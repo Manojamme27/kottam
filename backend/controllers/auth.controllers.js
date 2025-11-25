@@ -1,13 +1,10 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import genToken from "../utils/token.js";
-import { sendOtpMail } from "../utils/mail.js";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendOtpMail, sendAdminVerificationMail } from "../utils/mail.js";
 
 // Store temporary admin codes
-let pendingAdminCodes = {}; 
+let pendingAdminCodes = {};
 
 // =========================
 //      SIGN UP
@@ -35,23 +32,8 @@ export const signUp = async (req, res) => {
                 const code = Math.floor(100000 + Math.random() * 900000).toString();
                 pendingAdminCodes[email] = code;
 
-                // Send admin verification email via Resend
-                await resend.emails.send({
-    from: "Kottam <noreply@kottam.store>",   // ✅ FIXED
-    to: process.env.ADMIN_EMAIL,
-    subject: "🔐 KOTTAM Admin Verification Code",
-    html: `
-        <h3>New signup request</h3>
-        <p><strong>Role:</strong> ${role.toUpperCase()}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p>Your admin approval code:</p>
-        <h2 style="font-size:24px; letter-spacing:3px; color:#ff4d2d;">
-            ${code}
-        </h2>
-        <p>Share this code with the user only if approved.</p>
-    `,
-});
-
+                // Send admin verification email using resend.dev sender
+                await sendAdminVerificationMail(email, role, code);
 
                 return res.status(202).json({
                     message: "Verification code sent to admin. Ask admin for the code.",
@@ -112,8 +94,8 @@ export const signIn = async (req, res) => {
         res.cookie("token", token, {
             secure: true,
             sameSite: "none",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
         return res.status(200).json(user);
@@ -283,4 +265,3 @@ export const deleteAccount = async (req, res) => {
         return res.status(500).json({ message: `Delete account error ${error}` });
     }
 };
-
