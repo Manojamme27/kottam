@@ -37,16 +37,21 @@ export const signUp = async (req, res) => {
 
                 // Send admin verification email via Resend
                 await resend.emails.send({
-                    from: "Kottam <onboarding@resend.dev>",
-                    to: process.env.ADMIN_EMAIL,
-                    subject: "🔐 KOTTAM Admin Verification Code",
-                    text: `New signup request:
-Role: ${role.toUpperCase()}
-Email: ${email}
-Verification Code: ${code}
+    from: "Kottam <noreply@kottam.store>",   // ✅ FIXED
+    to: process.env.ADMIN_EMAIL,
+    subject: "🔐 KOTTAM Admin Verification Code",
+    html: `
+        <h3>New signup request</h3>
+        <p><strong>Role:</strong> ${role.toUpperCase()}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p>Your admin approval code:</p>
+        <h2 style="font-size:24px; letter-spacing:3px; color:#ff4d2d;">
+            ${code}
+        </h2>
+        <p>Share this code with the user only if approved.</p>
+    `,
+});
 
-Share this code with the user only if you approve the signup.`,
-                });
 
                 return res.status(202).json({
                     message: "Verification code sent to admin. Ask admin for the code.",
@@ -278,3 +283,4 @@ export const deleteAccount = async (req, res) => {
         return res.status(500).json({ message: `Delete account error ${error}` });
     }
 };
+
