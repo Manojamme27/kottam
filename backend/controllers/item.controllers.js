@@ -1,6 +1,8 @@
 import Item from "../models/item.model.js";
 import Shop from "../models/shop.model.js";
+import uploadOnCloudinary from "../utils/cloudinary.js"; // ✅ ADD THIS
 
+// ✅ ADD ITEM – upload images to Cloudinary
 export const addItem = async (req, res) => {
     try {
         const { name, category, foodType, price, offerPrice, description } = req.body;
@@ -12,10 +14,15 @@ export const addItem = async (req, res) => {
         const shop = await Shop.findOne({ owner: req.userId });
         if (!shop) return res.status(400).json({ message: "Shop not found" });
 
-        // MULTIPLE IMAGES
-        const imageUrls = req.files?.map(file =>
-            `${process.env.SERVER_URL}/uploads/${file.filename}`
-        ) || [];
+        // ✅ Upload all images to Cloudinary
+        const imageUrls = [];
+
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const imageUrl = await uploadOnCloudinary(file.path);
+                if (imageUrl) imageUrls.push(imageUrl);
+            }
+        }
 
         const newItem = await Item.create({
             name,
@@ -24,7 +31,8 @@ export const addItem = async (req, res) => {
             price,
             offerPrice,
             description,
-            images: imageUrls,
+            images: imageUrls,                  // ✅ store all
+            image: imageUrls[0] || "",          // ✅ main image for old UI
             shop: shop._id,
         });
 
@@ -41,8 +49,7 @@ export const addItem = async (req, res) => {
 };
 
 
-
-
+// ✅ EDIT ITEM – keep selected old images + upload new to Cloudinary
 export const editItem = async (req, res) => {
     try {
         const { itemId } = req.params;
@@ -57,17 +64,27 @@ export const editItem = async (req, res) => {
             price,
             offerPrice,
             description,
-            existingImages // JSON string
+            existingImages // JSON string from frontend
         } = req.body;
 
-        // Keep only the images that owner selected to KEEP
-        const oldImages = existingImages ? JSON.parse(existingImages) : [];
+        // ✅ Safely parse existingImages
+        let oldImages = [];
+        try {
+            oldImages = existingImages ? JSON.parse(existingImages) : [];
+        } catch (e) {
+            oldImages = [];
+        }
 
-        // Add newly uploaded images
-        const newImages = req.files?.map(file =>
-            `${process.env.SERVER_URL}/uploads/${file.filename}`
-        ) || [];
+        // ✅ Upload newly added images to Cloudinary
+        const newImages = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const imageUrl = await uploadOnCloudinary(file.path);
+                if (imageUrl) newImages.push(imageUrl);
+            }
+        }
 
+        // ✅ Final images list
         const finalImages = [...oldImages, ...newImages];
 
         item.name = name;
@@ -77,6 +94,7 @@ export const editItem = async (req, res) => {
         item.offerPrice = offerPrice;
         item.description = description;
         item.images = finalImages;
+        item.image = finalImages[0] || item.image; // ✅ keep main image in sync
 
         await item.save();
 
@@ -90,8 +108,7 @@ export const editItem = async (req, res) => {
 };
 
 
-
-
+// ✅ Get item by id
 export const getItemById = async (req, res) => {
     try {
         const itemId = req.params.itemId;
@@ -106,6 +123,7 @@ export const getItemById = async (req, res) => {
 };
 
 
+// ✅ Delete item
 export const deleteItem = async (req, res) => {
     try {
         const itemId = req.params.itemId;
@@ -114,7 +132,7 @@ export const deleteItem = async (req, res) => {
             return res.status(400).json({ message: "item not found" });
         }
         const shop = await Shop.findOne({ owner: req.userId });
-        shop.items = shop.items.filter((i) => i !== item._id);
+        shop.items = shop.items.filter((i) => i.toString() !== item._id.toString());
         await shop.save();
         await shop.populate({
             path: "items",
@@ -127,6 +145,7 @@ export const deleteItem = async (req, res) => {
 };
 
 
+// ✅ Get items by city (only OPEN shops)
 export const getItemByCity = async (req, res) => {
     try {
         const { city } = req.params;
@@ -134,7 +153,6 @@ export const getItemByCity = async (req, res) => {
             return res.status(400).json({ message: "city is required" });
         }
 
-        // 1️⃣ Get all shops in the city
         const shops = await Shop.find({
             city: { $regex: new RegExp(`^${city}$`, "i") },
         }).populate("items");
@@ -143,32 +161,26 @@ export const getItemByCity = async (req, res) => {
             return res.status(400).json({ message: "shops not found" });
         }
 
-        // ❗ 2️⃣ Filter ONLY OPEN shops
         const openShops = shops.filter(s => s.isOpen !== false);
-
-        // If no shop is open, return empty list
         if (openShops.length === 0) {
             return res.status(200).json([]);
         }
 
-        // 3️⃣ Extract OPEN shop IDs
         const shopIds = openShops.map(shop => shop._id);
 
-        // 4️⃣ Get items only from OPEN shops
         const items = await Item.find({ shop: { $in: shopIds } })
             .populate("shop", "name image isOpen");
 
         const filtered = items.filter(i => i.shop?.isOpen);
         return res.status(200).json(filtered);
 
-
-        return res.status(200).json(items);
-
     } catch (error) {
         return res.status(500).json({ message: `get item by city error ${error}` });
     }
 };
 
+
+// ✅ Get items for a specific shop
 export const getItemsByShop = async (req, res) => {
     try {
         const { shopId } = req.params;
@@ -190,6 +202,7 @@ export const getItemsByShop = async (req, res) => {
 };
 
 
+// ✅ Search items (only OPEN shops)
 export const searchItems = async (req, res) => {
     try {
         const { query, city } = req.query;
@@ -197,7 +210,6 @@ export const searchItems = async (req, res) => {
             return res.status(200).json([]);
         }
 
-        // 1️⃣ SHOP FILTER → Only OPEN shops
         const shops = await Shop.find({
             city: { $regex: new RegExp(`^${city}$`, "i") },
             isOpen: true
@@ -209,7 +221,6 @@ export const searchItems = async (req, res) => {
 
         const shopIds = shops.map(s => s._id);
 
-        // 2️⃣ ITEM SEARCH → Only items from OPEN shops
         const items = await Item.find({
             shop: { $in: shopIds },
             $or: [
@@ -218,7 +229,6 @@ export const searchItems = async (req, res) => {
             ]
         }).populate("shop", "name image isOpen");
 
-        // 3️⃣ EXTRA FILTER (safety)
         const filtered = items.filter(i => i.shop?.isOpen === true);
 
         return res.status(200).json(filtered);
@@ -229,7 +239,7 @@ export const searchItems = async (req, res) => {
 };
 
 
-
+// ✅ Item rating
 export const rating = async (req, res) => {
     try {
         const { itemId, rating } = req.body;
