@@ -8,7 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendOtpMail = async (to, otp) => {
   try {
     await resend.emails.send({
-      from: "Kottam <noreply@kottam.store>",   // your verified domain
+      from: "Kottam <onboarding@resend.dev>",   // default sender (works without domain)
       to,
       subject: "Reset Your Password",
       html: `
@@ -22,11 +22,11 @@ export const sendOtpMail = async (to, otp) => {
   }
 };
 
-// 🛵 Send delivery OTP to customer
+// 🛵 Send delivery OTP to customer (you said you may remove this later)
 export const sendDeliveryOtpMail = async (user, otp) => {
   try {
     await resend.emails.send({
-      from: "Kottam <noreply@kottam.store>",
+      from: "Kottam <onboarding@resend.dev>",
       to: user.email,
       subject: "Your Delivery OTP",
       html: `
@@ -44,8 +44,8 @@ export const sendDeliveryOtpMail = async (user, otp) => {
 export const sendAdminVerificationMail = async (email, role, code) => {
   try {
     await resend.emails.send({
-      from: "Kottam <noreply@kottam.store>",
-      to: process.env.ADMIN_EMAIL,   // ALWAYS goes to admin email
+      from: "Kottam <onboarding@resend.dev>",
+      to: process.env.ADMIN_EMAIL,   // ALWAYS goes to admin
       subject: "KOTTAM Admin Approval Required",
       html: `
         <h3>New ${role.toUpperCase()} Signup Request</h3>
@@ -54,7 +54,7 @@ export const sendAdminVerificationMail = async (email, role, code) => {
         <h2 style="font-size: 24px; letter-spacing: 3px; color: #ff4d2d;">
           ${code}
         </h2>
-        <p>Share this code ONLY if user is approved.</p>
+        <p>Share this code ONLY if the user is approved.</p>
       `,
     });
   } catch (err) {
