@@ -15,10 +15,12 @@ import { Server } from "socket.io"
 
 const app = express()
 const server = http.createServer(app)
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000";
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: FRONTEND_URL,
         credentials: true,
         methods: ['POST', 'GET']
     }
@@ -31,9 +33,7 @@ const port = process.env.PORT || 5000;
 
 app.use(
     cors({
-        origin: isProduction
-            ? "https://kottam.onrender.com"
-            : "http://localhost:5173",
+        origin: FRONTEND_URL,
         credentials: true,
     })
 );
@@ -58,3 +58,4 @@ server.listen(port, () => {
     connectDb();
     console.log(`server started at ${port}`);
 });
+
