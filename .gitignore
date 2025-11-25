@@ -1,0 +1,58 @@
+# =========================
+# Global
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+
+# Logs
+logs/
+*.log
+logs/*.log
+
+# Env files (Never push secrets)
+.env
+backend/.env
+frontend/.env
+
+# Build outputs
+dist/
+build/
+frontend/dist/
+frontend/build/
+backend/public/
+
+# Local dev files
+.vscode/
+.idea/
+
+# Uploads (your backend uploaded images)
+backend/uploads/
+
+# Static firebase / misc
+firebase-debug.log
+firebase.json
+
+# Optional: ignore lockfiles if you want
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# =========================
+# Backend Specific
+# =========================
+backend/node_modules/
+backend/.npmrc
+
+# =========================
+# Frontend Specific
+# =========================
+frontend/node_modules/
+frontend/.npmrc
+
+# If using Vite
+frontend/.vite/
+
