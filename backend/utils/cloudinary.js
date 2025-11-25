@@ -6,12 +6,23 @@ cloudinary.v2.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (filePath) => {
+// ✅ NEW: Works with multer.memoryStorage() buffer on Render
+const uploadOnCloudinary = async (fileBuffer) => {
     return new Promise((resolve, reject) => {
-        cloudinary.v2.uploader.upload(filePath, { folder: "shops" }, (err, result) => {
-            if (err) reject(err);
-            else resolve(result.secure_url);
-        });
+        const uploadStream = cloudinary.v2.uploader.upload_stream(
+            { folder: "shops" },       // optional folder
+            (error, result) => {
+                if (error) {
+                    console.error("Cloudinary upload error:", error);
+                    reject(error);
+                } else {
+                    resolve(result.secure_url);
+                }
+            }
+        );
+
+        // pipe buffer into Cloudinary
+        uploadStream.end(fileBuffer);
     });
 };
 
