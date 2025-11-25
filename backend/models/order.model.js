@@ -40,10 +40,6 @@ const shopOrderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
-    deliveryOtp: {
-        type: String,
-        default: null
-    },
     otpExpires: {
         type: Date,
         default: null
@@ -110,3 +106,4 @@ const orderSchema = new mongoose.Schema({
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;
+
