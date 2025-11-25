@@ -1,11 +1,33 @@
 import Shop from "../models/shop.model.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import cloudinary from "cloudinary";
 
-// CREATE OR EDIT SHOP WITH MULTIPLE IMAGES
+// Cloudinary Config (already done globally)
+cloudinary.v2.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Upload buffer to Cloudinary
+const uploadBufferToCloudinary = (fileBuffer, fileName) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.v2.uploader.upload_stream(
+            { folder: "shops", public_id: fileName },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            }
+        );
+        stream.end(fileBuffer);
+    });
+};
+
+// CREATE OR EDIT SHOP
 export const createEditShop = async (req, res) => {
     try {
         const { name, city, state, address, existingImages } = req.body;
 
+        // Parse old images
         let oldImages = [];
         try {
             oldImages = existingImages ? JSON.parse(existingImages) : [];
@@ -15,16 +37,21 @@ export const createEditShop = async (req, res) => {
 
         const newImages = [];
 
-        // Upload new files
+        // Upload new buffers to Cloudinary
         if (req.files && req.files.length > 0) {
             for (let file of req.files) {
-                const imageUrl = await uploadOnCloudinary(file.path);
+                const imageUrl = await uploadBufferToCloudinary(
+                    file.buffer,
+                    Date.now() + "-" + file.originalname
+                );
                 if (imageUrl) newImages.push(imageUrl);
             }
         }
 
+        // Merge final images
         const finalImages = [...oldImages, ...newImages];
 
+        // Find existing shop
         let shop = await Shop.findOne({ owner: req.userId });
 
         if (!shop) {
@@ -44,20 +71,17 @@ export const createEditShop = async (req, res) => {
             shop.address = address;
             shop.images = finalImages;
             shop.image = finalImages[0] || shop.image;
-
             await shop.save();
         }
 
         shop = await shop.populate("owner items");
-
         return res.status(200).json(shop);
 
     } catch (error) {
-        console.log(error);
+        console.error("Shop Create/Edit Error:", error);
         return res.status(500).json({ message: error.message });
     }
 };
-
 
 export const getMyShop = async (req, res) => {
     try {
@@ -73,9 +97,7 @@ export const getMyShop = async (req, res) => {
         return res.status(200).json(shop);
 
     } catch (error) {
-        return res
-            .status(500)
-            .json({ message: `get my shop error ${error}` });
+        return res.status(500).json({ message: `get my shop error ${error}` });
     }
 };
 
@@ -100,7 +122,6 @@ export const getShopByCity = async (req, res) => {
     }
 };
 
-// Toggle shop status
 export const toggleShopStatus = async (req, res) => {
     try {
         const ownerId = req.userId;
