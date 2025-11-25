@@ -16,58 +16,58 @@ import { Server } from "socket.io";
 const app = express();
 const server = http.createServer(app);
 
-// 🔥 Allowed frontend URLs
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://kottam-frontend.vercel.app",
-    "https://kottam.vercel.app"
-];
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-// 🔥 CORS for Express
+// -------------------------
+// FIX 1: CORS FOR COOKIES
+// -------------------------
 app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
-        },
-        credentials: true,
-    })
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
 );
 
+// -------------------------
+// FIX 2: JSON + COOKIES
+// -------------------------
 app.use(express.json());
 app.use(cookieParser());
 
-// Serve uploads folder
+// -------------------------
+// FIX 3: STATIC FILES
+// -------------------------
 app.use("/uploads", express.static("uploads"));
 
-// 🔥 Socket.IO with proper CORS
+// -------------------------
+// FIX 4: SOCKET.IO WITH FRONTEND_URL
+// -------------------------
 const io = new Server(server, {
-    cors: {
-        origin: allowedOrigins,
-        credentials: true,
-        methods: ["GET", "POST"]
-    }
+  cors: {
+    origin: FRONTEND_URL,
+    credentials: true,
+  },
 });
-
-// attach socket to app
 app.set("io", io);
 
-// Routes
+// -------------------------
+// ROUTES
+// -------------------------
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/order", orderRouter);
 
-// Socket Handler
+// SOCKET
 socketHandler(io);
 
-// Start server
-const port = process.env.PORT || 5000;
+// -------------------------
+// START SERVER
+// -------------------------
+const port = process.env.PORT || 8000;
 server.listen(port, () => {
-    connectDb();
-    console.log(`server started at ${port}`);
+  connectDb();
+  console.log("server started at", port);
 });
