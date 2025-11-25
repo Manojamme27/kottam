@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FaUtensils, FaPen } from 'react-icons/fa';
 import Nav from './Nav';
-import OwnerItemCard from './ownerItemCard';
+import OwnerItemCard from './OwnerItemCard';
 import useGetMyshop from '../hooks/useGetMyshop';
 import axios from 'axios';
 import { serverUrl } from '../App';
@@ -232,3 +232,4 @@ function StatCard({ title, value, color }) {
     </div>
   );
 }
+
