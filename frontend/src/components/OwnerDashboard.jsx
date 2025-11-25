@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUtensils, FaPen } from 'react-icons/fa';
 import Nav from './Nav';
 import OwnerItemCard from './OwnerItemCard';
-import useGetMyshop from '../hooks/useGetMyshop';
+import useGetMyshop from '../hooks/useGetMyShop';
 import axios from 'axios';
 import { serverUrl } from '../App';
 import useOwnerSocket from "../hooks/useOwnerSocket";
@@ -232,4 +232,5 @@ function StatCard({ title, value, color }) {
     </div>
   );
 }
+
 
