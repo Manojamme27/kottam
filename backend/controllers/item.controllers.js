@@ -1,8 +1,31 @@
 import Item from "../models/item.model.js";
 import Shop from "../models/shop.model.js";
-import uploadOnCloudinary from "../utils/cloudinary.js"; // ✅ ADD THIS
+import cloudinary from "cloudinary";
 
-// ✅ ADD ITEM – upload images to Cloudinary
+// Cloudinary Config
+cloudinary.v2.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Upload buffer to Cloudinary
+const uploadBufferToCloudinary = (fileBuffer, fileName) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.v2.uploader.upload_stream(
+            { folder: "items", public_id: fileName },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            }
+        );
+        stream.end(fileBuffer);
+    });
+};
+
+/* ============================================================
+   ADD ITEM
+============================================================ */
 export const addItem = async (req, res) => {
     try {
         const { name, category, foodType, price, offerPrice, description } = req.body;
@@ -14,13 +37,16 @@ export const addItem = async (req, res) => {
         const shop = await Shop.findOne({ owner: req.userId });
         if (!shop) return res.status(400).json({ message: "Shop not found" });
 
-        // ✅ Upload all images to Cloudinary
+        // Upload multiple images from buffer
         const imageUrls = [];
 
         if (req.files && req.files.length > 0) {
-            for (const file of req.files) {
-                const imageUrl = await uploadOnCloudinary(file.path);
-                if (imageUrl) imageUrls.push(imageUrl);
+            for (let file of req.files) {
+                const url = await uploadBufferToCloudinary(
+                    file.buffer,
+                    Date.now() + "-" + file.originalname
+                );
+                if (url) imageUrls.push(url);
             }
         }
 
@@ -31,8 +57,7 @@ export const addItem = async (req, res) => {
             price,
             offerPrice,
             description,
-            images: imageUrls,                  // ✅ store all
-            image: imageUrls[0] || "",          // ✅ main image for old UI
+            images: imageUrls,
             shop: shop._id,
         });
 
@@ -48,8 +73,9 @@ export const addItem = async (req, res) => {
     }
 };
 
-
-// ✅ EDIT ITEM – keep selected old images + upload new to Cloudinary
+/* ============================================================
+   EDIT ITEM
+============================================================ */
 export const editItem = async (req, res) => {
     try {
         const { itemId } = req.params;
@@ -64,27 +90,24 @@ export const editItem = async (req, res) => {
             price,
             offerPrice,
             description,
-            existingImages // JSON string from frontend
+            existingImages
         } = req.body;
 
-        // ✅ Safely parse existingImages
-        let oldImages = [];
-        try {
-            oldImages = existingImages ? JSON.parse(existingImages) : [];
-        } catch (e) {
-            oldImages = [];
-        }
+        const oldImages = existingImages ? JSON.parse(existingImages) : [];
 
-        // ✅ Upload newly added images to Cloudinary
         const newImages = [];
+
+        // Upload images from buffer
         if (req.files && req.files.length > 0) {
-            for (const file of req.files) {
-                const imageUrl = await uploadOnCloudinary(file.path);
-                if (imageUrl) newImages.push(imageUrl);
+            for (let file of req.files) {
+                const url = await uploadBufferToCloudinary(
+                    file.buffer,
+                    Date.now() + "-" + file.originalname
+                );
+                if (url) newImages.push(url);
             }
         }
 
-        // ✅ Final images list
         const finalImages = [...oldImages, ...newImages];
 
         item.name = name;
@@ -94,7 +117,6 @@ export const editItem = async (req, res) => {
         item.offerPrice = offerPrice;
         item.description = description;
         item.images = finalImages;
-        item.image = finalImages[0] || item.image; // ✅ keep main image in sync
 
         await item.save();
 
@@ -269,3 +291,4 @@ export const rating = async (req, res) => {
         return res.status(500).json({ message: `rating error ${error}` });
     }
 };
+
