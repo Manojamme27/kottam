@@ -212,45 +212,52 @@ function DeliveryBoy() {
     }
   };
 
-  // ✅ NEW: Directly mark as delivered (no OTP)
-  const completeDelivery = async () => {
+ const completeDelivery = async () => {
     try {
-      if (!currentOrder || !currentOrder.shopOrder) return;
+        if (!currentOrder || !currentOrder.shopOrder) return;
 
-      const orderId = currentOrder._id;
-      const rawShop = currentOrder.shopOrder.shop;
+        // 🛑 Ask confirmation before proceeding
+        const confirmAction = window.confirm(
+            "Are you sure you want to mark this order as delivered?"
+        );
+        if (!confirmAction) return;
 
-      // shop can be populated object or plain ObjectId/string
-      const shopId = rawShop?._id || rawShop;
-      if (!shopId) {
-        console.error("❌ No shopId in currentOrder.shopOrder");
-        return;
-      }
+        const orderId = currentOrder._id;
 
-      setLoading(true);
-      setMessage("");
+        // shop may be populated object or string
+        const rawShop = currentOrder.shopOrder.shop;
+        const shopId = rawShop?._id || rawShop;
 
-      await axios.post(
-        `${serverUrl}/api/order/update-status/${orderId}/${shopId}`,
-        { status: "delivered" },
-        { withCredentials: true }
-      );
+        if (!shopId) {
+            console.error("❌ No shopId in currentOrder.shopOrder");
+            return;
+        }
 
-      setMessage("✅ Delivery marked as completed.");
+        setLoading(true);
+        setMessage("");
 
-      // Refresh dashboard data
-      await Promise.all([
-        getCurrentOrder(), // will clear current if assignment is done
-        handleTodayDeliveries(),
-        getAssignments(),
-      ]);
+        await axios.post(
+            `${serverUrl}/api/order/update-status/${orderId}/${shopId}`,
+            { status: "delivered" },
+            { withCredentials: true }
+        );
+
+        setMessage("✅ Delivery marked as completed.");
+
+        // 🔥 Instantly hide current order (DO NOT wait for backend refresh)
+        setCurrentOrder(null);
+
+        // Refresh dashboard stats silently
+        getAssignments();
+        handleTodayDeliveries();
     } catch (error) {
-      console.error("completeDelivery error:", error.response || error);
-      setMessage("❌ Failed to update order status. Try again.");
+        console.error("❌ completeDelivery error:", error.response || error);
+        setMessage("❌ Failed to update order status. Try again.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
   // ------------------- 🔄 Socket Listener -------------------
   useEffect(() => {
@@ -588,3 +595,4 @@ function DeliveryBoy() {
 }
 
 export default DeliveryBoy;
+
