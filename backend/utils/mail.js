@@ -23,22 +23,6 @@ export const sendOtpMail = async (to, otp) => {
 };
 
 // 🛵 Send delivery OTP to customer (you said you may remove this later)
-export const sendDeliveryOtpMail = async (user, otp) => {
-  try {
-    await resend.emails.send({
-      from: "Kottam <onboarding@resend.dev>",
-      to: user.email,
-      subject: "Your Delivery OTP",
-      html: `
-        <p>Your delivery confirmation OTP is:</p>
-        <h2 style="font-size: 22px; color: #ff4d2d;">${otp}</h2>
-        <p>This OTP expires in <b>5 minutes</b>.</p>
-      `,
-    });
-  } catch (err) {
-    console.error("sendDeliveryOtpMail Error:", err);
-  }
-};
 
 // 👑 Send Admin Verification Code
 export const sendAdminVerificationMail = async (email, role, code) => {
@@ -61,3 +45,4 @@ export const sendAdminVerificationMail = async (email, role, code) => {
     console.error("sendAdminVerificationMail Error:", err);
   }
 };
+
