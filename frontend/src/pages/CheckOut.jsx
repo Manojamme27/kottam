@@ -6,6 +6,20 @@ import { IoLocationSharp } from "react-icons/io5";
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { useDispatch, useSelector } from 'react-redux';
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// FIX Leaflet marker icon issue in Vercel/React builds
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
 import { setAddress, setLocation } from '../redux/mapSlice';
 import { MdDeliveryDining } from "react-icons/md";
 import { FaCreditCard } from "react-icons/fa";
@@ -362,3 +376,4 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
