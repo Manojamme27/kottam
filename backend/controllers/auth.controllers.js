@@ -74,7 +74,7 @@ export const signUp = async (req, res) => {
 
         const token = await genToken(user._id);
         res.cookie("token", token, {
-            secure: false,
+            secure: true,
             sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
@@ -102,7 +102,7 @@ export const signIn = async (req, res) => {
 
         const token = await genToken(user._id);
         res.cookie("token", token, {
-            secure: false,
+            secure: true,
             sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
@@ -195,7 +195,7 @@ export const googleAuth = async (req, res) => {
 
         const token = await genToken(user._id);
         res.cookie("token", token, {
-            secure: false,
+            secure: true,
             sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
@@ -240,5 +240,6 @@ export const deleteAccount = async (req, res) => {
         return res.status(500).json({ message: `Delete account error: ${error}` });
     }
 };
+
 
 
