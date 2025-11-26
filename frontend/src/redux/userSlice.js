@@ -180,19 +180,24 @@ const userSlice = createSlice({
   const order = state.myOrders.find(o => o._id === orderId);
   if (!order) return;
 
+  // shopOrders ALWAYS treated as array for update
   const shopOrders = Array.isArray(order.shopOrders)
     ? order.shopOrders
     : [order.shopOrders];
 
-  const shopOrder = shopOrders.find(
-    so => String(so.shop?._id) === String(shopId)
+  const shopOrder = shopOrders.find(so =>
+    String(so.shop?._id || so.shop) === String(shopId)
   );
 
   if (shopOrder) {
     shopOrder.status = status;
   }
 
-  order.shopOrders = shopOrders; // normalize back
+  // For OWNER → keep ONE object only
+  order.shopOrders =
+    state.userData?.role === "owner"
+      ? shopOrder
+      : shopOrders;
 },
 
 updateRealtimeOrderStatus: (state, action) => {
@@ -205,16 +210,20 @@ updateRealtimeOrderStatus: (state, action) => {
     ? order.shopOrders
     : [order.shopOrders];
 
-  const shopOrder = shopOrders.find(
-    so => String(so.shop?._id) === String(shopId)
+  const shopOrder = shopOrders.find(so =>
+    String(so.shop?._id || so.shop) === String(shopId)
   );
 
   if (shopOrder) {
     shopOrder.status = status;
   }
 
-  order.shopOrders = shopOrders; // normalize back
+  order.shopOrders =
+    state.userData?.role === "owner"
+      ? shopOrder
+      : shopOrders;
 },
+
 
 
     setSearchItems: (state, action) => {
@@ -244,4 +253,5 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
