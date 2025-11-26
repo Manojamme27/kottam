@@ -7,8 +7,6 @@ import "react-toastify/dist/ReactToastify.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-
-
 // Hooks
 import useGetCity from "./hooks/useGetCity";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
@@ -39,18 +37,18 @@ import { setSocket, addMyOrder, updateRealtimeOrderStatus } from "./redux/userSl
 // Server URL
 export const serverUrl = import.meta.env.VITE_SERVER_URL;
 
-// 🔊 PLAY SOUND ON NOTIFICATION (file in public/notify.mp3)
+// 🔊 Play notification sound
 const playSound = () => {
-  const audio = new Audio("/notify.mp3"); // ✅ Correct path for public folder
-  audio.volume = 1.0;
-  audio.play().catch((err) => console.log("Audio blocked:", err));
+  const audio = new Audio("/notify.mp3");
+  audio.volume = 1;
+  audio.play().catch(() => {});
 };
 
 function App() {
   const { userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
-  // Initialize Hooks
+  // Initialize hooks
   useGetCurrentUser();
   useUpdateLocation();
   useGetCity();
@@ -59,50 +57,67 @@ function App() {
   useGetItemsByCity();
   useGetMyOrders();
 
-  // SOCKET.IO SETUP
+  // ===============================
+  // ⚡ SOCKET SETUP (FULL REALTIME)
+  // ===============================
   useEffect(() => {
     if (!userData?._id) return;
 
-    const socketInstance = io(serverUrl, {
+    // Ensure only 1 socket instance
+    let socket = io(serverUrl, {
       withCredentials: true,
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1500,
     });
 
-    socketInstance.on("connect", () => {
-      console.log("✅ Socket connected:", socketInstance.id);
-      socketInstance.emit("identity", { userId: userData._id });
+    socket.on("connect", () => {
+      console.log("🔌 SOCKET CONNECTED:", socket.id);
+
+      // Identify user to server
+      socket.emit("identity", { userId: userData._id });
     });
 
-    socketInstance.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
+    socket.on("disconnect", () => {
+      console.log("❌ SOCKET DISCONNECTED");
     });
 
-    // 🔥 SOCKET EVENTS WITH SOUND 🔊
+    // Re-identify after reconnect
+    socket.on("reconnect", () => {
+      console.log("🔄 SOCKET RECONNECTED:", socket.id);
+      socket.emit("identity", { userId: userData._id });
+    });
 
-    // NEW ORDER (Owner only)
-    socketInstance.on("newOrder", (orderData) => {
+    // ================================
+    // 🔥 REALTIME EVENTS FOR ALL ROLES
+    // ================================
+
+    // OWNER → New Order Received
+    socket.on("newOrder", (orderData) => {
       playSound();
-      toast.success(`New Order Received`);
+      toast.success("New Order Received");
       dispatch(addMyOrder(orderData));
     });
 
-    // ORDER STATUS UPDATE (User)
-    socketInstance.on("update-status", (data) => {
+    // USER → Status Update
+    socket.on("update-status", (data) => {
       playSound();
       toast.info(`Order status updated: ${data.status}`);
       dispatch(updateRealtimeOrderStatus(data));
     });
 
-    // NEW DELIVERY ASSIGNMENT (Delivery Boy)
-    socketInstance.on("newAssignment", (assignment) => {
+    // DELIVERY BOY → New Assignment
+    socket.on("newAssignment", (assignment) => {
       playSound();
       toast.success(`New Delivery Assignment from ${assignment.shopName}`);
     });
 
-    dispatch(setSocket(socketInstance));
+    dispatch(setSocket(socket));
 
     return () => {
-      socketInstance.disconnect();
+      socket.removeAllListeners();
+      socket.disconnect();
     };
   }, [userData?._id]);
 
@@ -128,10 +143,7 @@ function App() {
       {/* Toast Notifications */}
       <ToastContainer
         position="top-center"
-        autoClose={2500}
-        hideProgressBar={false}
-        closeOnClick
-        pauseOnHover
+        autoClose={2300}
         theme="colored"
         toastStyle={{
           backgroundColor: "#fff9f6",
