@@ -49,20 +49,25 @@ function MyOrders() {
         setCancelPopup({ show: false, orderId: null });
 
         dispatch(
-          setMyOrders(
-            myOrders.map((o) =>
-              o._id === cancelPopup.orderId
-                ? {
-                    ...o,
-                    shopOrders: normalizeShopOrders(o.shopOrders).map((so) => ({
-                      ...so,
-                      status: "cancelled",
-                    })),
-                  }
-                : o
-            )
-          )
-        );
+  setMyOrders(
+    myOrders.map((o) => {
+      if (o._id !== cancelPopup.orderId) return o;
+
+      const normalized = Array.isArray(o.shopOrders)
+        ? o.shopOrders
+        : [o.shopOrders];
+
+      return {
+        ...o,
+        shopOrders: normalized.map((so) => ({
+          ...so,
+          status: "cancelled",
+        })),
+      };
+    })
+  )
+);
+
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to cancel order ❌");
@@ -189,3 +194,4 @@ function MyOrders() {
 }
 
 export default MyOrders;
+
