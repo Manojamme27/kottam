@@ -55,6 +55,13 @@ export const placeOrder = async (req, res) => {
                     (sum, i) => sum + Number(i.price) * Number(i.quantity),
                     0
                 );
+                // ⭐ Minimum ₹100 per shop
+if (subtotal < 100) {
+    return res.status(400).json({
+        message: `Minimum order ₹100 required for shop: ${shop.name}`
+    });
+}
+
 
                 let deliveryFee = 0;
                 if (subtotal >= 100 && subtotal <= 199) deliveryFee = 30;
@@ -666,4 +673,5 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
