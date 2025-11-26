@@ -433,6 +433,49 @@ function Nav() {
                     </button>
                 </div>
             )}
+            {/* DELETE ACCOUNT POPUP */}
+<AnimatePresence>
+    {showDeletePopup && (
+        <motion.div
+            className="fixed inset-0 bg-black/40 flex items-center justify-center z-[99999]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+        >
+            <motion.div
+                className="bg-white p-6 rounded-2xl shadow-xl w-[90%] max-w-sm"
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+            >
+                <h3 className="text-lg font-bold mb-4 text-center">
+                    Delete Account?
+                </h3>
+
+                <p className="text-gray-600 text-sm mb-6 text-center">
+                    This action is permanent. All your data will be removed.
+                </p>
+
+                <div className="flex gap-3">
+                    <button
+                        className="w-1/2 bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold"
+                        onClick={() => setShowDeletePopup(false)}
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        className="w-1/2 bg-red-600 text-white py-2 rounded-lg font-semibold"
+                        onClick={handleDeleteAccount}
+                    >
+                        Delete
+                    </button>
+                </div>
+            </motion.div>
+        </motion.div>
+    )}
+</AnimatePresence>
+
 
         </>
         
@@ -443,3 +486,4 @@ function Nav() {
 }
 
 export default Nav;
+
