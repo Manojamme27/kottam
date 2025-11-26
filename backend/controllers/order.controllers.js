@@ -262,18 +262,27 @@ export const updateOrderStatus = async (req, res) => {
         // -----------------------------------------------------------
         // WHEN SHOP SETS "OUT OF DELIVERY"
         // -----------------------------------------------------------
-        if (status === "out of delivery" && !shopOrder.assignment) {
-            const { longitude, latitude } = order.deliveryAddress;
+        // --- DELIVERY BOY DIRECT DELIVERY COMPLETION (NO OTP) ---
+if (status === "delivered") {
 
-            const nearByDeliveryBoys = await User.find({
-                role: "deliveryBoy",
-                location: {
-                    $near: {
-                        $geometry: { type: "Point", coordinates: [Number(longitude), Number(latitude)] },
-                        $maxDistance: 15000
-                    }
-                }
-            });
+    shopOrder.status = "delivered";
+    shopOrder.deliveredAt = new Date();
+
+    // Remove assignment
+    await DeliveryAssignment.deleteOne({
+        shopOrderId: shopOrder._id,
+        order: orderId,
+        assignedTo: shopOrder.assignedDeliveryBoy
+    });
+
+    await order.save();
+
+    return res.status(200).json({
+        message: "Order marked as delivered",
+        shopOrder
+    });
+}
+
 
             // Remove busy boys
             const nearByIds = nearByDeliveryBoys.map(b => b._id);
@@ -587,3 +596,4 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
