@@ -340,15 +340,19 @@ export const updateOrderStatus = async (req, res) => {
             if (io) {
                 availableBoys.forEach(boy => {
                     if (boy.socketId) {
-                        io.to(boy.socketId).emit("newAssignment", {
-                            sentTo: boy._id,
-                            assignmentId: deliveryAssignment._id,
-                            orderId: order._id,
-                            shopName: shopOrder.shop.name,
-                            deliveryAddress: order.deliveryAddress,
-                            items: shopOrder.shopOrderItems,
-                            subtotal: shopOrder.subtotal
-                        });
+// populate shop before using shopOrder.shop.name
+await order.populate("shopOrders.shop", "name");
+
+io.to(socket).emit("newAssignment", {
+    sentTo: boy._id,
+    assignmentId: deliveryAssignment._id,
+    orderId: order._id,
+    shopName: shopOrder.shop.name,   // now safe
+    deliveryAddress: order.deliveryAddress,
+    items: shopOrder.shopOrderItems,
+    subtotal: shopOrder.subtotal
+});
+
                     }
                 });
             }
@@ -643,6 +647,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
