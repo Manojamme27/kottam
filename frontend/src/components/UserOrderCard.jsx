@@ -1,47 +1,17 @@
 import axios from "axios";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { serverUrl } from "../App";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { updateRealtimeOrderStatus } from "../redux/userSlice.js";
 import { toast } from "react-toastify";
 
 function UserOrderCard({ data }) {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { socket } = useSelector((state) => state.user);
-
     const [selectedRating, setSelectedRating] = useState({});
     const [isCancelling, setIsCancelling] = useState(false);
     const [showCancelPopup, setShowCancelPopup] = useState(false);
-
-    const shopOrders = Array.isArray(data?.shopOrders)
-        ? data.shopOrders
-        : data?.shopOrders
-            ? [data.shopOrders]
-            : [];
-
-    // ⭐ Local status to instantly hide cancel button
-    const [localStatus, setLocalStatus] = useState(
-        shopOrders?.[0]?.status?.toLowerCase() || "pending"
-    );
-
-    // ⭐ Listen for realtime updates to sync status instantly
-    useEffect(() => {
-        if (!socket) return;
-
-        const handler = ({ orderId, shopId, status }) => {
-            if (orderId === data._id) {
-                const updated = status.toLowerCase();
-                setLocalStatus(updated); // instant UI update
-                dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
-            }
-        };
-
-        socket.on("update-status", handler);
-
-        return () => socket.off("update-status", handler);
-    }, [socket, data, dispatch]);
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
@@ -72,29 +42,39 @@ function UserOrderCard({ data }) {
     const confirmCancelOrder = async () => {
         setIsCancelling(true);
         try {
-            const res = await axios.put(
+            await axios.put(
                 `${serverUrl}/api/order/cancel/${data._id}`,
                 {},
                 { withCredentials: true }
             );
 
-            // update all shopOrders instantly
-            data?.shopOrders?.forEach((shopOrder) => {
+            // ✅ Update redux for all shopOrders of this order
+            const shopOrdersArray = Array.isArray(data?.shopOrders)
+                ? data.shopOrders
+                : data?.shopOrders
+                    ? [data.shopOrders]
+                    : [];
+
+            shopOrdersArray.forEach((shopOrder) => {
+                if (!shopOrder?.shop?._id) return;
                 dispatch(
                     updateRealtimeOrderStatus({
                         orderId: data._id,
-                        shopId: shopOrder?.shop?._id,
+                        shopId: shopOrder.shop._id,
                         status: "cancelled",
                     })
                 );
             });
 
-            setLocalStatus("cancelled");
             setShowCancelPopup(false);
 
             toast.success("Order cancelled successfully", {
                 position: "top-center",
                 autoClose: 1500,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: true,
                 theme: "colored",
             });
         } catch (error) {
@@ -109,11 +89,22 @@ function UserOrderCard({ data }) {
         }
     };
 
+    // 🔹 Normalize shopOrders and status
+    const shopOrders = Array.isArray(data?.shopOrders)
+        ? data.shopOrders
+        : data?.shopOrders
+            ? [data.shopOrders]
+            : [];
+
+    const normalizedStatus =
+        shopOrders?.[0]?.status?.toLowerCase()?.trim() || "pending";
+
     return (
         <>
+            {/* 🔹 Order Card */}
             <div
                 className={`bg-white rounded-lg shadow p-4 space-y-4 ${
-                    localStatus === "cancelled" ? "opacity-60" : ""
+                    normalizedStatus === "cancelled" ? "opacity-60" : ""
                 }`}
             >
                 {/* Header */}
@@ -126,7 +117,6 @@ function UserOrderCard({ data }) {
                             Date: {formatDate(data?.createdAt)}
                         </p>
                     </div>
-
                     <div className="text-right">
                         {data?.paymentMethod === "cod" ? (
                             <p className="text-sm text-gray-500">
@@ -139,17 +129,17 @@ function UserOrderCard({ data }) {
                         )}
                         <p
                             className={`font-medium ${
-                                localStatus === "cancelled"
+                                normalizedStatus === "cancelled"
                                     ? "text-gray-400"
                                     : "text-blue-600"
                             }`}
                         >
-                            {localStatus || "Pending"}
+                            {normalizedStatus || "pending"}
                         </p>
                     </div>
                 </div>
 
-                {/* Items */}
+                {/* Items per shopOrder */}
                 {shopOrders.map((shopOrder, index) => (
                     <div
                         className="border rounded-lg p-3 bg-[#fffaf7] space-y-3"
@@ -162,6 +152,7 @@ function UserOrderCard({ data }) {
                         <div className="mt-2">
                             {shopOrder?.shopOrderItems?.length > 0 ? (
                                 <>
+                                    {/* Header row */}
                                     <div className="grid grid-cols-4 text-sm font-semibold text-slate-700 border-b pb-1">
                                         <span>Item</span>
                                         <span className="text-center">Qty</span>
@@ -169,6 +160,7 @@ function UserOrderCard({ data }) {
                                         <span className="text-right">Total</span>
                                     </div>
 
+                                    {/* Item rows */}
                                     {shopOrder.shopOrderItems.map((item, idx) => {
                                         const qty = item?.quantity || 0;
                                         const price = item?.price || 0;
@@ -179,7 +171,9 @@ function UserOrderCard({ data }) {
                                                 key={idx}
                                                 className="grid grid-cols-4 text-sm py-1.5 border-b last:border-b-0"
                                             >
-                                                <span className="truncate">{item?.name}</span>
+                                                <span className="truncate">
+                                                    {item?.name || "Unnamed"}
+                                                </span>
                                                 <span className="text-center">{qty}</span>
                                                 <span className="text-center">₹{price}</span>
                                                 <span className="text-right font-medium">
@@ -200,12 +194,12 @@ function UserOrderCard({ data }) {
                             </p>
                             <span
                                 className={`text-sm font-medium ${
-                                    localStatus === "cancelled"
+                                    normalizedStatus === "cancelled"
                                         ? "text-gray-400"
                                         : "text-blue-600"
                                 }`}
                             >
-                                {localStatus}
+                                {shopOrder?.status || "pending"}
                             </span>
                         </div>
                     </div>
@@ -215,19 +209,20 @@ function UserOrderCard({ data }) {
                 <div className="flex justify-between items-center border-t pt-2">
                     <p className="font-semibold">Total: ₹{data?.totalAmount || 0}</p>
                     <div className="flex gap-2">
-
-                        {/* ❌ Hide cancel when status is out of delivery */}
-                        {!["cancelled", "delivered", "out of delivery"].includes(localStatus) && (
+                        {/* ❌ Cancel button hidden for these statuses */}
+                        {!["cancelled", "delivered", "out of delivery"].includes(
+                            normalizedStatus
+                        ) && (
                             <button
                                 onClick={() => setShowCancelPopup(true)}
-                                className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition"
+                                className="bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out"
                             >
                                 Cancel Order
                             </button>
                         )}
 
                         <button
-                            className="bg-[#ff4d2d] hover:bg-[#e64526] text-white px-4 py-2 rounded-lg text-sm"
+                            className="bg-[#ff4d2d] hover:bg-[#e64526] text-white px-4 py-2 rounded-lg text-sm transition-all duration-300 transform hover:scale-105 active:scale-95"
                             onClick={() => navigate(`/track-order/${data?._id}`)}
                         >
                             Track Order
@@ -236,10 +231,10 @@ function UserOrderCard({ data }) {
                 </div>
             </div>
 
-            {/* Cancel Confirmation Popup */}
+            {/* 🔹 Cancel Confirmation Popup */}
             {showCancelPopup && (
                 <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-10000">
-                    <div className="bg-white p-6 rounded-lg shadow-2xl w-[90%] max-w-sm text-center">
+                    <div className="bg-white p-6 rounded-lg shadow-2xl w-[90%] max-w-sm text-center transform transition-all scale-100 animate-fadeIn">
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">
                             Confirm Cancellation
                         </h3>
@@ -250,18 +245,18 @@ function UserOrderCard({ data }) {
                             <button
                                 onClick={confirmCancelOrder}
                                 disabled={isCancelling}
-                                className={`px-4 py-2 rounded-lg font-medium text-white ${
-                                    isCancelling
-                                        ? "bg-gray-400"
-                                        : "bg-red-600 hover:bg-red-700"
-                                }`}
+                                className={`px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 
+                                    ${
+                                        isCancelling
+                                            ? "bg-gray-400 cursor-not-allowed"
+                                            : "bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transform hover:scale-105 active:scale-95 shadow-md"
+                                    }`}
                             >
                                 {isCancelling ? "Cancelling..." : "Confirm"}
                             </button>
-
                             <button
                                 onClick={() => setShowCancelPopup(false)}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 active:scale-95"
                             >
                                 Cancel
                             </button>
