@@ -83,11 +83,27 @@ function Nav() {
             });
 
             if (result.status === 200) {
-                dispatch(setUserData(null));
-                setShowDeletePopup(false);
-                toast.success("Account deleted");
-                navigate("/signin");
-            }
+
+    // clear redux
+    dispatch(setUserData(null));
+
+    // clear local storage
+    localStorage.removeItem("userData");
+
+    // clear cart storage for all users
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith("cartItems_")) {
+            localStorage.removeItem(key);
+        }
+    });
+
+    setShowDeletePopup(false);
+    toast.success("Account deleted successfully");
+
+    // force redirect
+    window.location.href = "/signin";
+}
+
         } catch {
             toast.error("Failed to delete account.");
         }
@@ -441,3 +457,4 @@ function Nav() {
 }
 
 export default Nav;
+
