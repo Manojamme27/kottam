@@ -16,11 +16,13 @@ userRouter.get("/location-refresh", isAuth, async (req, res) => {
         const user = await User.findById(req.userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        const city = user.currentCity;
+        const city = user.city;
 
-        if (!city) return res.status(400).json({ message: "No saved city" });
+        // ⭐ FIXED: Instead of 400, return empty data gracefully
+        if (!city) {
+            return res.status(200).json({ shops: [], items: [] });
+        }
 
-        // get only open shops
         const shops = await Shop.find({
             city: { $regex: new RegExp(`^${city}$`, "i") },
             isOpen: true
@@ -41,5 +43,7 @@ userRouter.get("/location-refresh", isAuth, async (req, res) => {
 
 
 
+
 export default userRouter
+
 
