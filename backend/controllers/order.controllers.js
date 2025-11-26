@@ -209,7 +209,7 @@ export const getMyOrders = async (req, res) => {
         .sort({ createdAt: -1 })
         .populate("shopOrders.shop", "name")
         .populate("shopOrders.owner", "name email mobile")
-        .populate("user", "name email mobile")
+        .populate("user", "fullName email mobile")  
         .populate("shopOrders.shopOrderItems.item", "name image price")
         .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
@@ -634,5 +634,6 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
