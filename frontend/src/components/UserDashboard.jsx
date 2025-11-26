@@ -51,48 +51,68 @@ function UserDashboard() {
     const filtered = itemsInMyCity.filter((item) => item.shop?.isOpen !== false);
     setUpdatedItemsList(filtered);
   }, [itemsInMyCity]);
+// -----------------------------
+// 🔥 AUTO REFRESH (FIRST LOAD)
+// -----------------------------
+useEffect(() => {
+  const refreshData = async () => {
+    if (!currentCity) return;
+    if (!document.cookie.includes("token")) return;
 
-  // -----------------------------
-  // 🔥 AUTO REFRESH (FIRST LOAD)
-  // -----------------------------
-  useEffect(() => {
-    const refreshData = async () => {
-      if (!currentCity) return;
-      if (!document.cookie.includes("token")) return;
+    try {
+      const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
+        withCredentials: true,
+      });
 
-      try {
-        const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
-          withCredentials: true,
-        });
-
-        dispatch(setShopsInMyCity(res.data.shops));
-        dispatch(setItemsInMyCity(res.data.items));
-      } catch (err) {
-        console.log("Auto refresh error:", err?.response?.data || err);
+      if (res.status === 200 && res.data) {
+        // only update UI when valid data comes
+        if (Array.isArray(res.data.shops)) {
+          dispatch(setShopsInMyCity(res.data.shops));
+        }
+        if (Array.isArray(res.data.items)) {
+          dispatch(setItemsInMyCity(res.data.items));
+        }
       }
-    };
+    } catch (err) {
+      console.log("Auto refresh error (ignored):", err?.response?.data);
+      // ❌ DO NOT CLEAR shops/items here
+    }
+  };
 
-    refreshData();
-  }, [currentCity]);
+  refreshData();
+}, [currentCity]);
 
-  // -----------------------------
-  // 🔥 BACKGROUND REFRESH every 15 sec
-  // -----------------------------
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (!currentCity) return;
-      try {
-        const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
-          withCredentials: true,
-        });
 
-        dispatch(setShopsInMyCity(res.data.shops));
-        dispatch(setItemsInMyCity(res.data.items));
-      } catch (err) {}
-    }, 15000);
+// -----------------------------
+// 🔥 BACKGROUND REFRESH every 15 sec
+// -----------------------------
+useEffect(() => {
+  const interval = setInterval(async () => {
+    if (!currentCity) return;
+    if (!document.cookie.includes("token")) return;
 
-    return () => clearInterval(interval);
-  }, [currentCity]);
+    try {
+      const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
+        withCredentials: true,
+      });
+
+      if (res.status === 200 && res.data) {
+        if (Array.isArray(res.data.shops)) {
+          dispatch(setShopsInMyCity(res.data.shops));
+        }
+        if (Array.isArray(res.data.items)) {
+          dispatch(setItemsInMyCity(res.data.items));
+        }
+      }
+    } catch (err) {
+      console.log("Background refresh error (ignored)");
+      // ❌ DO NOT CLEAR shops/items here
+    }
+  }, 15000);
+
+  return () => clearInterval(interval);
+}, [currentCity]);
+
 
   // -----------------------------
   // 🔥 REAL-TIME SOCKET UPDATES
@@ -349,3 +369,4 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
