@@ -185,7 +185,11 @@ export const verifyPayment = async (req, res) => {
 // ============================================================
 export const getMyOrders = async (req, res) => {
     try {
+        // ✅ Make sure user exists
         const user = await User.findById(req.userId);
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
 
         // ------------------------------
         // USER VIEW
@@ -201,43 +205,46 @@ export const getMyOrders = async (req, res) => {
         }
 
         // ------------------------------
-        // OWNER VIEW  (FIXED)
+        // OWNER VIEW (FIXED)
         // ------------------------------
-     if (user.role === "owner") {
+        if (user.role === "owner") {
 
-    const orders = await Order.find({ "shopOrders.owner": req.userId })
-        .sort({ createdAt: -1 })
-        .populate("shopOrders.shop", "name")
-        .populate("shopOrders.owner", "name email mobile")
-        .populate("user", "fullName email mobile")  
-        .populate("shopOrders.shopOrderItems.item", "name image price")
-        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+            const orders = await Order.find({ "shopOrders.owner": req.userId })
+                .sort({ createdAt: -1 })
+                .populate("shopOrders.shop", "name")
+                .populate("shopOrders.owner", "name email mobile")
+                .populate("user", "fullName email mobile")
+                .populate("shopOrders.shopOrderItems.item", "name image price")
+                .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-    const filtered = [];
+            const filtered = [];
 
-    for (const order of orders) {
-        // get shopOrders belonging to owner
-        const valid = order.shopOrders.filter(
-            so => String(so.owner?._id || so.owner) === String(req.userId)
-        );
+            for (const order of orders) {
 
-        // ⚡ very important: skip empty results
-        if (!valid || valid.length === 0) continue;
+                const valid = order.shopOrders.filter(
+                    (so) =>
+                        String(so.owner?._id || so.owner) === String(req.userId)
+                );
 
-        filtered.push({
-            _id: order._id,
-            paymentMethod: order.paymentMethod,
-            user: order.user,
-            createdAt: order.createdAt,
-            deliveryAddress: order.deliveryAddress,
-            payment: order.payment,
-            shopOrders: valid   // ALWAYS ARRAY WITH VALID ITEMS
-        });
-    }
+                // Skip empty results
+                if (!valid || valid.length === 0) continue;
 
-    return res.status(200).json(filtered);
-}
+                filtered.push({
+                    _id: order._id,
+                    paymentMethod: order.paymentMethod,
+                    user: order.user,
+                    createdAt: order.createdAt,
+                    deliveryAddress: order.deliveryAddress,
+                    payment: order.payment,
+                    shopOrders: valid, // ALWAYS ARRAY WITH VALID ITEMS
+                });
+            }
 
+            return res.status(200).json(filtered);
+        }
+
+        // Fallback (if some other role appears)
+        return res.status(403).json({ message: "Role not supported" });
 
     } catch (error) {
         console.log("GET MY ORDERS ERROR ❌", error);
@@ -650,6 +657,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
