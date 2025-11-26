@@ -1,12 +1,12 @@
 import axios from 'axios';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MdPhone } from "react-icons/md";
 import { serverUrl } from '../App';
 import { useDispatch } from 'react-redux';
 import { updateOrderStatus } from '../redux/userSlice.js';
 import { FiPrinter } from 'react-icons/fi';
 
-// ✅ SAME DELIVERY FEE SLAB AS CHECKOUT
+// SAME DELIVERY FEE LOGIC
 const calculateDeliveryFee = (amount) => {
     if (amount < 100) return 0;
     if (amount >= 100 && amount <= 199) return 30;
@@ -22,16 +22,14 @@ function OwnerOrderCard({ data }) {
 
     const user = data?.user || {};
 
-    // 🔥 FIX: shopOrders is always an ARRAY → owner always gets index 0
+    // 🔥 ALWAYS NORMALIZE shopOrders
     const normalizedShopOrders = Array.isArray(data?.shopOrders)
-  ? data.shopOrders
-  : [data.shopOrders];
+        ? data.shopOrders
+        : [data.shopOrders];
 
-const shopOrder = normalizedShopOrders[0];
+    const shopOrder = normalizedShopOrders[0];
 
-
-    // Prevent crash if backend returns wrong structure
-    if (!shopOrder) return null;
+    if (!shopOrder) return <></>; // Prevent blank screen forever
 
     const assignedBoy = shopOrder?.assignedDeliveryBoy || null;
 
@@ -43,12 +41,9 @@ const shopOrder = normalizedShopOrders[0];
         shopOrder?.status?.toLowerCase()
     );
 
-    // Sync real-time updates (VERY IMPORTANT)
-    useEffect(() => {
-        // Sync only shopOrder-related fields
-        // No UI logic changed
-    }, [shopOrder]);
-
+    // ================================
+    // UPDATE STATUS (OWNER)
+    // ================================
     const handleUpdateStatus = async (orderId, shopId, status) => {
         try {
             const result = await axios.post(
@@ -56,81 +51,41 @@ const shopOrder = normalizedShopOrders[0];
                 { status },
                 { withCredentials: true }
             );
+
+            // Sync redux
             dispatch(updateOrderStatus({ orderId, shopId, status }));
-            setAvailableBoys(result.data.availableBoys);
+
+            // Sync available delivery boys (if out of delivery)
+            if (result.data.availableBoys) {
+                setAvailableBoys(result.data.availableBoys);
+            }
+
         } catch (error) {
             console.log(error);
         }
     };
 
+    // ================================
+    // PRINT RECEIPT
+    // ================================
     const handlePrint = () => {
         const printContent = `
         <html>
         <head>
             <title>Order Receipt</title>
             <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    width: 300px;
-                    margin: auto;
-                    padding: 10px;
-                    color: #333;
-                }
-                h2 {
-                    text-align: center;
-                    color: #ff4d2d;
-                    margin: 0 0 10px 0;
-                }
-                .section-title {
-                    font-weight: bold;
-                    margin-top: 10px;
-                    border-bottom: 1px solid #ddd;
-                    padding-bottom: 4px;
-                }
-                .info {
-                    font-size: 14px;
-                    margin-bottom: 4px;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 8px;
-                    font-size: 14px;
-                }
-                th, td {
-                    padding: 5px 0;
-                }
-                th {
-                    text-align: left;
-                    border-bottom: 1px solid #ccc;
-                }
-                td {
-                    border-bottom: 1px dashed #ddd;
-                }
-                .totals {
-                    margin-top: 10px;
-                    font-size: 15px;
-                }
-                .totals div {
-                    display: flex;
-                    justify-content: space-between;
-                    margin: 3px 0;
-                }
-                .grand-total {
-                    font-weight: bold;
-                    font-size: 18px;
-                    color: #ff4d2d;
-                    border-top: 1px dashed #999;
-                    padding-top: 6px;
-                }
-                .footer {
-                    text-align: center;
-                    margin-top: 15px;
-                    font-size: 13px;
-                    border-top: 1px solid #eee;
-                    padding-top: 8px;
-                    color: #555;
-                }
+                body { font-family: Arial; width: 300px; margin: auto; padding: 10px; color: #333; }
+                h2 { text-align: center; color: #ff4d2d; margin: 0 0 10px 0; }
+                .section-title { font-weight: bold; margin-top: 10px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+                .info { font-size: 14px; margin-bottom: 4px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+                th, td { padding: 5px 0; }
+                th { border-bottom: 1px solid #ccc; }
+                td { border-bottom: 1px dashed #ddd; }
+                .totals { margin-top: 10px; font-size: 15px; }
+                .totals div { display: flex; justify-content: space-between; margin: 3px 0; }
+                .grand-total { font-weight: bold; font-size: 18px; color: #ff4d2d; border-top: 1px dashed #999; padding-top: 6px; }
+                .footer { text-align: center; margin-top: 15px; font-size: 13px; border-top: 1px solid #eee; padding-top: 8px; color: #555; }
             </style>
         </head>
 
@@ -148,12 +103,7 @@ const shopOrder = normalizedShopOrders[0];
 
             <table>
                 <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Qty</th>
-                        <th>₹Price</th>
-                        <th>Total</th>
-                    </tr>
+                    <tr><th>Item</th><th>Qty</th><th>₹Price</th><th>Total</th></tr>
                 </thead>
                 <tbody>
                     ${shopOrder.shopOrderItems
@@ -171,28 +121,21 @@ const shopOrder = normalizedShopOrders[0];
             </table>
 
             <div class="section-title">Bill Summary</div>
-
             <div class="totals">
                 <div><span>Subtotal:</span> <span>₹${subtotal}</span></div>
                 <div><span>Delivery Fee:</span> <span>₹${deliveryFee}</span></div>
-                <div class="grand-total">
-                    <span>Total:</span> <span>₹${total}</span>
-                </div>
+                <div class="grand-total"><span>Total:</span> <span>₹${total}</span></div>
             </div>
 
-            <div class="footer">
-                Thank you for ordering with KOTTAM 🍽️<br>
-                Have a great day!
-            </div>
+            <div class="footer">Thank you for ordering with KOTTAM 🍽️</div>
         </body>
         </html>
         `;
 
-        const printWindow = window.open("", "_blank");
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-
-        setTimeout(() => printWindow.print(), 300);
+        const win = window.open("", "_blank");
+        win.document.write(printContent);
+        win.document.close();
+        setTimeout(() => win.print(), 300);
     };
 
     return (
@@ -203,7 +146,7 @@ const shopOrder = normalizedShopOrders[0];
                     : "bg-white border-orange-100 hover:shadow-lg"
             }`}
         >
-            {/* CUSTOMER DETAILS */}
+            {/* USER INFO */}
             <div className="flex justify-between flex-wrap gap-3">
                 <div>
                     <h2 className="text-lg font-bold text-gray-800">
@@ -223,9 +166,7 @@ const shopOrder = normalizedShopOrders[0];
                     <p>
                         <strong>Payment:</strong>{" "}
                         {data.paymentMethod === "online"
-                            ? data.payment
-                                ? "Paid ✅"
-                                : "Unpaid ❌"
+                            ? data.payment ? "Paid ✅" : "Unpaid ❌"
                             : "COD 💵"}
                     </p>
                     <p>{new Date(data.createdAt).toLocaleDateString("en-GB")}</p>
@@ -336,7 +277,9 @@ const shopOrder = normalizedShopOrders[0];
                         <>
                             <p>Available Delivery Boys:</p>
                             {availableBoys.map((b, i) => (
-                                <div key={i}>{b.fullName} - {b.mobile}</div>
+                                <div key={i}>
+                                    {b.fullName} - {b.mobile}
+                                </div>
                             ))}
                         </>
                     ) : (
@@ -349,4 +292,3 @@ const shopOrder = normalizedShopOrders[0];
 }
 
 export default OwnerOrderCard;
-
