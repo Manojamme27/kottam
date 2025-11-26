@@ -23,7 +23,7 @@ function MyOrders() {
   });
 
   // ============================================
-  // NORMALIZER → ALWAYS RETURN ARRAY
+  // ALWAYS normalize to array
   // ============================================
   const normalizeShopOrders = (shopOrders) => {
     if (!shopOrders) return [];
@@ -48,7 +48,6 @@ function MyOrders() {
 
         setCancelPopup({ show: false, orderId: null });
 
-        // patching cancelled status safely
         dispatch(
           setMyOrders(
             myOrders.map((o) =>
@@ -76,14 +75,22 @@ function MyOrders() {
   useEffect(() => {
     if (!socket) return;
 
-    // ----- OWNER -----
+    // OWNER SIDE → Receive NEW user orders
     const handleNewOrder = (order) => {
       if (userData.role === "owner") {
-        dispatch(setMyOrders([order, ...myOrders]));
+        dispatch(
+          setMyOrders([
+            {
+              ...order,
+              shopOrders: normalizeShopOrders(order.shopOrders),
+            },
+            ...myOrders,
+          ])
+        );
       }
     };
 
-    // ----- USER -----
+    // USER SIDE → Receive status update
     const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
       if (String(userId) === String(userData._id)) {
         dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
@@ -97,7 +104,7 @@ function MyOrders() {
       socket.off("newOrder", handleNewOrder);
       socket.off("update-status", handleStatusUpdate);
     };
-  }, [socket, myOrders, userData, dispatch]);
+  }, [socket, userData, dispatch]); // 🚀 REMOVE myOrders to prevent infinite loops!
 
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
