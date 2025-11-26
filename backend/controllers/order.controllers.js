@@ -187,64 +187,31 @@ export const getMyOrders = async (req, res) => {
     try {
         const user = await User.findById(req.userId);
 
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        // ------------------------------------------------------
-        // USER VIEW  → return full order with full shopOrders[]
-        // ------------------------------------------------------
+        // ------------------------------
+        // USER VIEW
+        // ------------------------------
         if (user.role === "user") {
             const orders = await Order.find({ user: req.userId })
                 .sort({ createdAt: -1 })
                 .populate("shopOrders.shop", "name")
-                .populate("shopOrders.owner", "fullName email mobile")
+                .populate("shopOrders.owner", "name email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price");
 
             return res.status(200).json(orders);
         }
 
-        // ------------------------------------------------------
-        // OWNER VIEW  → return ONLY shopOrders belonging to owner
-        // ------------------------------------------------------
-        if (user.role === "owner") {
+        // ------------------------------
+        // OWNER VIEW  (FIXED)
+        // ------------------------------
+     if (user.role === "owner") {
 
-            const orders = await Order.find({ "shopOrders.owner": req.userId })
-                .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "name")
-                .populate("shopOrders.owner", "fullName email mobile")
-                .populate("shopOrders.shopOrderItems.item", "name image price")
-                .populate("user", "fullName email mobile")
-                .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
-
-            const filtered = [];
-
-            for (const order of orders) {
-                const validShopOrders = order.shopOrders.filter(
-                    so => String(so.owner?._id || so.owner) === String(req.userId)
-                );
-
-                if (validShopOrders.length === 0) continue;
-
-                filtered.push({
-                    _id: order._id,
-                    paymentMethod: order.paymentMethod,
-                    createdAt: order.createdAt,
-                    deliveryAddress: order.deliveryAddress,
-                    payment: order.payment,
-                    user: order.user,
-                    shopOrders: validShopOrders
-                });
-            }
-
-            return res.status(200).json(filtered);
-        }
-
-    } catch (error) {
-        console.log("GET MY ORDERS ERROR ❌", error);
-        return res.status(500).json({ message: "get User order error " + error });
-    }
-};
+    const orders = await Order.find({ "shopOrders.owner": req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "name email mobile")
+        .populate("user", "fullName email mobile")  
+        .populate("shopOrders.shopOrderItems.item", "name image price")
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
 
 // ============================================================
@@ -651,6 +618,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
