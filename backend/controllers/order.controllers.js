@@ -260,6 +260,18 @@ export const updateOrderStatus = async (req, res) => {
         let shopOrder = order.shopOrders.find(o => String(o.shop) === String(shopId));
         if (!shopOrder) return res.status(400).json({ message: "shop order not found" });
 
+        // 👇 NEW: track available boys so we can return them later
+        let availableBoys = [];
+
+        // 👇 NEW: for normal statuses (pending, preparing, cancelled, etc.)
+        // always update the shopOrder.status
+        if (status && status !== "delivered" && status !== "out of delivery") {
+            shopOrder.status = status;
+        }
+
+        // ============================================================
+        //  DELIVERED
+        // ============================================================
         if (status === "delivered") {
             shopOrder.status = "delivered";
             shopOrder.deliveredAt = new Date();
@@ -278,6 +290,9 @@ export const updateOrderStatus = async (req, res) => {
             });
         }
 
+        // ============================================================
+        //  OUT OF DELIVERY
+        // ============================================================
         if (status === "out of delivery") {
             shopOrder.status = "out of delivery";
 
@@ -307,7 +322,7 @@ export const updateOrderStatus = async (req, res) => {
                 .distinct("assignedTo");
 
             const busySet = new Set(busyIds.map(id => String(id)));
-            const availableBoys = nearByDeliveryBoys.filter(b => !busySet.has(String(b._id)));
+            availableBoys = nearByDeliveryBoys.filter(b => !busySet.has(String(b._id)));
 
             if (!availableBoys.length) {
                 await order.save();
@@ -352,13 +367,12 @@ export const updateOrderStatus = async (req, res) => {
         await order.save();
 
         // ============================================================
-        //  POPULATE & SEND REALTIME (PATCHED)
+        //  POPULATE & SEND REALTIME
         // ============================================================
         await order.populate("user", "socketId");
         await order.populate("shopOrders.shop", "name");
         await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile");
 
-        // 🔥 FIX: GET FRESH UPDATED SHOPORDER
         const updatedShopOrder = order.shopOrders.find(
             o => String(o.shop._id) === String(shopId)
         );
@@ -369,7 +383,7 @@ export const updateOrderStatus = async (req, res) => {
             io.to(order.user.socketId).emit("update-status", {
                 orderId: order._id,
                 shopId: updatedShopOrder.shop._id,
-                status: updatedShopOrder.status,
+                status: updatedShopOrder.status,   // ✅ now "preparing"/"out of delivery" correctly
                 userId: order.user._id
             });
         }
@@ -377,7 +391,9 @@ export const updateOrderStatus = async (req, res) => {
         return res.status(200).json({
             shopOrder: updatedShopOrder,
             assignedDeliveryBoy: updatedShopOrder?.assignedDeliveryBoy,
-            assignment: updatedShopOrder?.assignment
+            assignment: updatedShopOrder?.assignment,
+            // 👇 NEW: so OwnerOrderCard can show "Available Delivery Boys"
+            availableBoys
         });
 
     } catch (error) {
@@ -634,6 +650,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
