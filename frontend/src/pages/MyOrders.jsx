@@ -22,7 +22,9 @@ function MyOrders() {
     orderId: null,
   });
 
-  // ✅ Handle cancel order
+  // ================================
+  // 🚫 Cancel Order
+  // ================================
   const handleCancelOrder = async () => {
     try {
       const res = await axios.put(
@@ -32,107 +34,123 @@ function MyOrders() {
       );
 
       if (res.status === 200) {
-        toast.success("Order cancelled successfully ✅", {
+        toast.success("Order cancelled successfully!", {
           position: "top-center",
-          autoClose: 2000,
         });
+
         setCancelPopup({ show: false, orderId: null });
+
+        // Refresh orders automatically after cancel
+        dispatch(
+          setMyOrders(
+            myOrders.map((o) =>
+              o._id === cancelPopup.orderId
+                ? { ...o, shopOrders: o.shopOrders.map((so) => ({ ...so, status: "cancelled" })) }
+                : o
+            )
+          )
+        );
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to cancel order ❌",
-        {
-          position: "top-center",
-          autoClose: 2000,
-        }
-      );
+      toast.error(error.response?.data?.message || "Failed to cancel order ❌");
     }
   };
 
-  // ✅ Socket events
+  // ================================
+  // ⚡ REALTIME SOCKET EVENTS (Perfectly clean)
+  // ================================
   useEffect(() => {
-    socket?.on("newOrder", (data) => {
-      if (data.shopOrders?.owner._id == userData._id) {
-        dispatch(setMyOrders([data, ...myOrders]));
-      }
-    });
+    if (!socket) return;
 
-    socket?.on("update-status", ({ orderId, shopId, status, userId }) => {
-      if (userId == userData._id) {
+    // ----- OWNER ----- (receives new orders)
+    const handleNewOrder = (order) => {
+      if (userData.role === "owner") {
+        dispatch(setMyOrders([order, ...myOrders]));
+      }
+    };
+
+    // ----- USER ----- (update status across UI)
+    const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
+      if (String(userId) === String(userData._id)) {
         dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
       }
-    });
+    };
+
+    socket.on("newOrder", handleNewOrder);
+    socket.on("update-status", handleStatusUpdate);
 
     return () => {
-      socket?.off("newOrder");
-      socket?.off("update-status");
+      socket.off("newOrder", handleNewOrder);
+      socket.off("update-status", handleStatusUpdate);
     };
-  }, [socket, userData, myOrders, dispatch]);
+  }, [socket, myOrders, userData, dispatch]);
 
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
+        {/* Header */}
         <div className="flex items-center gap-5 mb-6">
-          <div className="z-10 cursor-pointer" onClick={() => navigate("/")}>
+          <div className="cursor-pointer" onClick={() => navigate("/")}>
             <IoIosArrowRoundBack size={35} className="text-[#ff4d2d]" />
           </div>
-          <h1 className="text-2xl font-bold text-start">My Orders</h1>
+          <h1 className="text-2xl font-bold">My Orders</h1>
         </div>
 
+        {/* ORDERS */}
         <div className="space-y-6">
-          {myOrders?.map((order, index) =>
+          {myOrders?.map((order) =>
             userData.role === "user" ? (
               <div
-                key={index}
+                key={order._id}
                 className="relative border border-gray-200 rounded-xl shadow-sm p-4 bg-white hover:shadow-md transition"
               >
                 <UserOrderCard data={order} />
 
-                {/* ✅ Cancel button for users */}
+                {/* CANCEL BUTTON / ONLY FOR USER */}
                 {order.shopOrders?.some(
                   (so) =>
                     so.status !== "delivered" &&
-                    so.status !== "cancelled" &&
-                    so.status !== "out of delivery"
+                    so.status !== "cancelled"
                 ) && (
-                    <button
-                      className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all"
-                      onClick={() =>
-                        setCancelPopup({ show: true, orderId: order._id })
-                      }
-                    >
-                      Cancel Order
-                    </button>
-                  )}
+                  <button
+                    className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition"
+                    onClick={() =>
+                      setCancelPopup({ show: true, orderId: order._id })
+                    }
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             ) : userData.role === "owner" ? (
-              <OwnerOrderCard data={order} key={index} />
+              <OwnerOrderCard data={order} key={order._id} />
             ) : null
           )}
         </div>
       </div>
 
-      {/* ✅ Cancel confirmation popup */}
+      {/* CANCEL POPUP */}
       {cancelPopup.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-10000">
-          <div className="bg-white p-6 rounded-xl shadow-2xl w-[90%] max-w-sm text-center animate-fadeIn">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-[2000]">
+          <div className="bg-white p-6 rounded-xl shadow-2xl w-[90%] max-w-sm text-center">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Cancel Order?
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to cancel this order? This action cannot be
-              undone.
+              Are you sure you want to cancel this order?
             </p>
+
             <div className="flex justify-center gap-3">
               <button
                 onClick={handleCancelOrder}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium"
               >
                 Confirm Cancel
               </button>
+
               <button
                 onClick={() => setCancelPopup({ show: false, orderId: null })}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium shadow-sm transition-all"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium"
               >
                 Go Back
               </button>
