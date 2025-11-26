@@ -239,9 +239,6 @@ export const getMyOrders = async (req, res) => {
     }
 };
 
-// ============================================================
-//  UPDATE ORDER STATUS  (OWNER + DELIVERY BOY)
-// ============================================================
 export const updateOrderStatus = async (req, res) => {
     try {
         const { orderId, shopId } = req.params;
@@ -254,14 +251,13 @@ export const updateOrderStatus = async (req, res) => {
         if (!shopOrder) return res.status(400).json({ message: "shop order not found" });
 
         // ============================================================
-        //  DELIVERY BOY → DIRECT DELIVERY COMPLETION (NO OTP)
+        // DELIVERY BOY → MARK AS DELIVERED (NO OTP)
         // ============================================================
         if (status === "delivered") {
-
             shopOrder.status = "delivered";
             shopOrder.deliveredAt = new Date();
 
-            // Remove assignment
+            // remove assignment
             await DeliveryAssignment.deleteOne({
                 shopOrderId: shopOrder._id,
                 order: orderId,
@@ -277,14 +273,15 @@ export const updateOrderStatus = async (req, res) => {
         }
 
         // ============================================================
-        //  OWNER SETS "OUT OF DELIVERY" → ASSIGN DELIVERY BOY
+        // OWNER → SET OUT OF DELIVERY → ASSIGN DELIVERY BOY
         // ============================================================
         if (status === "out of delivery") {
+
             shopOrder.status = "out of delivery";
 
             const { longitude, latitude } = order.deliveryAddress;
 
-            // Find nearby delivery boys
+            // find nearby boys
             const nearByDeliveryBoys = await User.find({
                 role: "deliveryBoy",
                 location: {
@@ -303,15 +300,13 @@ export const updateOrderStatus = async (req, res) => {
                 });
             }
 
-            // Filter out busy boys
+            // filter busy boys
             const nearByIds = nearByDeliveryBoys.map(b => b._id);
-            const busyIds = await DeliveryAssignment.find({
-                assignedTo: { $in: nearByIds },
-                status: { $nin: ["brodcasted", "completed"] }
-            }).distinct("assignedTo");
+            const busyIds = await DeliveryAssignment
+                .find({ assignedTo: { $in: nearByIds }, status: { $nin: ["brodcasted", "completed"] } })
+                .distinct("assignedTo");
 
             const busySet = new Set(busyIds.map(id => String(id)));
-
             const availableBoys = nearByDeliveryBoys.filter(b => !busySet.has(String(b._id)));
 
             if (!availableBoys.length) {
@@ -322,9 +317,8 @@ export const updateOrderStatus = async (req, res) => {
                 });
             }
 
+            // create delivery assignment
             const candidates = availableBoys.map(b => b._id);
-
-            // Create assignment
             const deliveryAssignment = await DeliveryAssignment.create({
                 order: order._id,
                 shop: shopOrder.shop,
@@ -335,33 +329,34 @@ export const updateOrderStatus = async (req, res) => {
 
             shopOrder.assignment = deliveryAssignment._id;
 
-            // Emit assignment via socket
+            // populate shop to send name
+            await order.populate("shopOrders.shop", "name");
+
             const io = req.app.get("io");
+
             if (io) {
-                availableBoys.forEach(boy => {
-                    if (boy.socketId) {
-// populate shop before using shopOrder.shop.name
-await order.populate("shopOrders.shop", "name");
+                for (const boy of availableBoys) {
+                    if (!boy.socketId) continue;
 
-io.to(socket).emit("newAssignment", {
-    sentTo: boy._id,
-    assignmentId: deliveryAssignment._id,
-    orderId: order._id,
-    shopName: shopOrder.shop.name,   // now safe
-    deliveryAddress: order.deliveryAddress,
-    items: shopOrder.shopOrderItems,
-    subtotal: shopOrder.subtotal
-});
-
-                    }
-                });
+                    io.to(boy.socketId).emit("newAssignment", {
+                        sentTo: boy._id,
+                        assignmentId: deliveryAssignment._id,
+                        orderId: order._id,
+                        shopName: shopOrder.shop.name,
+                        deliveryAddress: order.deliveryAddress,
+                        items: shopOrder.shopOrderItems,
+                        subtotal: shopOrder.subtotal
+                    });
+                }
             }
         }
 
-        // Save final changes
+        // save final state
         await order.save();
 
-        // Notify user via socket
+        // ============================================================
+        // NOTIFY CUSTOMER (REALTIME STATUS UPDATE)
+        // ============================================================
         await order.populate("user", "socketId");
         await order.populate("shopOrders.shop", "name");
         await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile");
@@ -369,6 +364,7 @@ io.to(socket).emit("newAssignment", {
         const updatedShopOrder = order.shopOrders.find(o => String(o.shop) === String(shopId));
 
         const io = req.app.get("io");
+
         if (io && order.user.socketId) {
             io.to(order.user.socketId).emit("update-status", {
                 orderId: order._id,
@@ -389,7 +385,6 @@ io.to(socket).emit("newAssignment", {
         return res.status(500).json({ message: `order status error ${error}` });
     }
 };
-
 
 
 // ============================================================
@@ -647,6 +642,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
