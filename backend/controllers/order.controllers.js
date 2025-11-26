@@ -414,6 +414,42 @@ export const getDeliveryBoyAssignment = async (req, res) => {
         return res.status(500).json({ message: `get Assignment error ${error}` });
     }
 };
+// ============================================================
+//  GET ORDER BY ID (for user Track page)
+// ============================================================
+export const getOrderById = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+
+        const order = await Order.findById(orderId)
+            .populate("user", "fullName email mobile location")
+            .populate({
+                path: "shopOrders.shop",
+                model: "Shop",
+            })
+            .populate({
+                path: "shopOrders.assignedDeliveryBoy",
+                model: "User",
+                select: "fullName mobile location",
+            })
+            .populate({
+                path: "shopOrders.shopOrderItems.item",
+                model: "Item",
+            })
+            .lean();
+
+        if (!order) {
+            return res.status(404).json({ message: "order not found" });
+        }
+
+        return res.status(200).json(order);
+    } catch (error) {
+        console.error("getOrderById error:", error);
+        return res
+            .status(500)
+            .json({ message: `get by id order error ${error.message}` });
+    }
+};
 
 
 // ============================================================
@@ -607,5 +643,6 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
