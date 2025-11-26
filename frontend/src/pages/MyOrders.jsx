@@ -22,8 +22,16 @@ function MyOrders() {
     orderId: null,
   });
 
+  // ============================================
+  // NORMALIZER → ALWAYS RETURN ARRAY
+  // ============================================
+  const normalizeShopOrders = (shopOrders) => {
+    if (!shopOrders) return [];
+    return Array.isArray(shopOrders) ? shopOrders : [shopOrders];
+  };
+
   // ================================
-  // 🚫 Cancel Order
+  // CANCEL ORDER
   // ================================
   const handleCancelOrder = async () => {
     try {
@@ -40,12 +48,18 @@ function MyOrders() {
 
         setCancelPopup({ show: false, orderId: null });
 
-        // Refresh orders automatically after cancel
+        // patching cancelled status safely
         dispatch(
           setMyOrders(
             myOrders.map((o) =>
               o._id === cancelPopup.orderId
-                ? { ...o, shopOrders: o.shopOrders.map((so) => ({ ...so, status: "cancelled" })) }
+                ? {
+                    ...o,
+                    shopOrders: normalizeShopOrders(o.shopOrders).map((so) => ({
+                      ...so,
+                      status: "cancelled",
+                    })),
+                  }
                 : o
             )
           )
@@ -57,19 +71,19 @@ function MyOrders() {
   };
 
   // ================================
-  // ⚡ REALTIME SOCKET EVENTS (Perfectly clean)
+  // REALTIME SOCKET HANDLING
   // ================================
   useEffect(() => {
     if (!socket) return;
 
-    // ----- OWNER ----- (receives new orders)
+    // ----- OWNER -----
     const handleNewOrder = (order) => {
       if (userData.role === "owner") {
         dispatch(setMyOrders([order, ...myOrders]));
       }
     };
 
-    // ----- USER ----- (update status across UI)
+    // ----- USER -----
     const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
       if (String(userId) === String(userData._id)) {
         dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
@@ -98,24 +112,23 @@ function MyOrders() {
 
         {/* ORDERS */}
         <div className="space-y-6">
-          {myOrders?.map((order) =>
-            userData.role === "user" ? (
+          {myOrders?.map((order) => {
+            const normalized = normalizeShopOrders(order.shopOrders);
+
+            return userData.role === "user" ? (
               <div
                 key={order._id}
                 className="relative border border-gray-200 rounded-xl shadow-sm p-4 bg-white hover:shadow-md transition"
               >
                 <UserOrderCard data={order} />
 
-                {/* CANCEL BUTTON / ONLY FOR USER */}
-                {(Array.isArray(order.shopOrders) 
-    ? order.shopOrders 
-    : [order.shopOrders]
-  ).some(
-    (so) =>
-      so.status !== "delivered" &&
-      so.status !== "cancelled"
-  ) && (
-
+                {/* CANCEL BUTTON */}
+                {normalized.some(
+                  (so) =>
+                    so?.status !== "delivered" &&
+                    so?.status !== "cancelled" &&
+                    so?.status !== "out of delivery"
+                ) && (
                   <button
                     className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition"
                     onClick={() =>
@@ -128,8 +141,8 @@ function MyOrders() {
               </div>
             ) : userData.role === "owner" ? (
               <OwnerOrderCard data={order} key={order._id} />
-            ) : null
-          )}
+            ) : null;
+          })}
         </div>
       </div>
 
@@ -153,7 +166,9 @@ function MyOrders() {
               </button>
 
               <button
-                onClick={() => setCancelPopup({ show: false, orderId: null })}
+                onClick={() =>
+                  setCancelPopup({ show: false, orderId: null })
+                }
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium"
               >
                 Go Back
@@ -167,4 +182,3 @@ function MyOrders() {
 }
 
 export default MyOrders;
-
