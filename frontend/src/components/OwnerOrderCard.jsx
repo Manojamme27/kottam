@@ -18,15 +18,19 @@ const calculateDeliveryFee = (amount) => {
 function OwnerOrderCard({ data }) {
   const dispatch = useDispatch();
 
-  // 🔥 Local reactive state (auto-updates UI instantly)
-  const [orderStatus, setOrderStatus] = useState(data?.shopOrders?.status);
+  // 🔥 IMPORTANT FIX — shopOrders is an ARRAY → owner only sees index 0
+  const shopOrder = data?.shopOrders?.[0] || null;
+
+  const user = data?.user || {};
+
+  if (!shopOrder) return null; // safety — prevents undefined.map crash
+
+  // Local reactive state
+  const [orderStatus, setOrderStatus] = useState(shopOrder?.status);
   const [availableBoys, setAvailableBoys] = useState([]);
   const [assignedBoy, setAssignedBoy] = useState(
-    data?.shopOrders?.assignedDeliveryBoy || null
+    shopOrder?.assignedDeliveryBoy || null
   );
-
-  const shopOrder = data?.shopOrders;
-  const user = data?.user || {};
 
   const subtotal = Number(shopOrder?.subtotal || 0);
   const deliveryFee = calculateDeliveryFee(subtotal);
@@ -48,7 +52,7 @@ function OwnerOrderCard({ data }) {
   const handleUpdateStatus = async (orderId, shopId, status) => {
     if (!status) return;
 
-    setOrderStatus(status); // instant UI response → no lag
+    setOrderStatus(status); // instant UI response
 
     try {
       const res = await axios.post(
@@ -57,7 +61,7 @@ function OwnerOrderCard({ data }) {
         { withCredentials: true }
       );
 
-      // Sync redux → global real-time update
+      // Sync redux
       dispatch(updateOrderStatus({ orderId, shopId, status }));
 
       if (res.data?.assignedDeliveryBoy) {
