@@ -21,32 +21,29 @@ export const getCurrentUser = async (req, res) => {
 // ⭐ FINAL PATCH — FULLY COMPATIBLE WITH YOUR FRONTEND
 export const updateUserLocation = async (req, res) => {
     try {
-        const userId = req.userId;
-        const { city, state, address } = req.body;
+        const { lat, lon } = req.body;
 
-        if (!city) {
-            return res.status(400).json({ message: "City is required" });
+        if (!lat || !lon) {
+            return res.status(200).json({ message: "Location skipped (no coordinates)" });
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
+        const user = await User.findByIdAndUpdate(
+            req.userId,
             {
-                currentCity: city,
-                currentState: state || null,
-                currentAddress: address || null
+                location: {
+                    type: "Point",
+                    coordinates: [Number(lon), Number(lat)],
+                }
             },
             { new: true }
         );
 
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-        return res.status(200).json({
-            message: "Location updated",
-            user: updatedUser
-        });
+        return res.status(200).json({ message: "Location updated" });
+
     } catch (error) {
         return res.status(500).json({ message: `update location user error ${error}` });
     }
 };
+
