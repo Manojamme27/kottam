@@ -187,7 +187,9 @@ export const getMyOrders = async (req, res) => {
     try {
         const user = await User.findById(req.userId);
 
+        // ------------------------------
         // USER VIEW
+        // ------------------------------
         if (user.role === "user") {
             const orders = await Order.find({ user: req.userId })
                 .sort({ createdAt: -1 })
@@ -198,35 +200,50 @@ export const getMyOrders = async (req, res) => {
             return res.status(200).json(orders);
         }
 
-        // OWNER VIEW (PATCH APPLIED)
+        // ------------------------------
+        // OWNER VIEW  (FIXED)
+        // ------------------------------
         if (user.role === "owner") {
+
+            // 📌 First populate owners inside shopOrders
             const orders = await Order.find({ "shopOrders.owner": req.userId })
                 .sort({ createdAt: -1 })
                 .populate("shopOrders.shop", "name")
-                .populate("user")
+                .populate("shopOrders.owner", "name email mobile") // important!
+                .populate("user", "name email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price")
                 .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-            const filtered = orders.map(order => {
-                const so = order.shopOrders.find(o => String(o.owner._id) === String(req.userId));
+            // 📌 Clean filtered list
+            const filtered = orders
+                .map(order => {
+                    const shopOrder = order.shopOrders.find(
+                        so => String(so.owner?._id || so.owner) === String(req.userId)
+                    );
 
-                return {
-                    _id: order._id,
-                    paymentMethod: order.paymentMethod,
-                    user: order.user,
-                    shopOrders: [so], // 🔥 ALWAYS ARRAY — FIXED
-                    createdAt: order.createdAt,
-                    deliveryAddress: order.deliveryAddress,
-                    payment: order.payment
-                };
-            });
+                    if (!shopOrder) return null; // skip if no matching shopOrder
+
+                    return {
+                        _id: order._id,
+                        paymentMethod: order.paymentMethod,
+                        user: order.user,
+                        shopOrders: [shopOrder],     // owner sees only his shop order
+                        createdAt: order.createdAt,
+                        deliveryAddress: order.deliveryAddress,
+                        payment: order.payment
+                    };
+                })
+                .filter(Boolean); // remove nulls
 
             return res.status(200).json(filtered);
         }
+
     } catch (error) {
+        console.log("GET MY ORDERS ERROR ❌", error);
         return res.status(500).json({ message: `get User order error ${error}` });
     }
 };
+
 
 // ============================================================
 //  UPDATE ORDER STATUS
@@ -616,3 +633,4 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
