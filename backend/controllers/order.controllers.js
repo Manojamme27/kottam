@@ -361,11 +361,12 @@ export const updateOrderStatus = async (req, res) => {
         await order.populate("shopOrders.shop", "name");
         await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile");
 
-        const updatedShopOrder = order.shopOrders.find(o => String(o.shop) === String(shopId));
+        // 🔧 IMPORTANT FIX: reuse the same shopOrder reference to avoid mismatch
+        const updatedShopOrder = shopOrder;
 
         const io = req.app.get("io");
 
-        if (io && order.user.socketId) {
+        if (io && order.user.socketId && updatedShopOrder && updatedShopOrder.shop) {
             io.to(order.user.socketId).emit("update-status", {
                 orderId: order._id,
                 shopId: updatedShopOrder.shop._id,
@@ -413,6 +414,8 @@ export const getDeliveryBoyAssignment = async (req, res) => {
         return res.status(500).json({ message: `get Assignment error ${error}` });
     }
 };
+
+
 // ============================================================
 //  GET ORDER BY ID (for user Track page)
 // ============================================================
@@ -642,8 +645,3 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
-
-
-
-
-
