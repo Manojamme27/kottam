@@ -23,7 +23,12 @@ function OwnerOrderCard({ data }) {
     const user = data?.user || {};
 
     // 🔥 FIX: shopOrders is always an ARRAY → owner always gets index 0
-    const shopOrder = data?.shopOrders?.[0] || null;
+    const normalizedShopOrders = Array.isArray(data?.shopOrders)
+  ? data.shopOrders
+  : [data.shopOrders];
+
+const shopOrder = normalizedShopOrders[0];
+
 
     // Prevent crash if backend returns wrong structure
     if (!shopOrder) return null;
@@ -344,3 +349,4 @@ function OwnerOrderCard({ data }) {
 }
 
 export default OwnerOrderCard;
+
