@@ -27,12 +27,14 @@ export const placeOrder = async (req, res) => {
             return res.status(400).json({ message: "send complete deliveryAddress" });
         }
 
+        // normalize: cartItems[i].shop = shopId string
         cartItems.forEach(i => {
             if (typeof i.shop === "object" && i.shop._id) {
                 i.shop = i.shop._id;
             }
         });
 
+        // group items by shop
         const groupItemsByShop = {};
         cartItems.forEach(item => {
             const shopId = item.shop;
@@ -42,13 +44,17 @@ export const placeOrder = async (req, res) => {
             groupItemsByShop[shopId].push(item);
         });
 
+        // build shopOrders
         const shopOrders = await Promise.all(
             Object.keys(groupItemsByShop).map(async (shopId) => {
                 const shop = await Shop.findById(shopId).populate("owner");
                 if (!shop) return res.status(400).json({ message: "shop not found" });
 
                 const items = groupItemsByShop[shopId];
-                const subtotal = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity), 0);
+                const subtotal = items.reduce(
+                    (sum, i) => sum + Number(i.price) * Number(i.quantity),
+                    0
+                );
 
                 let deliveryFee = 0;
                 if (subtotal >= 100 && subtotal <= 199) deliveryFee = 30;
@@ -64,17 +70,35 @@ export const placeOrder = async (req, res) => {
                         item: i.id,
                         price: i.price,
                         quantity: i.quantity,
-                        name: i.name
-                    }))
+                        name: i.name,
+                    })),
                 };
             })
         );
 
+        // 🔥 PER-SHOP MINIMUM ₹100 CHECK
+        for (const so of shopOrders) {
+            // if any mapping above returned an early res (shop not found),
+            // `so` could be undefined → skip those safely
+            if (!so) continue;
+
+            if (so.subtotal < 100) {
+                return res.status(400).json({
+                    message: "Minimum order ₹100 required for each shop.",
+                    shopId: so.shop,
+                    subtotal: so.subtotal,
+                });
+            }
+        }
+
+        // -----------------------------
+        // ONLINE PAYMENT FLOW
+        // -----------------------------
         if (paymentMethod === "online") {
             const razorOrder = await instance.orders.create({
                 amount: Math.round(totalAmount * 100),
                 currency: "INR",
-                receipt: `receipt_${Date.now()}`
+                receipt: `receipt_${Date.now()}`,
             });
 
             const newOrder = await Order.create({
@@ -84,21 +108,24 @@ export const placeOrder = async (req, res) => {
                 totalAmount,
                 shopOrders,
                 razorpayOrderId: razorOrder.id,
-                payment: false
+                payment: false,
             });
 
             return res.status(200).json({
                 razorOrder,
-                orderId: newOrder._id
+                orderId: newOrder._id,
             });
         }
 
+        // -----------------------------
+        // COD FLOW
+        // -----------------------------
         const newOrder = await Order.create({
             user: req.userId,
             paymentMethod,
             deliveryAddress,
             totalAmount,
-            shopOrders
+            shopOrders,
         });
 
         await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
@@ -108,7 +135,7 @@ export const placeOrder = async (req, res) => {
 
         const io = req.app.get("io");
         if (io) {
-            newOrder.shopOrders.forEach(shopOrder => {
+            newOrder.shopOrders.forEach((shopOrder) => {
                 const ownerSocketId = shopOrder.owner.socketId;
                 if (ownerSocketId) {
                     io.to(ownerSocketId).emit("newOrder", {
@@ -118,7 +145,7 @@ export const placeOrder = async (req, res) => {
                         shopOrders: shopOrder,
                         createdAt: newOrder.createdAt,
                         deliveryAddress: newOrder.deliveryAddress,
-                        payment: newOrder.payment
+                        payment: newOrder.payment,
                     });
                 }
             });
@@ -130,6 +157,7 @@ export const placeOrder = async (req, res) => {
         return res.status(500).json({ message: `place order error ${error}` });
     }
 };
+
 
 // ============================================================
 //  VERIFY PAYMENT
@@ -638,3 +666,4 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
