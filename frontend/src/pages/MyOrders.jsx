@@ -107,11 +107,15 @@ function MyOrders() {
                 <UserOrderCard data={order} />
 
                 {/* CANCEL BUTTON / ONLY FOR USER */}
-                {order.shopOrders?.some(
-                  (so) =>
-                    so.status !== "delivered" &&
-                    so.status !== "cancelled"
-                ) && (
+                {(Array.isArray(order.shopOrders) 
+    ? order.shopOrders 
+    : [order.shopOrders]
+  ).some(
+    (so) =>
+      so.status !== "delivered" &&
+      so.status !== "cancelled"
+  ) && (
+
                   <button
                     className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition"
                     onClick={() =>
@@ -163,3 +167,4 @@ function MyOrders() {
 }
 
 export default MyOrders;
+
