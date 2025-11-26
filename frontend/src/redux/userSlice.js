@@ -28,7 +28,6 @@ const userSlice = createSlice({
   },
 
   reducers: {
-    // Save user & load their cart
     setUserData: (state, action) => {
       state.userData = action.payload;
 
@@ -43,215 +42,94 @@ const userSlice = createSlice({
         );
 
         localStorage.setItem("userData", JSON.stringify(action.payload));
-
       } else {
-        // User logged out
         state.cartItems = [];
         state.totalAmount = 0;
         localStorage.removeItem("userData");
       }
     },
 
-    setCurrentCity: (state, action) => {
-      state.currentCity = action.payload;
-    },
-    setCurrentState: (state, action) => {
-      state.currentState = action.payload;
-    },
-    setCurrentAddress: (state, action) => {
-      state.currentAddress = action.payload;
-    },
-    setShopsInMyCity: (state, action) => {
-      state.shopInMyCity = action.payload;
-    },
-    setItemsInMyCity: (state, action) => {
-      state.itemsInMyCity = action.payload;
-    },
     setSocket: (state, action) => {
       state.socket = action.payload;
     },
 
-    // ⭐ ADD TO CART (FIXED FOREVER)
-    addToCart: (state, action) => {
-      const item = action.payload;
-
-      // Force shop to ALWAYS STRING
-      const shopId =
-        typeof item.shop === "string"
-          ? item.shop
-          : item.shop?._id
-            ? item.shop._id
-            : null;
-
-      const existing = state.cartItems.find((i) => i.id === item.id);
-
-      if (existing) {
-        existing.quantity += item.quantity;
-      } else {
-        state.cartItems.push({
-          ...item,
-          shop: shopId, // 🔥 FINAL FIX
-        });
-      }
-
-      state.totalAmount = state.cartItems.reduce(
-        (sum, i) => sum + i.price * i.quantity,
-        0
-      );
-
-      if (state.userData?._id) {
-        localStorage.setItem(
-          `cartItems_${state.userData._id}`,
-          JSON.stringify(state.cartItems)
-        );
-      }
-    },
-
-    // ⭐ UPDATE QUANTITY (ALSO FIX SHOP)
-    updateQuantity: (state, action) => {
-      const { id, quantity, shop } = action.payload;
-
-      const item = state.cartItems.find((i) => i.id === id);
-      if (item) {
-        item.quantity = quantity;
-
-        // Fix shop here too
-        item.shop =
-          typeof item.shop === "string"
-            ? item.shop
-            : item.shop?._id
-              ? item.shop._id
-              : shop;
-      }
-
-      state.totalAmount = state.cartItems.reduce(
-        (sum, i) => sum + i.price * i.quantity,
-        0
-      );
-
-      if (state.userData?._id) {
-        localStorage.setItem(
-          `cartItems_${state.userData._id}`,
-          JSON.stringify(state.cartItems)
-        );
-      }
-    },
-
-    removeCartItem: (state, action) => {
-      state.cartItems = state.cartItems.filter((i) => i.id !== action.payload);
-
-      state.totalAmount = state.cartItems.reduce(
-        (sum, i) => sum + i.price * i.quantity,
-        0
-      );
-
-      if (state.userData?._id) {
-        localStorage.setItem(
-          `cartItems_${state.userData._id}`,
-          JSON.stringify(state.cartItems)
-        );
-      }
-    },
-
-    clearCart: (state) => {
-      state.cartItems = [];
-      state.totalAmount = 0;
-
-      if (state.userData?._id) {
-        localStorage.removeItem(`cartItems_${state.userData._id}`);
-      }
-    },
-
-    setTotalAmount: (state, action) => {
-      state.totalAmount = action.payload;
-    },
-
     setMyOrders: (state, action) => {
-      state.myOrders = action.payload;
+      // 🔥 ALWAYS normalize shopOrders inside orders
+      state.myOrders = action.payload.map((o) => ({
+        ...o,
+        shopOrders: Array.isArray(o.shopOrders)
+          ? o.shopOrders
+          : [o.shopOrders],
+      }));
     },
 
     addMyOrder: (state, action) => {
-      state.myOrders = [action.payload, ...state.myOrders];
+      const newOrder = action.payload;
+
+      state.myOrders = [
+        {
+          ...newOrder,
+          shopOrders: Array.isArray(newOrder.shopOrders)
+            ? newOrder.shopOrders
+            : [newOrder.shopOrders],
+        },
+        ...state.myOrders,
+      ];
     },
 
+    // ⭐ ALWAYS FORCE shopOrders AS ARRAY (OWNER & USER)
     updateOrderStatus: (state, action) => {
-  const { orderId, shopId, status } = action.payload;
+      const { orderId, shopId, status } = action.payload;
 
-  const order = state.myOrders.find(o => o._id === orderId);
-  if (!order) return;
+      const order = state.myOrders.find((o) => o._id === orderId);
+      if (!order) return;
 
-  // shopOrders ALWAYS treated as array for update
-  const shopOrders = Array.isArray(order.shopOrders)
-    ? order.shopOrders
-    : [order.shopOrders];
+      const shopOrders = Array.isArray(order.shopOrders)
+        ? order.shopOrders
+        : [order.shopOrders];
 
-  const shopOrder = shopOrders.find(so =>
-    String(so.shop?._id || so.shop) === String(shopId)
-  );
+      const shopOrder = shopOrders.find(
+        (so) => String(so.shop?._id) === String(shopId)
+      );
 
-  if (shopOrder) {
-    shopOrder.status = status;
-  }
+      if (shopOrder) {
+        shopOrder.status = status;
+      }
 
-  // For OWNER → keep ONE object only
-  order.shopOrders =
-    state.userData?.role === "owner"
-      ? shopOrder
-      : shopOrders;
-},
+      // overwrite with normalized version
+      order.shopOrders = shopOrders;
+    },
 
-updateRealtimeOrderStatus: (state, action) => {
-  const { orderId, shopId, status } = action.payload;
+    updateRealtimeOrderStatus: (state, action) => {
+      const { orderId, shopId, status } = action.payload;
 
-  const order = state.myOrders.find(o => o._id === orderId);
-  if (!order) return;
+      const order = state.myOrders.find((o) => o._id === orderId);
+      if (!order) return;
 
-  const shopOrders = Array.isArray(order.shopOrders)
-    ? order.shopOrders
-    : [order.shopOrders];
+      const shopOrders = Array.isArray(order.shopOrders)
+        ? order.shopOrders
+        : [order.shopOrders];
 
-  const shopOrder = shopOrders.find(so =>
-    String(so.shop?._id || so.shop) === String(shopId)
-  );
+      const shopOrder = shopOrders.find(
+        (so) => String(so.shop?._id) === String(shopId)
+      );
 
-  if (shopOrder) {
-    shopOrder.status = status;
-  }
+      if (shopOrder) {
+        shopOrder.status = status;
+      }
 
-  order.shopOrders =
-    state.userData?.role === "owner"
-      ? shopOrder
-      : shopOrders;
-},
-
-
-
-    setSearchItems: (state, action) => {
-      state.searchItems = action.payload;
+      order.shopOrders = shopOrders;
     },
   },
 });
 
 export const {
   setUserData,
-  setCurrentAddress,
-  setCurrentCity,
-  setCurrentState,
-  setShopsInMyCity,
-  setItemsInMyCity,
-  addToCart,
-  updateQuantity,
-  removeCartItem,
-  clearCart,
+  setSocket,
   setMyOrders,
   addMyOrder,
   updateOrderStatus,
-  setSearchItems,
-  setTotalAmount,
   updateRealtimeOrderStatus,
-  setSocket,
 } = userSlice.actions;
 
 export default userSlice.reducer;
-
-
