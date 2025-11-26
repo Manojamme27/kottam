@@ -1,17 +1,43 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { serverUrl } from "../App";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { updateRealtimeOrderStatus } from "../redux/userSlice.js";
 import { toast } from "react-toastify";
 
 function UserOrderCard({ data }) {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { socket } = useSelector((state) => state.user);
+
     const [selectedRating, setSelectedRating] = useState({});
     const [isCancelling, setIsCancelling] = useState(false);
     const [showCancelPopup, setShowCancelPopup] = useState(false);
+
+    // ⭐⭐⭐ REALTIME STATUS UPDATE — FIX ⭐⭐⭐
+    useEffect(() => {
+        if (!socket) return;
+
+        const handler = ({ orderId, shopId, status, userId }) => {
+            if (orderId === data._id) {
+                dispatch(
+                    updateRealtimeOrderStatus({
+                        orderId,
+                        shopId,
+                        status,
+                    })
+                );
+            }
+        };
+
+        socket.on("update-status", handler);
+
+        return () => {
+            socket.off("update-status", handler);
+        };
+    }, [socket, data._id, dispatch]);
+    // ⭐⭐⭐ END FIX ⭐⭐⭐
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
@@ -48,7 +74,6 @@ function UserOrderCard({ data }) {
                 { withCredentials: true }
             );
 
-            // ✅ Update redux immediately
             data?.shopOrders?.forEach((shopOrder) => {
                 dispatch(
                     updateRealtimeOrderStatus({
@@ -59,17 +84,11 @@ function UserOrderCard({ data }) {
                 );
             });
 
-            // ✅ Close popup
             setShowCancelPopup(false);
 
-            // ✅ Show toast on success
             toast.success("Order cancelled successfully", {
                 position: "top-center",
                 autoClose: 1500,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: false,
-                draggable: true,
                 theme: "colored",
             });
         } catch (error) {
@@ -92,10 +111,10 @@ function UserOrderCard({ data }) {
 
     return (
         <>
-            {/* 🔹 Order Card */}
             <div
-                className={`bg-white rounded-lg shadow p-4 space-y-4 ${shopOrders?.[0]?.status === "cancelled" ? "opacity-60" : ""
-                    }`}
+                className={`bg-white rounded-lg shadow p-4 space-y-4 ${
+                    shopOrders?.[0]?.status === "cancelled" ? "opacity-60" : ""
+                }`}
             >
                 {/* Header */}
                 <div className="flex justify-between border-b pb-2">
@@ -118,10 +137,11 @@ function UserOrderCard({ data }) {
                             </p>
                         )}
                         <p
-                            className={`font-medium ${shopOrders?.[0]?.status === "cancelled"
+                            className={`font-medium ${
+                                shopOrders?.[0]?.status === "cancelled"
                                     ? "text-gray-400"
                                     : "text-blue-600"
-                                }`}
+                            }`}
                         >
                             {shopOrders?.[0]?.status || "Pending"}
                         </p>
@@ -141,7 +161,6 @@ function UserOrderCard({ data }) {
                         <div className="mt-2">
                             {shopOrder?.shopOrderItems?.length > 0 ? (
                                 <>
-                                    {/* Header row */}
                                     <div className="grid grid-cols-4 text-sm font-semibold text-slate-700 border-b pb-1">
                                         <span>Item</span>
                                         <span className="text-center">Qty</span>
@@ -149,7 +168,6 @@ function UserOrderCard({ data }) {
                                         <span className="text-right">Total</span>
                                     </div>
 
-                                    {/* Item rows */}
                                     {shopOrder.shopOrderItems.map((item, idx) => {
                                         const qty = item?.quantity || 0;
                                         const price = item?.price || 0;
@@ -160,29 +178,37 @@ function UserOrderCard({ data }) {
                                                 key={idx}
                                                 className="grid grid-cols-4 text-sm py-1.5 border-b last:border-b-0"
                                             >
-                                                <span className="truncate">{item?.name || "Unnamed"}</span>
+                                                <span className="truncate">
+                                                    {item?.name || "Unnamed"}
+                                                </span>
                                                 <span className="text-center">{qty}</span>
-                                                <span className="text-center">₹{price}</span>
-                                                <span className="text-right font-medium">₹{lineTotal}</span>
+                                                <span className="text-center">
+                                                    ₹{price}
+                                                </span>
+                                                <span className="text-right font-medium">
+                                                    ₹{lineTotal}
+                                                </span>
                                             </div>
                                         );
                                     })}
                                 </>
                             ) : (
-                                <p className="text-sm text-gray-500">No items found</p>
+                                <p className="text-sm text-gray-500">
+                                    No items found
+                                </p>
                             )}
                         </div>
-
 
                         <div className="flex justify-between items-center border-t pt-2">
                             <p className="font-semibold">
                                 Subtotal: ₹{shopOrder?.subtotal || 0}
                             </p>
                             <span
-                                className={`text-sm font-medium ${shopOrder?.status === "cancelled"
+                                className={`text-sm font-medium ${
+                                    shopOrder?.status === "cancelled"
                                         ? "text-gray-400"
                                         : "text-blue-600"
-                                    }`}
+                                }`}
                             >
                                 {shopOrder?.status || "Pending"}
                             </span>
@@ -192,21 +218,26 @@ function UserOrderCard({ data }) {
 
                 {/* Footer */}
                 <div className="flex justify-between items-center border-t pt-2">
-                    <p className="font-semibold">Total: ₹{data?.totalAmount || 0}</p>
-                    <div className="flex gap-2">
-                        {!["cancelled", "delivered", "out of delivery"]
-                            .includes(shopOrders?.[0]?.status?.toLowerCase()?.trim()) && (
+                    <p className="font-semibold">
+                        Total: ₹{data?.totalAmount || 0}
+                    </p>
 
-                                <button
-                                    onClick={() => setShowCancelPopup(true)}
-                                    className="bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out"
-                                >
-                                    Cancel Order
-                                </button>
-                            )}
+                    <div className="flex gap-2">
+                        {!["cancelled", "delivered", "out of delivery"].includes(
+                            shopOrders?.[0]?.status?.toLowerCase()?.trim()
+                        ) && (
+                            <button
+                                onClick={() => setShowCancelPopup(true)}
+                                className="bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out"
+                            >
+                                Cancel Order
+                            </button>
+                        )}
                         <button
                             className="bg-[#ff4d2d] hover:bg-[#e64526] text-white px-4 py-2 rounded-lg text-sm transition-all duration-300 transform hover:scale-105 active:scale-95"
-                            onClick={() => navigate(`/track-order/${data?._id}`)}
+                            onClick={() =>
+                                navigate(`/track-order/${data?._id}`)
+                            }
                         >
                             Track Order
                         </button>
@@ -214,28 +245,30 @@ function UserOrderCard({ data }) {
                 </div>
             </div>
 
-            {/* 🔹 Cancel Confirmation Popup */}
+            {/* Cancel Popup */}
             {showCancelPopup && (
                 <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-10000">
-                    <div className="bg-white p-6 rounded-lg shadow-2xl w-[90%] max-w-sm text-center transform transition-all scale-100 animate-fadeIn">
+                    <div className="bg-white p-6 rounded-lg shadow-2xl w-[90%] max-w-sm text-center scale-100 animate-fadeIn">
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">
                             Confirm Cancellation
                         </h3>
                         <p className="text-sm text-gray-600 mb-4">
                             Are you sure you want to cancel this order?
                         </p>
+
                         <div className="flex justify-center gap-3">
                             <button
                                 onClick={confirmCancelOrder}
                                 disabled={isCancelling}
-                                className={`px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 
-                  ${isCancelling
+                                className={`px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 ${
+                                    isCancelling
                                         ? "bg-gray-400 cursor-not-allowed"
                                         : "bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transform hover:scale-105 active:scale-95 shadow-md"
-                                    }`}
+                                }`}
                             >
                                 {isCancelling ? "Cancelling..." : "Confirm"}
                             </button>
+
                             <button
                                 onClick={() => setShowCancelPopup(false)}
                                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 active:scale-95"
