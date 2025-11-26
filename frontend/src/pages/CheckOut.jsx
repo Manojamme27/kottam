@@ -175,9 +175,17 @@ function CheckOut() {
     }
 
   } catch (error) {
-    toast.error("Failed to place order. Try again later.", { position: "top-center" });
-    console.log(error);
-  }
+    const msg = error?.response?.data?.message;
+
+    if (msg) {
+        toast.error(msg, { position: "top-center" });
+    } else {
+        toast.error("Failed to place order. Try again later.", { position: "top-center" });
+    }
+
+    console.log("Place order error:", error);
+}
+
 
   setPlacingOrder(false);
 };
@@ -388,5 +396,6 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
