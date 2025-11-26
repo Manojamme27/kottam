@@ -203,40 +203,41 @@ export const getMyOrders = async (req, res) => {
         // ------------------------------
         // OWNER VIEW  (FIXED)
         // ------------------------------
-        if (user.role === "owner") {
+     if (user.role === "owner") {
 
-            // 📌 First populate owners inside shopOrders
-            const orders = await Order.find({ "shopOrders.owner": req.userId })
-                .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "name")
-                .populate("shopOrders.owner", "name email mobile") // important!
-                .populate("user", "name email mobile")
-                .populate("shopOrders.shopOrderItems.item", "name image price")
-                .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+    const orders = await Order.find({ "shopOrders.owner": req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "name email mobile")
+        .populate("user", "name email mobile")
+        .populate("shopOrders.shopOrderItems.item", "name image price")
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-            // 📌 Clean filtered list
-            const filtered = orders
-                .map(order => {
-                    const shopOrder = order.shopOrders.find(
-                        so => String(so.owner?._id || so.owner) === String(req.userId)
-                    );
+    const filtered = [];
 
-                    if (!shopOrder) return null; // skip if no matching shopOrder
+    for (const order of orders) {
+        // get shopOrders belonging to owner
+        const valid = order.shopOrders.filter(
+            so => String(so.owner?._id || so.owner) === String(req.userId)
+        );
 
-                    return {
-                        _id: order._id,
-                        paymentMethod: order.paymentMethod,
-                        user: order.user,
-                        shopOrders: [shopOrder],     // owner sees only his shop order
-                        createdAt: order.createdAt,
-                        deliveryAddress: order.deliveryAddress,
-                        payment: order.payment
-                    };
-                })
-                .filter(Boolean); // remove nulls
+        // ⚡ very important: skip empty results
+        if (!valid || valid.length === 0) continue;
 
-            return res.status(200).json(filtered);
-        }
+        filtered.push({
+            _id: order._id,
+            paymentMethod: order.paymentMethod,
+            user: order.user,
+            createdAt: order.createdAt,
+            deliveryAddress: order.deliveryAddress,
+            payment: order.payment,
+            shopOrders: valid   // ALWAYS ARRAY WITH VALID ITEMS
+        });
+    }
+
+    return res.status(200).json(filtered);
+}
+
 
     } catch (error) {
         console.log("GET MY ORDERS ERROR ❌", error);
@@ -633,4 +634,5 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
