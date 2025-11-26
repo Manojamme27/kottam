@@ -37,36 +37,9 @@ userRouter.get("/location-refresh", isAuth, async (req, res) => {
         return res.status(500).json({ message: "refresh failed", error });
     }
 });
-export const updateUserLocation = async (req, res) => {
-    try {
-        const userId = req.userId;
-        const { city, state, address } = req.body;
 
-        if (!city) {
-            return res.status(400).json({ message: "City is required" });
-        }
-
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            {
-                currentCity: city,
-                currentState: state,
-                currentAddress: address,
-            },
-            { new: true }
-        );
-
-        return res.status(200).json({
-            message: "Location updated",
-            user: updatedUser
-        });
-
-    } catch (error) {
-        console.log("Update location error:", error);
-        return res.status(500).json({ message: "Server error" });
-    }
-};
 
 
 
 export default userRouter
+
