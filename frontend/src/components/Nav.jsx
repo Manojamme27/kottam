@@ -29,9 +29,11 @@ function Nav() {
     const [manualCity, setManualCity] = useState("");
     const [scrolled, setScrolled] = useState(false);
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
     const dropdownRef = useRef(null);
     const notifRef = useRef(null);
     const mobileSearchRef = useRef(null);
+
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -53,12 +55,14 @@ function Nav() {
             toast.error("Failed to logout.");
         }
     };
+
+    // ⭐ Close mobile search
     useEffect(() => {
         function handleOutsideClick(e) {
             if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
                 setMobileSearchOpen(false);
-                setQuery("");            // clear text
-                dispatch(setSearchItems(null));  // clear results
+                setQuery("");
+                dispatch(setSearchItems(null));
             }
         }
 
@@ -70,7 +74,6 @@ function Nav() {
             document.removeEventListener("mousedown", handleOutsideClick);
         };
     }, [mobileSearchOpen]);
-
 
     // ⭐ Delete account
     const handleDeleteAccount = async () => {
@@ -108,7 +111,7 @@ function Nav() {
         else dispatch(setSearchItems(null));
     }, [query]);
 
-    // ⭐ Close menus
+    // ⭐ Close Profile & Notification Menus
     useEffect(() => {
         const closeMenus = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowInfo(false);
@@ -133,7 +136,6 @@ function Nav() {
                 className={`w-full h-20 flex items-center justify-between md:justify-center gap-[30px] px-5 fixed top-0 z-50 backdrop-blur-md border-b border-white/40 transition-all ${scrolled ? "bg-white/80 shadow-md" : "bg-white/50"
                     }`}
             >
-
                 {/* Logo */}
                 <div
                     className="flex items-center gap-3 cursor-pointer hover:scale-105 transition"
@@ -142,9 +144,6 @@ function Nav() {
                     <img src={logo} alt="" className="w-14 h-14 object-contain rounded-lg" />
                     <h1 className="text-2xl font-bold text-[#ff4d2d]">KOTTAM</h1>
                 </div>
-                {/* MOBILE LOCATION PILL */}
-                
-
 
                 {/* Search (Desktop) */}
                 {userData.role === "user" && (
@@ -171,10 +170,6 @@ function Nav() {
 
                 {/* RIGHT SECTION */}
                 <div className="flex items-center gap-4">
-        
-
-
-
                     {/* Notifications */}
                     {userData.role === "owner" && (
                         <div className="relative" ref={notifRef}>
@@ -192,33 +187,6 @@ function Nav() {
                                     {notifications.filter((n) => !n.read).length}
                                 </span>
                             )}
-
-                            <AnimatePresence>
-                                {showNotif && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="absolute right-0 mt-3 bg-white w-72 rounded-xl shadow-xl p-4 z-50"
-                                    >
-                                        <h3 className="font-semibold mb-2">Notifications</h3>
-                                        <div className="max-h-60 overflow-y-auto">
-                                            {notifications.length === 0 ? (
-                                                <p className="text-gray-500 text-sm text-center py-4">
-                                                    No notifications yet.
-                                                </p>
-                                            ) : (
-                                                notifications.map((n, i) => (
-                                                    <div key={i} className="p-3 border-b text-sm">
-                                                        <p className="font-medium">{n.title}</p>
-                                                        <p className="text-gray-600">{n.message}</p>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
                         </div>
                     )}
 
@@ -241,6 +209,7 @@ function Nav() {
                             <MdAddCircleOutline size={18} /> Add Item
                         </button>
                     )}
+
                     {/* Mobile Search Icon */}
                     {userData.role === "user" && (
                         <IoIosSearch
@@ -249,8 +218,6 @@ function Nav() {
                             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
                         />
                     )}
-                
-
                     {/* Cart */}
                     {userData.role === "user" && (
                         <div onClick={() => navigate("/cart")} className="relative cursor-pointer">
@@ -273,6 +240,7 @@ function Nav() {
                         {showInfo && (
                             <div className="absolute right-0 mt-3 bg-white shadow-xl rounded-xl p-5 w-48 z-50">
                                 <div className="font-semibold mb-2">{userData.fullName}</div>
+
                                 {/* Mobile My Orders */}
                                 {(userData.role === "user" || userData.role === "owner") && (
                                     <div
@@ -283,7 +251,7 @@ function Nav() {
                                     </div>
                                 )}
 
-
+                                {/* DELETE ACCOUNT */}
                                 {userData.role === "user" && (
                                     <div
                                         className="text-red-600 cursor-pointer mb-2"
@@ -299,12 +267,13 @@ function Nav() {
                             </div>
                         )}
                     </div>
-                    {/* MOBILE ONLY: Location bubble under profile */}
+
+                    {/* MOBILE ONLY: Location bubble */}
                     {userData.role === "user" && (
                         <div className="absolute top-[60px] right-1 md:hidden z-20">
                             <div
                                 onClick={() => setShowLocationPopup(true)}
-                                className="flex items-center gap-1 px-1 py-0 "
+                                className="flex items-center gap-1 px-1 py-0"
                             >
                                 <FaLocationDot className="text-[#ff4d2d]" />
                                 <span className="font-medium text-gray-700">
@@ -315,6 +284,7 @@ function Nav() {
                     )}
                 </div>
             </div>
+
             {/* Mobile Search Bar Under Navbar */}
             {userData.role === "user" && mobileSearchOpen && (
                 <div ref={mobileSearchRef} className="md:hidden w-full px-5 py-2 bg-white shadow-sm fixed top-20 z-40">
@@ -330,7 +300,6 @@ function Nav() {
                     </div>
                 </div>
             )}
-
 
             {/* 🌍 MOBILE SEARCH POPUP */}
             <AnimatePresence>
@@ -415,31 +384,60 @@ function Nav() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
             {/* OWNER MOBILE FLOATING BUTTONS */}
             {userData.role === "owner" && (
                 <div className="md:hidden fixed bottom-5 right-5 flex flex-col gap-3 z-50">
                     <button
                         onClick={() => navigate("/my-orders")}
-                        className="bg-[#ff4d2d] text-white w-12 h-12 rounded-full shadow-lg hover:bg-[#e64526] flex items-center justify-center"
+                        className="bg-[#ff4d2d] text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
                     >
                         <TbReceipt2 size={22} />
                     </button>
 
                     <button
                         onClick={() => navigate("/add-item")}
-                        className="bg-[#ff4d2d] text-white w-12 h-12 rounded-full shadow-lg hover:bg-[#e64526] flex items-center justify-center"
+                        className="bg-[#ff4d2d] text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
                     >
                         <MdAdd size={24} />
                     </button>
                 </div>
             )}
 
-        </>
-        
-    );
-   
+            {/* ⭐⭐⭐ DELETE ACCOUNT POPUP — ADDED FIX ⭐⭐⭐ */}
+            {showDeletePopup && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[99999]">
+                    <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm">
+                        <h3 className="text-lg font-bold mb-2 text-red-600">
+                            Delete Account?
+                        </h3>
 
-    
+                        <p className="text-gray-700 mb-4 text-sm">
+                            Are you sure you want to delete your account?  
+                            This action cannot be undone.
+                        </p>
+
+                        <div className="flex items-center justify-between gap-3">
+                            <button
+                                onClick={handleDeleteAccount}
+                                className="bg-red-600 text-white px-4 py-2 rounded-lg w-full"
+                            >
+                                Delete
+                            </button>
+
+                            <button
+                                onClick={() => setShowDeletePopup(false)}
+                                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg w-full"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+        </>
+    );
 }
 
 export default Nav;
