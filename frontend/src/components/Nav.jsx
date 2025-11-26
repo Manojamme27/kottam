@@ -35,14 +35,12 @@ function Nav() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // ⭐ Scroll Logic
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // ⭐ Logout
     const handleLogOut = async () => {
         try {
             await axios.get(`${serverUrl}/api/auth/signout`, { withCredentials: true });
@@ -53,12 +51,13 @@ function Nav() {
             toast.error("Failed to logout.");
         }
     };
+
     useEffect(() => {
         function handleOutsideClick(e) {
             if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
                 setMobileSearchOpen(false);
-                setQuery("");            // clear text
-                dispatch(setSearchItems(null));  // clear results
+                setQuery("");
+                dispatch(setSearchItems(null));
             }
         }
 
@@ -71,8 +70,6 @@ function Nav() {
         };
     }, [mobileSearchOpen]);
 
-
-    // ⭐ Delete account
     const handleDeleteAccount = async () => {
         try {
             const result = await axios.delete(`${serverUrl}/api/auth/delete-account`, {
@@ -90,7 +87,6 @@ function Nav() {
         }
     };
 
-    // ⭐ Search Items
     const handleSearchItems = async () => {
         try {
             const result = await axios.get(
@@ -108,7 +104,6 @@ function Nav() {
         else dispatch(setSearchItems(null));
     }, [query]);
 
-    // ⭐ Close menus
     useEffect(() => {
         const closeMenus = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowInfo(false);
@@ -118,7 +113,6 @@ function Nav() {
         return () => document.removeEventListener("mousedown", closeMenus);
     }, []);
 
-    // ⭐ Change City Manually
     const changeCity = () => {
         if (!manualCity.trim()) return toast.error("Enter a city name");
         dispatch(setCurrentCity(manualCity.trim()));
@@ -130,10 +124,10 @@ function Nav() {
         <>
             {/* NAVBAR */}
             <div
-                className={`w-full h-20 flex items-center justify-between md:justify-center gap-[30px] px-5 fixed top-0 z-50 backdrop-blur-md border-b border-white/40 transition-all ${scrolled ? "bg-white/80 shadow-md" : "bg-white/50"
-                    }`}
+                className={`w-full h-20 flex items-center justify-between md:justify-center gap-[30px] px-5 fixed top-0 z-50 backdrop-blur-md border-b border-white/40 transition-all ${
+                    scrolled ? "bg-white/80 shadow-md" : "bg-white/50"
+                }`}
             >
-
                 {/* Logo */}
                 <div
                     className="flex items-center gap-3 cursor-pointer hover:scale-105 transition"
@@ -142,9 +136,6 @@ function Nav() {
                     <img src={logo} alt="" className="w-14 h-14 object-contain rounded-lg" />
                     <h1 className="text-2xl font-bold text-[#ff4d2d]">KOTTAM</h1>
                 </div>
-                {/* MOBILE LOCATION PILL */}
-                
-
 
                 {/* Search (Desktop) */}
                 {userData.role === "user" && (
@@ -171,10 +162,6 @@ function Nav() {
 
                 {/* RIGHT SECTION */}
                 <div className="flex items-center gap-4">
-        
-
-
-
                     {/* Notifications */}
                     {userData.role === "owner" && (
                         <div className="relative" ref={notifRef}>
@@ -192,33 +179,6 @@ function Nav() {
                                     {notifications.filter((n) => !n.read).length}
                                 </span>
                             )}
-
-                            <AnimatePresence>
-                                {showNotif && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="absolute right-0 mt-3 bg-white w-72 rounded-xl shadow-xl p-4 z-50"
-                                    >
-                                        <h3 className="font-semibold mb-2">Notifications</h3>
-                                        <div className="max-h-60 overflow-y-auto">
-                                            {notifications.length === 0 ? (
-                                                <p className="text-gray-500 text-sm text-center py-4">
-                                                    No notifications yet.
-                                                </p>
-                                            ) : (
-                                                notifications.map((n, i) => (
-                                                    <div key={i} className="p-3 border-b text-sm">
-                                                        <p className="font-medium">{n.title}</p>
-                                                        <p className="text-gray-600">{n.message}</p>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
                         </div>
                     )}
 
@@ -241,6 +201,7 @@ function Nav() {
                             <MdAddCircleOutline size={18} /> Add Item
                         </button>
                     )}
+
                     {/* Mobile Search Icon */}
                     {userData.role === "user" && (
                         <IoIosSearch
@@ -249,7 +210,6 @@ function Nav() {
                             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
                         />
                     )}
-                
 
                     {/* Cart */}
                     {userData.role === "user" && (
@@ -273,6 +233,7 @@ function Nav() {
                         {showInfo && (
                             <div className="absolute right-0 mt-3 bg-white shadow-xl rounded-xl p-5 w-48 z-50">
                                 <div className="font-semibold mb-2">{userData.fullName}</div>
+
                                 {/* Mobile My Orders */}
                                 {(userData.role === "user" || userData.role === "owner") && (
                                     <div
@@ -283,7 +244,7 @@ function Nav() {
                                     </div>
                                 )}
 
-
+                                {/* DELETE ACCOUNT (USER ONLY) */}
                                 {userData.role === "user" && (
                                     <div
                                         className="text-red-600 cursor-pointer mb-2"
@@ -299,6 +260,59 @@ function Nav() {
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* ---------------------------------------------- */}
+            {/* ADDING DELETE ACCOUNT POPUP (USER ONLY) PATCH */}
+            {/* ---------------------------------------------- */}
+
+            {userData.role === "user" && (
+                <AnimatePresence>
+                    {showDeletePopup && (
+                        <motion.div
+                            className="fixed inset-0 bg-black/40 flex items-center justify-center z-[99999]"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <motion.div
+                                className="bg-white p-6 rounded-2xl shadow-xl w-[90%] max-w-sm"
+                                initial={{ scale: 0.85 }}
+                                animate={{ scale: 1 }}
+                                exit={{ scale: 0.85 }}
+                            >
+                                <h3 className="text-lg font-bold mb-3 text-center text-red-600">
+                                    Delete Account?
+                                </h3>
+
+                                <p className="text-sm text-gray-700 text-center mb-5">
+                                    This action is permanent. Are you sure you want to delete your account?
+                                </p>
+
+                                <button
+                                    onClick={handleDeleteAccount}
+                                    className="w-full bg-red-600 text-white py-2 rounded-lg font-semibold"
+                                >
+                                    Yes, Delete My Account
+                                </button>
+
+                                <button
+                                    className="w-full mt-3 text-gray-700 underline"
+                                    onClick={() => setShowDeletePopup(false)}
+                                >
+                                    Cancel
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            )}
+
+            {/* ---------------------------------------------- */}
+            {/* (Everything below stays EXACTLY the same) */}
+ 
+       </div>
                     {/* MOBILE ONLY: Location bubble under profile */}
                     {userData.role === "user" && (
                         <div className="absolute top-[60px] right-1 md:hidden z-20">
@@ -443,3 +457,4 @@ function Nav() {
 }
 
 export default Nav;
+
