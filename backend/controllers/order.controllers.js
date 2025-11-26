@@ -186,10 +186,11 @@ export const verifyPayment = async (req, res) => {
 export const getMyOrders = async (req, res) => {
     try {
         const user = await User.findById(req.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-        // ------------------------------
         // USER VIEW
-        // ------------------------------
         if (user.role === "user") {
             const orders = await Order.find({ user: req.userId })
                 .sort({ createdAt: -1 })
@@ -200,20 +201,44 @@ export const getMyOrders = async (req, res) => {
             return res.status(200).json(orders);
         }
 
-        // ------------------------------
-        // OWNER VIEW  (FIXED)
-        // ------------------------------
-     if (user.role === "owner") {
+        // OWNER VIEW
+        if (user.role === "owner") {
+            const orders = await Order.find({ "shopOrders.owner": req.userId })
+                .sort({ createdAt: -1 })
+                .populate("shopOrders.shop", "name")
+                .populate("shopOrders.owner", "name email mobile")
+                .populate("user", "fullName email mobile")
+                .populate("shopOrders.shopOrderItems.item", "name image price")
+                .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-    const orders = await Order.find({ "shopOrders.owner": req.userId })
-        .sort({ createdAt: -1 })
-        .populate("shopOrders.shop", "name")
-        .populate("shopOrders.owner", "name email mobile")
-        .populate("user", "fullName email mobile")  
-        .populate("shopOrders.shopOrderItems.item", "name image price")
-        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+            const filtered = [];
 
+            for (const order of orders) {
+                const valid = order.shopOrders.filter(
+                    so => String(so.owner?._id || so.owner) === String(req.userId)
+                );
 
+                if (!valid || valid.length === 0) continue;
+
+                filtered.push({
+                    _id: order._id,
+                    paymentMethod: order.paymentMethod,
+                    user: order.user,
+                    createdAt: order.createdAt,
+                    deliveryAddress: order.deliveryAddress,
+                    payment: order.payment,
+                    shopOrders: valid
+                });
+            }
+
+            return res.status(200).json(filtered);
+        }
+
+    } catch (error) {
+        console.log("GET MY ORDERS ERROR ❌", error);
+        return res.status(500).json({ message: `get User order error ${error}` });
+    }
+};
 // ============================================================
 //  UPDATE ORDER STATUS
 // ============================================================
@@ -228,11 +253,9 @@ export const updateOrderStatus = async (req, res) => {
         let shopOrder = order.shopOrders.find(o => String(o.shop) === String(shopId));
         if (!shopOrder) return res.status(400).json({ message: "shop order not found" });
 
-        // 👇 NEW: track available boys so we can return them later
         let availableBoys = [];
 
-        // 👇 NEW: for normal statuses (pending, preparing, cancelled, etc.)
-        // always update the shopOrder.status
+        // NORMAL STATUS UPDATE (preparing / cancelled / pending)
         if (status && status !== "delivered" && status !== "out of delivery") {
             shopOrder.status = status;
         }
@@ -259,7 +282,7 @@ export const updateOrderStatus = async (req, res) => {
         }
 
         // ============================================================
-        //  OUT OF DELIVERY
+        //  OUT OF DELIVERY → AUTO ASSIGN NEARBY DELIVERY BOY
         // ============================================================
         if (status === "out of delivery") {
             shopOrder.status = "out of delivery";
@@ -334,9 +357,7 @@ export const updateOrderStatus = async (req, res) => {
 
         await order.save();
 
-        // ============================================================
-        //  POPULATE & SEND REALTIME
-        // ============================================================
+        // REALTIME POPULATE
         await order.populate("user", "socketId");
         await order.populate("shopOrders.shop", "name");
         await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile");
@@ -351,7 +372,7 @@ export const updateOrderStatus = async (req, res) => {
             io.to(order.user.socketId).emit("update-status", {
                 orderId: order._id,
                 shopId: updatedShopOrder.shop._id,
-                status: updatedShopOrder.status,   // ✅ now "preparing"/"out of delivery" correctly
+                status: updatedShopOrder.status,
                 userId: order.user._id
             });
         }
@@ -360,7 +381,6 @@ export const updateOrderStatus = async (req, res) => {
             shopOrder: updatedShopOrder,
             assignedDeliveryBoy: updatedShopOrder?.assignedDeliveryBoy,
             assignment: updatedShopOrder?.assignment,
-            // 👇 NEW: so OwnerOrderCard can show "Available Delivery Boys"
             availableBoys
         });
 
@@ -371,7 +391,7 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 // ============================================================
-//  DELIVERY BOY → GET PENDING ASSIGNMENTS
+//  DELIVERY BOY — PENDING ASSIGNMENTS
 // ============================================================
 export const getDeliveryBoyAssignment = async (req, res) => {
     try {
@@ -398,7 +418,7 @@ export const getDeliveryBoyAssignment = async (req, res) => {
 };
 
 // ============================================================
-//  GET ORDER BY ID (Track Page)
+//  GET ORDER BY ID
 // ============================================================
 export const getOrderById = async (req, res) => {
     try {
@@ -433,7 +453,7 @@ export const getOrderById = async (req, res) => {
 };
 
 // ============================================================
-//  DELIVERY BOY → ACCEPT ORDER
+//  DELIVERY BOY — ACCEPT ORDER
 // ============================================================
 export const acceptOrder = async (req, res) => {
     try {
@@ -474,7 +494,7 @@ export const acceptOrder = async (req, res) => {
 };
 
 // ============================================================
-//  DELIVERY BOY → CURRENT ORDER INFO
+//  DELIVERY BOY — CURRENT ORDER
 // ============================================================
 export const getCurrentOrder = async (req, res) => {
     try {
@@ -523,7 +543,7 @@ export const getCurrentOrder = async (req, res) => {
 };
 
 // ============================================================
-//  TODAY'S DELIVERY STATS
+//  TODAY’S DELIVERY STATS
 // ============================================================
 export const getTodayDeliveries = async (req, res) => {
     try {
@@ -568,7 +588,7 @@ export const getTodayDeliveries = async (req, res) => {
 };
 
 // ============================================================
-//  CANCEL ORDER
+//  CANCEL ORDER (USER)
 // ============================================================
 export const cancelOrder = async (req, res) => {
     try {
@@ -618,10 +638,3 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
-
-
-
-
-
-
-
