@@ -175,25 +175,47 @@ const userSlice = createSlice({
     },
 
     updateOrderStatus: (state, action) => {
-      const { orderId, shopId, status } = action.payload;
-      const order = state.myOrders.find((o) => o._id === orderId);
+  const { orderId, shopId, status } = action.payload;
 
-      if (order && order.shopOrders && order.shopOrders.shop._id === shopId) {
-        order.shopOrders.status = status;
-      }
-    },
+  const order = state.myOrders.find(o => o._id === orderId);
+  if (!order) return;
 
-    updateRealtimeOrderStatus: (state, action) => {
-      const { orderId, shopId, status } = action.payload;
-      const order = state.myOrders.find((o) => o._id === orderId);
+  const shopOrders = Array.isArray(order.shopOrders)
+    ? order.shopOrders
+    : [order.shopOrders];
 
-      if (order) {
-        const shopOrder = order.shopOrders.find(
-          (so) => so.shop._id === shopId
-        );
-        if (shopOrder) shopOrder.status = status;
-      }
-    },
+  const shopOrder = shopOrders.find(
+    so => String(so.shop?._id) === String(shopId)
+  );
+
+  if (shopOrder) {
+    shopOrder.status = status;
+  }
+
+  order.shopOrders = shopOrders; // normalize back
+},
+
+updateRealtimeOrderStatus: (state, action) => {
+  const { orderId, shopId, status } = action.payload;
+
+  const order = state.myOrders.find(o => o._id === orderId);
+  if (!order) return;
+
+  const shopOrders = Array.isArray(order.shopOrders)
+    ? order.shopOrders
+    : [order.shopOrders];
+
+  const shopOrder = shopOrders.find(
+    so => String(so.shop?._id) === String(shopId)
+  );
+
+  if (shopOrder) {
+    shopOrder.status = status;
+  }
+
+  order.shopOrders = shopOrders; // normalize back
+},
+
 
     setSearchItems: (state, action) => {
       state.searchItems = action.payload;
@@ -222,3 +244,4 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
