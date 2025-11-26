@@ -56,6 +56,8 @@ function CheckOut() {
   const [shopCharges, setShopCharges] = useState([]); // per-shop subtotal + fee
   const [totalDeliveryFee, setTotalDeliveryFee] = useState(0);
   const [grandTotal, setGrandTotal] = useState(totalAmount);
+  const [placingOrder, setPlacingOrder] = useState(false);
+
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -141,45 +143,45 @@ function CheckOut() {
     }
   };
 
-  // ✅ Place order logic
   const handlePlaceOrder = async () => {
-    try {
-      const result = await axios.post(
-        `${serverUrl}/api/order/place-order`,
-        {
-          paymentMethod,
-          deliveryAddress: {
-            text: addressInput,
-            latitude: location.lat,
-            longitude: location.lon,
-          },
-          // 🔥 We send the grand total INCLUDING all shop delivery fees
-          totalAmount: grandTotal,
-          cartItems,
+  if (placingOrder) return; // prevents double click
+
+  setPlacingOrder(true);
+  try {
+    const result = await axios.post(
+      `${serverUrl}/api/order/place-order`,
+      {
+        paymentMethod,
+        deliveryAddress: {
+          text: addressInput,
+          latitude: location.lat,
+          longitude: location.lon,
         },
-        { withCredentials: true }
-      );
+        totalAmount: grandTotal,
+        cartItems,
+      },
+      { withCredentials: true }
+    );
 
-      if (paymentMethod === "cod") {
-        dispatch(addMyOrder(result.data));
-
-        // ✅ Clear cart only on successful order
-        dispatch(clearCart());
-        toast.success("Order placed successfully!", { position: "top-center" });
-
-        navigate("/order-placed");
-      } else {
-        const orderId = result.data.orderId;
-        const razorOrder = result.data.razorOrder;
-        openRazorpayWindow(orderId, razorOrder);
-      }
-    } catch (error) {
-      toast.error("Failed to place order. Try again later.", { position: "top-center" });
-      console.log(error);
-      console.log("FINAL CART ITEMS SENDING:", cartItems);
-
+    if (paymentMethod === "cod") {
+      dispatch(addMyOrder(result.data));
+      dispatch(clearCart());
+      toast.success("Order placed successfully!", { position: "top-center" });
+      navigate("/order-placed");
+    } else {
+      const orderId = result.data.orderId;
+      const razorOrder = result.data.razorOrder;
+      openRazorpayWindow(orderId, razorOrder);
     }
-  };
+
+  } catch (error) {
+    toast.error("Failed to place order. Try again later.", { position: "top-center" });
+    console.log(error);
+  }
+
+  setPlacingOrder(false);
+};
+
 
   // ✅ Razorpay integration
   const openRazorpayWindow = (orderId, razorOrder) => {
@@ -365,15 +367,26 @@ function CheckOut() {
 
         {/* Place Order Button */}
         <button
-          className='w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white py-3 rounded-xl font-semibold transition-all duration-200'
-          onClick={handlePlaceOrder}
-        >
-          {paymentMethod === "cod" ? "Place Order" : "Pay & Place Order"}
-        </button>
+  disabled={placingOrder}
+  className={`w-full text-white py-3 rounded-xl font-semibold transition-all duration-200 
+    ${placingOrder ? "bg-gray-400 cursor-not-allowed" : "bg-[#ff4d2d] hover:bg-[#e64526]"}`}
+  onClick={handlePlaceOrder}
+>
+  {placingOrder ? (
+    <div className="flex items-center justify-center gap-2">
+      <span className="loader h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+      Processing...
+    </div>
+  ) : (
+    paymentMethod === "cod" ? "Place Order" : "Pay & Place Order"
+  )}
+</button>
+
       </div>
     </div>
   );
 }
 
 export default CheckOut;
+
 
