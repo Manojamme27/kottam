@@ -16,6 +16,7 @@ const userSlice = createSlice({
     currentCity: null,
     currentState: null,
     currentAddress: null,
+
     shopInMyCity: null,
     itemsInMyCity: null,
 
@@ -28,6 +29,7 @@ const userSlice = createSlice({
   },
 
   reducers: {
+    // ========== USER DATA ==========
     setUserData: (state, action) => {
       state.userData = action.payload;
 
@@ -49,35 +51,32 @@ const userSlice = createSlice({
       }
     },
 
+    // ========== RESTORED LOGIC FOR CITY ACCESS ==========
+    setCurrentCity: (state, action) => {
+      state.currentCity = action.payload;
+    },
+    setCurrentState: (state, action) => {
+      state.currentState = action.payload;
+    },
+    setCurrentAddress: (state, action) => {
+      state.currentAddress = action.payload;
+    },
+
+    // ========== SOCKET ==========
     setSocket: (state, action) => {
       state.socket = action.payload;
     },
 
+    // ========== ORDERS ==========
     setMyOrders: (state, action) => {
-      // 🔥 ALWAYS normalize shopOrders inside orders
-      state.myOrders = action.payload.map((o) => ({
-        ...o,
-        shopOrders: Array.isArray(o.shopOrders)
-          ? o.shopOrders
-          : [o.shopOrders],
-      }));
+      state.myOrders = action.payload;
     },
 
     addMyOrder: (state, action) => {
-      const newOrder = action.payload;
-
-      state.myOrders = [
-        {
-          ...newOrder,
-          shopOrders: Array.isArray(newOrder.shopOrders)
-            ? newOrder.shopOrders
-            : [newOrder.shopOrders],
-        },
-        ...state.myOrders,
-      ];
+      state.myOrders = [action.payload, ...state.myOrders];
     },
 
-    // ⭐ ALWAYS FORCE shopOrders AS ARRAY (OWNER & USER)
+    // normalize shopOrders → always array
     updateOrderStatus: (state, action) => {
       const { orderId, shopId, status } = action.payload;
 
@@ -96,7 +95,6 @@ const userSlice = createSlice({
         shopOrder.status = status;
       }
 
-      // overwrite with normalized version
       order.shopOrders = shopOrders;
     },
 
@@ -125,6 +123,9 @@ const userSlice = createSlice({
 
 export const {
   setUserData,
+  setCurrentCity,
+  setCurrentState,
+  setCurrentAddress,
   setSocket,
   setMyOrders,
   addMyOrder,
