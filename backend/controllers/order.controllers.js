@@ -185,70 +185,64 @@ export const verifyPayment = async (req, res) => {
 // ============================================================
 export const getMyOrders = async (req, res) => {
     try {
-        // ✅ Make sure user exists
         const user = await User.findById(req.userId);
+
         if (!user) {
             return res.status(400).json({ message: "User not found" });
         }
 
-        // ------------------------------
-        // USER VIEW
-        // ------------------------------
+        // ------------------------------------------------------
+        // USER VIEW  → return full order with full shopOrders[]
+        // ------------------------------------------------------
         if (user.role === "user") {
             const orders = await Order.find({ user: req.userId })
                 .sort({ createdAt: -1 })
                 .populate("shopOrders.shop", "name")
-                .populate("shopOrders.owner", "name email mobile")
+                .populate("shopOrders.owner", "fullName email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price");
 
             return res.status(200).json(orders);
         }
 
-        // ------------------------------
-        // OWNER VIEW (FIXED)
-        // ------------------------------
+        // ------------------------------------------------------
+        // OWNER VIEW  → return ONLY shopOrders belonging to owner
+        // ------------------------------------------------------
         if (user.role === "owner") {
 
             const orders = await Order.find({ "shopOrders.owner": req.userId })
                 .sort({ createdAt: -1 })
                 .populate("shopOrders.shop", "name")
-                .populate("shopOrders.owner", "name email mobile")
-                .populate("user", "fullName email mobile")
+                .populate("shopOrders.owner", "fullName email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price")
+                .populate("user", "fullName email mobile")
                 .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
             const filtered = [];
 
             for (const order of orders) {
-
-                const valid = order.shopOrders.filter(
-                    (so) =>
-                        String(so.owner?._id || so.owner) === String(req.userId)
+                const validShopOrders = order.shopOrders.filter(
+                    so => String(so.owner?._id || so.owner) === String(req.userId)
                 );
 
-                // Skip empty results
-                if (!valid || valid.length === 0) continue;
+                if (validShopOrders.length === 0) continue;
 
                 filtered.push({
                     _id: order._id,
                     paymentMethod: order.paymentMethod,
-                    user: order.user,
                     createdAt: order.createdAt,
                     deliveryAddress: order.deliveryAddress,
                     payment: order.payment,
-                    shopOrders: valid, // ALWAYS ARRAY WITH VALID ITEMS
+                    user: order.user,
+                    shopOrders: validShopOrders
                 });
             }
 
             return res.status(200).json(filtered);
         }
 
-        // Fallback (if some other role appears)
-        return res.status(403).json({ message: "Role not supported" });
-
     } catch (error) {
         console.log("GET MY ORDERS ERROR ❌", error);
-        return res.status(500).json({ message: `get User order error ${error}` });
+        return res.status(500).json({ message: "get User order error " + error });
     }
 };
 
@@ -657,6 +651,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
