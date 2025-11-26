@@ -2,38 +2,36 @@ import React, { useEffect, useRef, useState } from "react";
 import Nav from "./Nav";
 import { categories } from "../category";
 import CategoryCardCircle from "./CategoryCardCircle";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import FoodCardCompact from "./FoodCardCompact";
 import { useNavigate } from "react-router-dom";
 import ItemModal from "./ItemModal";
 import axios from "axios";
 import { serverUrl } from "../App";
 import { setShopsInMyCity, setItemsInMyCity } from "../redux/userSlice";
-import { useDispatch } from "react-redux";
 
-
-
-
-// 🖼️ Import all your banner images
+// banner images
 import banner1 from "../assets/banner1.png";
 import banner2 from "../assets/banner2.png";
 import banner3 from "../assets/banner3.png";
 import banner4 from "../assets/banner4.png";
 
-// helper to fix image paths
+// fix image
 import { getImageUrl } from "../utils/getImageUrl";
 
+// swiper
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
 function UserDashboard() {
-  const { currentCity, shopInMyCity, itemsInMyCity, searchItems } = useSelector(
-    (state) => state.user
-  );
+  const { currentCity, shopInMyCity, itemsInMyCity, searchItems, socket } =
+    useSelector((state) => state.user);
+
   const cateScrollRef = useRef();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [updatedItemsList, setUpdatedItemsList] = useState([]);
   const [modalItem, setModalItem] = useState(null);
@@ -41,20 +39,26 @@ function UserDashboard() {
   // ⭐ NEW state for selected category underline
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  // -----------------------------
+  // 🔥 Filter OPEN SHOPS items
+  // -----------------------------
   useEffect(() => {
-    if (Array.isArray(itemsInMyCity)) {
-      const filtered = itemsInMyCity.filter(
-        (item) => item.shop?.isOpen !== false
-      );
-      setUpdatedItemsList(filtered);
-    } else {
+    if (!Array.isArray(itemsInMyCity)) {
       setUpdatedItemsList([]);
+      return;
     }
+
+    const filtered = itemsInMyCity.filter((item) => item.shop?.isOpen !== false);
+    setUpdatedItemsList(filtered);
   }, [itemsInMyCity]);
+
+  // -----------------------------
+  // 🔥 AUTO REFRESH (FIRST LOAD)
+  // -----------------------------
   useEffect(() => {
     const refreshData = async () => {
-      if (!currentCity) return;     // ❗ Must have city
-      if (!document.cookie.includes("token")) return; // ❗ Must have auth
+      if (!currentCity) return;
+      if (!document.cookie.includes("token")) return;
 
       try {
         const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
@@ -64,18 +68,84 @@ function UserDashboard() {
         dispatch(setShopsInMyCity(res.data.shops));
         dispatch(setItemsInMyCity(res.data.items));
       } catch (err) {
-        console.log("Auto refresh error:", err.response?.data || err);
+        console.log("Auto refresh error:", err?.response?.data || err);
       }
     };
 
     refreshData();
   }, [currentCity]);
 
+  // -----------------------------
+  // 🔥 BACKGROUND REFRESH every 15 sec
+  // -----------------------------
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!currentCity) return;
+      try {
+        const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
+          withCredentials: true,
+        });
 
+        dispatch(setShopsInMyCity(res.data.shops));
+        dispatch(setItemsInMyCity(res.data.items));
+      } catch (err) {}
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [currentCity]);
+
+  // -----------------------------
+  // 🔥 REAL-TIME SOCKET UPDATES
+  // -----------------------------
+  useEffect(() => {
+    if (!socket) return;
+
+    // shop open/close OR shop edited
+    socket.on("shop-updated", () => {
+      triggerQuickRefresh();
+    });
+
+    // owner updated item
+    socket.on("item-updated", () => {
+      triggerQuickRefresh();
+    });
+
+    // new shop added in your city
+    socket.on("shop-added", () => {
+      triggerQuickRefresh();
+    });
+
+    // item deleted or disabled
+    socket.on("item-deleted", () => {
+      triggerQuickRefresh();
+    });
+
+    return () => {
+      socket.off("shop-updated");
+      socket.off("item-updated");
+      socket.off("shop-added");
+      socket.off("item-deleted");
+    };
+  }, [socket]);
+
+  const triggerQuickRefresh = async () => {
+    if (!currentCity) return;
+    try {
+      const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
+        withCredentials: true,
+      });
+      dispatch(setShopsInMyCity(res.data.shops));
+      dispatch(setItemsInMyCity(res.data.items));
+    } catch (err) {}
+  };
+
+  // -----------------------------
+  // 🔥 CATEGORY FILTER
+  // -----------------------------
   const handleFilterByCategory = (category) => {
     if (!Array.isArray(itemsInMyCity)) return;
 
-    // ❗ Only open shops' items
+    // open shop items only
     const openItems = itemsInMyCity.filter(
       (item) => item.shop?.isOpen !== false
     );
@@ -83,20 +153,17 @@ function UserDashboard() {
     if (!category || category === "All") {
       setUpdatedItemsList(openItems);
     } else {
-      const filteredList = openItems.filter(
-        (i) => i.category === category
-      );
+      const filteredList = openItems.filter((i) => i.category === category);
       setUpdatedItemsList(filteredList);
     }
   };
-
 
   return (
     <div className="w-screen min-h-screen flex flex-col bg-[#fff9f6]">
       <Nav />
 
       <div className="relative">
-        {/* 🎯 Sliding Banners Section */}
+        {/* SLIDER BANNERS */}
         <div className="w-full flex justify-center relative z-0 -mt-3.5 sm:-mt-4 md:-mt-[18px] lg:-mt-5">
           <div className="w-full max-w-6xl">
             <Swiper
@@ -126,7 +193,7 @@ function UserDashboard() {
           </div>
         </div>
 
-        {/* 🔍 Search Results */}
+        {/* SEARCH RESULTS */}
         {searchItems && searchItems.length > 0 && (
           <div className="w-full max-w-6xl mx-auto bg-white shadow-md rounded-2xl mt-4 p-5">
             <h1 className="text-[#2b2b2b] text-lg sm:text-xl font-semibold uppercase tracking-widest border-b border-gray-200 pb-2">
@@ -150,7 +217,7 @@ function UserDashboard() {
           </div>
         )}
 
-        {/* 🍽 Categories (Blinkit style polished) */}
+        {/* CATEGORIES */}
         <div className="w-full max-w-6xl mx-auto px-2.5 sticky top-[72px] z-40 bg-[#fff9f6] py-3">
           <h2 className="text-gray-700 text-base sm:text-lg font-semibold uppercase tracking-[0.15em] mb-3 sm:mb-4">
             Categories
@@ -175,7 +242,7 @@ function UserDashboard() {
           </div>
         </div>
 
-        {/* Recommended Section */}
+        {/* Recommended Items */}
         <div className="w-full max-w-6xl mx-auto px-3 mt-6">
           <h2 className="text-gray-700 text-base sm:text-lg font-semibold uppercase tracking-[0.15em] mb-3 sm:mb-4">
             Recommended For You
@@ -201,37 +268,21 @@ function UserDashboard() {
                   updatedItemsList
                     .filter((item) => item.shop?.isOpen !== false)
                     .map((item, idx) => (
-                    <div key={item._id || idx} className="flex justify-center">
-                      <div className="w-full max-w-[170px]">
-                        <FoodCardCompact
-                          data={item}
-                          onClick={(d) => setModalItem(d)}
-                        />
+                      <div key={item._id || idx} className="flex justify-center">
+                        <div className="w-full max-w-[170px]">
+                          <FoodCardCompact
+                            data={item}
+                            onClick={(d) => setModalItem(d)}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
               </div>
             </div>
-
-            {/* gradient edges */}
-            <div
-              className="pointer-events-none absolute top-0 left-0 h-full w-8"
-              style={{
-                background:
-                  "linear-gradient(90deg, #fff9f6 0%, rgba(255,249,246,0) 100%)",
-              }}
-            />
-            <div
-              className="pointer-events-none absolute top-0 right-0 h-full w-8"
-              style={{
-                background:
-                  "linear-gradient(270deg, #fff9f6 0%, rgba(255,249,246,0) 100%)",
-              }}
-            />
           </div>
         </div>
 
-        {/* Best Shops Section */}
+        {/* Best Shops */}
         <div className="w-full max-w-6xl mx-auto px-3 mt-10 mb-12">
           <h2 className="text-gray-700 text-base sm:text-lg font-semibold uppercase tracking-[0.15em] mb-3 sm:mb-4">
             Best Shops in {currentCity}
@@ -241,12 +292,11 @@ function UserDashboard() {
             {shopInMyCity
               ?.filter((shop) => shop.isOpen !== false)
               .map((shop) => (
-
-              <div
-                key={shop._id}
-                onClick={() => navigate(`/shop/${shop._id}`)}
-                className="cursor-pointer bg-white rounded-2xl border border-[#ff4d2d]/20 shadow-sm hover:shadow-md transition-transform duration-300 hover:scale-[1.01] overflow-hidden"
-              >
+                <div
+                  key={shop._id}
+                  onClick={() => navigate(`/shop/${shop._id}`)}
+                  className="cursor-pointer bg-white rounded-2xl border border-[#ff4d2d]/20 shadow-sm hover:shadow-md transition-transform duration-300 hover:scale-[1.01] overflow-hidden"
+                >
                   <div className="relative w-full h-52 sm:h-60 md:h-64">
                     <Swiper
                       modules={[Autoplay, Pagination]}
@@ -255,38 +305,38 @@ function UserDashboard() {
                       pagination={{ clickable: true }}
                       className="w-full h-full"
                     >
-                      {(shop.images?.length ? shop.images : [shop.image]).map((img, idx) => (
-                        <SwiperSlide key={idx}>
-                          <img
-                            src={getImageUrl(img)}
-                            alt={`${shop.name}-${idx}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </SwiperSlide>
-                      ))}
+                      {(shop.images?.length ? shop.images : [shop.image]).map(
+                        (img, idx) => (
+                          <SwiperSlide key={idx}>
+                            <img
+                              src={getImageUrl(img)}
+                              alt={`${shop.name}-${idx}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </SwiperSlide>
+                        )
+                      )}
                     </Swiper>
                   </div>
 
+                  <div className="p-4">
+                    <h3 className="text-gray-900 font-semibold text-lg truncate">
+                      {shop.name}
+                    </h3>
 
+                    <div className="mt-3 text-sm font-medium text-gray-600">
+                      Customer Favourite 🌟
+                    </div>
 
-                <div className="p-4">
-                  <h3 className="text-gray-900 font-semibold text-lg truncate">
-                    {shop.name}
-                  </h3>
-
-                  <div className="mt-3 text-sm font-medium text-gray-600">
-                    Customer Favourite 🌟
+                    <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-0.5 rounded-lg">
+                      ★ 4.{Math.floor(Math.random() * 5)}
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      By {Math.floor(Math.random() * 9) + 1}.9k+
+                    </span>
                   </div>
-
-                  <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-0.5 rounded-lg">
-                    ★ 4.{Math.floor(Math.random() * 5)}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    By {Math.floor(Math.random() * 9) + 1}.9k+
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </div>
