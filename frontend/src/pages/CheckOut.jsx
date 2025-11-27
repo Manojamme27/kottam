@@ -145,6 +145,21 @@ function CheckOut() {
 
   const handlePlaceOrder = async () => {
   if (placingOrder) return; // prevents double click
+    const shopTotals = {};
+  cartItems.forEach((item) => {
+    const shopId = item.shop;
+    if (!shopTotals[shopId]) shopTotals[shopId] = 0;
+    shopTotals[shopId] += Number(item.price) * Number(item.quantity);
+  });
+
+  const invalidShops = Object.values(shopTotals).filter(total => total < 100);
+
+  if (invalidShops.length > 0) {
+    toast.error("Minimum order ₹100 required for each shop", {
+      position: "top-center",
+    });
+    return; // ❌ STOP → Do NOT place order
+  }
 
   setPlacingOrder(true);
   try {
@@ -396,6 +411,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
