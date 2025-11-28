@@ -478,11 +478,20 @@ function DeliveryBoy() {
                       "Assigned Restaurant"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Customer:{" "}
-                    <span className="font-semibold">
-                      {currentOrder?.user?.fullName}
-                    </span>
-                  </p>
+  Customer:{" "}
+  <span className="font-semibold">
+    {currentOrder?.user?.fullName}
+  </span>
+</p>
+
+{/* ⭐ ADD THIS NEW LINE FOR CUSTOMER MOBILE NUMBER */}
+<p className="text-xs text-gray-500">
+  Mobile:{" "}
+  <span className="font-semibold">
+    {currentOrder?.user?.mobile || "N/A"}
+  </span>
+</p>
+
                 </div>
                 <div className="text-xs text-gray-500 text-right">
                   <p>
@@ -595,4 +604,5 @@ function DeliveryBoy() {
 }
 
 export default DeliveryBoy;
+
 
