@@ -105,4 +105,14 @@ a {
 .animate-softGlow {
   animation: softGlow 2.4s ease-in-out infinite;
 }
+/* latest changes */
+@keyframes scrollText {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-scrollText {
+  animation: scrollText 5s linear infinite;
+  display: inline-block;
+}
 
