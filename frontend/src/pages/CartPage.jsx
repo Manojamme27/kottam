@@ -25,8 +25,46 @@ function CartPage() {
                 </div>
 
                 {cartItems?.length === 0 ? (
-                    <p className='text-gray-500 text-lg text-center'>Your Cart is Empty</p>
-                ) : (
+    <div className="flex flex-col items-center justify-center mt-10">
+
+        <div className="bg-white shadow-md rounded-2xl p-8 w-full max-w-sm text-center border border-orange-100">
+
+            {/* Icon circle */}
+            <div className="mx-auto mb-4 w-28 h-28 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 
+            flex items-center justify-center shadow-inner">
+                <svg width="55" height="55" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 10h14l-1.5 9h-15L3 4H1" 
+                          stroke="#ff7b34" 
+                          strokeWidth="2.2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"/>
+                    <circle cx="10" cy="21" r="1" fill="#ff7b34"/>
+                    <circle cx="18" cy="21" r="1" fill="#ff7b34"/>
+                </svg>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Your Cart is Empty
+            </h2>
+
+            {/* Subtitle */}
+            <p className="text-gray-500 text-sm mb-6">
+                Looks like you haven't added anything yet.
+            </p>
+
+            {/* CTA Button */}
+            <button
+                onClick={() => navigate("/")}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl shadow transition"
+            >
+                Browse Items
+            </button>
+        </div>
+
+    </div>
+) : (
+
                     <>
                         <div className='space-y-4'>
                             {cartItems.map((item, index) => (
@@ -83,3 +121,4 @@ function CartPage() {
 }
 
 export default CartPage;
+
