@@ -106,13 +106,17 @@ a {
   animation: softGlow 2.4s ease-in-out infinite;
 }
 /* latest changes */
-@keyframes scrollText {
+@keyframes premiumScroll {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  10% { transform: translateX(0); }       /* Pause at start */
+  45% { transform: translateX(-50%); }    /* Mid scroll */
+  55% { transform: translateX(-50%); }    /* Pause mid */
+  90% { transform: translateX(-100%); }   /* End scroll */
+  100% { transform: translateX(-100%); }  /* Reset */
 }
 
-.animate-scrollText {
-  animation: scrollText 5s linear infinite;
-  display: inline-block;
+.animate-premiumScroll {
+  animation: premiumScroll 6s linear infinite;
 }
+
 
