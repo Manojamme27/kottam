@@ -22,13 +22,17 @@ function MyOrders() {
     orderId: null,
   });
 
-  // Normalize shopOrders
+  // ============================================
+  // NORMALIZE SHOP ORDER FORMAT
+  // ============================================
   const normalizeShopOrders = (shopOrders) => {
     if (!shopOrders) return [];
     return Array.isArray(shopOrders) ? shopOrders : [shopOrders];
   };
 
-  // Cancel Order
+  // ============================================
+  // CANCEL ORDER
+  // ============================================
   const handleCancelOrder = async () => {
     try {
       const res = await axios.put(
@@ -69,7 +73,9 @@ function MyOrders() {
     }
   };
 
-  // Realtime socket updates
+  // ============================================
+  // SOCKET: NEW ORDER + STATUS UPDATE
+  // ============================================
   useEffect(() => {
     if (!socket) return;
 
@@ -106,7 +112,7 @@ function MyOrders() {
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
 
-        {/* Header */}
+        {/* HEADER */}
         <div className="flex items-center gap-5 mb-6">
           <div className="cursor-pointer" onClick={() => navigate("/")}>
             <IoIosArrowRoundBack size={35} className="text-[#ff4d2d]" />
@@ -114,35 +120,52 @@ function MyOrders() {
           <h1 className="text-2xl font-bold">My Orders</h1>
         </div>
 
-        {/* ⭐ PREMIUM EMPTY STATE UI */}
-        {myOrders?.length === 0 && (
-          <div className="flex flex-col items-center text-center mt-10 p-6 bg-white rounded-2xl shadow-md">
+        {/* ======================================================
+           PREMIUM EMPTY STATE (ONLY CHANGE DONE HERE)
+        ======================================================= */}
+        {myOrders?.length === 0 ? (
+          <div className="flex justify-center mt-10 px-4 animate-fadeIn">
+            <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-green-100 animate-slideUp">
 
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/891/891462.png"
-              alt="no-orders"
-              className="w-40 h-40 mb-4 opacity-90"
-            />
+              {/* Icon */}
+              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-green-100 to-green-200
+                              shadow-inner flex items-center justify-center mb-6 animate-float">
+                <svg width="65" height="65" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 3h18v13H3z" stroke="#2ab673" strokeWidth="2"/>
+                  <path d="M3 8h18" stroke="#2ab673" strokeWidth="2"/>
+                  <circle cx="7" cy="16.5" r="1.3" fill="#2ab673"/>
+                  <circle cx="17" cy="16.5" r="1.3" fill="#2ab673"/>
+                </svg>
+              </div>
 
-            <h2 className="text-2xl font-bold text-gray-800">No Orders Yet</h2>
+              {/* Title */}
+              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                No Orders Yet
+              </h2>
 
-            <p className="text-gray-600 mt-2 mb-6 text-[16px] px-4">
-              When you place an order, you can track it here.
-            </p>
+              {/* Subtitle */}
+              <p className="text-gray-500 text-center text-sm mb-7">
+                When you place an order, you can track it here.
+              </p>
 
-            <button
-              onClick={() => navigate("/")}
-              className="bg-green-600 text-white px-6 py-3 rounded-full text-lg font-semibold shadow hover:bg-green-700 transition"
-            >
-              Start Shopping
-            </button>
+              {/* CTA */}
+              <button
+                onClick={() => navigate("/")}
+                className="w-full py-3.5 bg-gradient-to-r from-green-500 to-green-600 
+                           text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg 
+                           transition active:scale-95"
+              >
+                Start Shopping
+              </button>
+
+            </div>
           </div>
-        )}
-
-        {/* ORDERS LIST */}
-        {myOrders?.length > 0 && (
+        ) : (
+          /* =====================================================
+             NORMAL ORDERS LIST (UNCHANGED)
+          ====================================================== */
           <div className="space-y-6">
-            {myOrders.map((order) => {
+            {myOrders?.map((order) => {
               const normalized = normalizeShopOrders(order.shopOrders);
 
               return userData.role === "user" ? (
@@ -152,7 +175,7 @@ function MyOrders() {
                 >
                   <UserOrderCard data={order} />
 
-                  {/* CANCEL ORDER BUTTON */}
+                  {/* CANCEL BUTTON */}
                   {normalized.some(
                     (so) =>
                       so?.status !== "delivered" &&
