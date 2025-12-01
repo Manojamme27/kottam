@@ -23,12 +23,19 @@ export default function CategoryCardCircle({ name, image, onClick, isSelected })
                 />
             </div>
 
-            {/* Name */}
-            <p className="mt-2 text-xs sm:text-sm font-medium text-gray-800 text-center truncate w-20 md:w-24">
-                {name}
-            </p>
+            {/* CATEGORY NAME — Auto sliding text */}
+            <div
+                className="
+                    mt-2 text-xs sm:text-sm font-medium text-gray-800 
+                    w-20 md:w-24 text-center overflow-hidden whitespace-nowrap relative
+                "
+            >
+                <span className="inline-block animate-scrollText px-1">
+                    {name}
+                </span>
+            </div>
 
-            {/* Orange Underline (Swiggy style) */}
+            {/* Orange underline */}
             {isSelected && (
                 <div className="w-10 h-[3px] bg-[#FF5D00] rounded-full mt-1"></div>
             )}
