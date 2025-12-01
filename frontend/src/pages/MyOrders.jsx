@@ -123,7 +123,48 @@ function MyOrders() {
         </div>
 
         {/* ORDERS */}
-        <div className="space-y-6">
+        {myOrders?.length === 0 ? (
+  <div className="flex justify-center mt-10 px-4 animate-fadeIn">
+    <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-green-100 animate-slideUp">
+
+      {/* Illustration Circle */}
+      <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-green-100 to-green-200
+                      shadow-inner flex items-center justify-center mb-6 animate-float">
+        <div className="animate-softGlow">
+          <svg width="70" height="70" viewBox="0 0 24 24" fill="none">
+            <path d="M3 3h18v13H3z" stroke="#2ab673" strokeWidth="2.2"/>
+            <path d="M3 8h18" stroke="#2ab673" strokeWidth="2.2"/>
+            <circle cx="7" cy="16.5" r="1.3" fill="#2ab673"/>
+            <circle cx="17" cy="16.5" r="1.3" fill="#2ab673"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Title */}
+      <h2 className="text-2xl font-bold text-gray-900 text-center mb-2 tracking-tight">
+        No Orders Yet
+      </h2>
+
+      {/* Subtitle */}
+      <p className="text-gray-500 text-center text-sm leading-relaxed mb-7">
+        When you place an order, you can track it here.
+      </p>
+
+      {/* CTA Button */}
+      <button
+        onClick={() => navigate("/")}
+        className="w-full py-3.5 bg-gradient-to-r from-green-500 to-green-600 
+                   text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg 
+                   transition active:scale-95"
+      >
+        Start Shopping
+      </button>
+
+    </div>
+  </div>
+) : (
+  <div className="space-y-6">
+
           {myOrders?.map((order) => {
             const normalized = normalizeShopOrders(order.shopOrders);
 
@@ -194,4 +235,5 @@ function MyOrders() {
 }
 
 export default MyOrders;
+
 
