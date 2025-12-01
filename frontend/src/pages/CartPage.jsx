@@ -25,21 +25,24 @@ function CartPage() {
                 </div>
 
                {cartItems?.length === 0 ? (
-    <div className="flex justify-center mt-10 px-4">
-        <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-orange-100">
+    <div className="flex justify-center mt-10 px-4 animate-fadeIn">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-orange-100 animate-slideUp">
 
             {/* Illustration Circle */}
             <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-200
-                            shadow-inner flex items-center justify-center mb-6">
-                <svg width="65" height="65" viewBox="0 0 24 24" fill="none">
-                    <path d="M7 10h14l-1.5 9h-15L3 4H1"
-                          stroke="#ff7b34"
-                          strokeWidth="2.4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"/>
-                    <circle cx="10" cy="21" r="1.3" fill="#ff7b34"/>
-                    <circle cx="18" cy="21" r="1.3" fill="#ff7b34"/>
-                </svg>
+                            shadow-inner flex items-center justify-center mb-6 animate-float">
+
+                <div className="animate-softGlow">
+                    <svg width="70" height="70" viewBox="0 0 24 24" fill="none">
+                        <path d="M7 10h14l-1.5 9h-15L3 4H1"
+                              stroke="#ff7b34"
+                              strokeWidth="2.4"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"/>
+                        <circle cx="10" cy="21" r="1.3" fill="#ff7b34"/>
+                        <circle cx="18" cy="21" r="1.3" fill="#ff7b34"/>
+                    </svg>
+                </div>
             </div>
 
             {/* Title */}
@@ -123,5 +126,6 @@ function CartPage() {
 }
 
 export default CartPage;
+
 
 
