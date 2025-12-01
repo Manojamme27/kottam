@@ -23,16 +23,16 @@ function MyOrders() {
   });
 
   // ============================================
-  // ALWAYS normalize to array
+  // NORMALIZE SHOP ORDER FORMAT
   // ============================================
   const normalizeShopOrders = (shopOrders) => {
     if (!shopOrders) return [];
     return Array.isArray(shopOrders) ? shopOrders : [shopOrders];
   };
 
-  // ================================
+  // ============================================
   // CANCEL ORDER
-  // ================================
+  // ============================================
   const handleCancelOrder = async () => {
     try {
       const res = await axios.put(
@@ -49,38 +49,36 @@ function MyOrders() {
         setCancelPopup({ show: false, orderId: null });
 
         dispatch(
-  setMyOrders(
-    myOrders.map((o) => {
-      if (o._id !== cancelPopup.orderId) return o;
+          setMyOrders(
+            myOrders.map((o) => {
+              if (o._id !== cancelPopup.orderId) return o;
 
-      const normalized = Array.isArray(o.shopOrders)
-        ? o.shopOrders
-        : [o.shopOrders];
+              const normalized = Array.isArray(o.shopOrders)
+                ? o.shopOrders
+                : [o.shopOrders];
 
-      return {
-        ...o,
-        shopOrders: normalized.map((so) => ({
-          ...so,
-          status: "cancelled",
-        })),
-      };
-    })
-  )
-);
-
+              return {
+                ...o,
+                shopOrders: normalized.map((so) => ({
+                  ...so,
+                  status: "cancelled",
+                })),
+              };
+            })
+          )
+        );
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to cancel order ❌");
     }
   };
 
-  // ================================
-  // REALTIME SOCKET HANDLING
-  // ================================
+  // ============================================
+  // SOCKET: NEW ORDER + STATUS UPDATE
+  // ============================================
   useEffect(() => {
     if (!socket) return;
 
-    // OWNER SIDE → Receive NEW user orders
     const handleNewOrder = (order) => {
       if (userData.role === "owner") {
         dispatch(
@@ -95,7 +93,6 @@ function MyOrders() {
       }
     };
 
-    // USER SIDE → Receive status update
     const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
       if (String(userId) === String(userData._id)) {
         dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
@@ -109,12 +106,13 @@ function MyOrders() {
       socket.off("newOrder", handleNewOrder);
       socket.off("update-status", handleStatusUpdate);
     };
-  }, [socket, userData, dispatch]); // 🚀 REMOVE myOrders to prevent infinite loops!
+  }, [socket, userData, dispatch]);
 
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
-        {/* Header */}
+
+        {/* HEADER */}
         <div className="flex items-center gap-5 mb-6">
           <div className="cursor-pointer" onClick={() => navigate("/")}>
             <IoIosArrowRoundBack size={35} className="text-[#ff4d2d]" />
@@ -122,81 +120,84 @@ function MyOrders() {
           <h1 className="text-2xl font-bold">My Orders</h1>
         </div>
 
-        {/* ORDERS */}
+        {/* ======================================================
+           PREMIUM EMPTY STATE (ONLY CHANGE DONE HERE)
+        ======================================================= */}
         {myOrders?.length === 0 ? (
-  <div className="flex justify-center mt-10 px-4 animate-fadeIn">
-    <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-green-100 animate-slideUp">
+          <div className="flex justify-center mt-10 px-4 animate-fadeIn">
+            <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-green-100 animate-slideUp">
 
-      {/* Illustration Circle */}
-      <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-green-100 to-green-200
-                      shadow-inner flex items-center justify-center mb-6 animate-float">
-        <div className="animate-softGlow">
-          <svg width="70" height="70" viewBox="0 0 24 24" fill="none">
-            <path d="M3 3h18v13H3z" stroke="#2ab673" strokeWidth="2.2"/>
-            <path d="M3 8h18" stroke="#2ab673" strokeWidth="2.2"/>
-            <circle cx="7" cy="16.5" r="1.3" fill="#2ab673"/>
-            <circle cx="17" cy="16.5" r="1.3" fill="#2ab673"/>
-          </svg>
-        </div>
-      </div>
-
-      {/* Title */}
-      <h2 className="text-2xl font-bold text-gray-900 text-center mb-2 tracking-tight">
-        No Orders Yet
-      </h2>
-
-      {/* Subtitle */}
-      <p className="text-gray-500 text-center text-sm leading-relaxed mb-7">
-        When you place an order, you can track it here.
-      </p>
-
-      {/* CTA Button */}
-      <button
-        onClick={() => navigate("/")}
-        className="w-full py-3.5 bg-gradient-to-r from-green-500 to-green-600 
-                   text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg 
-                   transition active:scale-95"
-      >
-        Start Shopping
-      </button>
-
-    </div>
-  </div>
-) : (
-  <div className="space-y-6">
-
-          {myOrders?.map((order) => {
-            const normalized = normalizeShopOrders(order.shopOrders);
-
-            return userData.role === "user" ? (
-              <div
-                key={order._id}
-                className="relative border border-gray-200 rounded-xl shadow-sm p-4 bg-white hover:shadow-md transition"
-              >
-                <UserOrderCard data={order} />
-
-                {/* CANCEL BUTTON */}
-                {normalized.some(
-                  (so) =>
-                    so?.status !== "delivered" &&
-                    so?.status !== "cancelled" &&
-                    so?.status !== "out of delivery"
-                ) && (
-                  <button
-                    className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition"
-                    onClick={() =>
-                      setCancelPopup({ show: true, orderId: order._id })
-                    }
-                  >
-                    Cancel
-                  </button>
-                )}
+              {/* Icon */}
+              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-green-100 to-green-200
+                              shadow-inner flex items-center justify-center mb-6 animate-float">
+                <svg width="65" height="65" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 3h18v13H3z" stroke="#2ab673" strokeWidth="2"/>
+                  <path d="M3 8h18" stroke="#2ab673" strokeWidth="2"/>
+                  <circle cx="7" cy="16.5" r="1.3" fill="#2ab673"/>
+                  <circle cx="17" cy="16.5" r="1.3" fill="#2ab673"/>
+                </svg>
               </div>
-            ) : userData.role === "owner" ? (
-              <OwnerOrderCard data={order} key={order._id} />
-            ) : null;
-          })}
-        </div>
+
+              {/* Title */}
+              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                No Orders Yet
+              </h2>
+
+              {/* Subtitle */}
+              <p className="text-gray-500 text-center text-sm mb-7">
+                When you place an order, you can track it here.
+              </p>
+
+              {/* CTA */}
+              <button
+                onClick={() => navigate("/")}
+                className="w-full py-3.5 bg-gradient-to-r from-green-500 to-green-600 
+                           text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg 
+                           transition active:scale-95"
+              >
+                Start Shopping
+              </button>
+
+            </div>
+          </div>
+        ) : (
+          /* =====================================================
+             NORMAL ORDERS LIST (UNCHANGED)
+          ====================================================== */
+          <div className="space-y-6">
+            {myOrders?.map((order) => {
+              const normalized = normalizeShopOrders(order.shopOrders);
+
+              return userData.role === "user" ? (
+                <div
+                  key={order._id}
+                  className="relative border border-gray-200 rounded-xl shadow-sm p-4 bg-white hover:shadow-md transition"
+                >
+                  <UserOrderCard data={order} />
+
+                  {/* CANCEL BUTTON */}
+                  {normalized.some(
+                    (so) =>
+                      so?.status !== "delivered" &&
+                      so?.status !== "cancelled" &&
+                      so?.status !== "out of delivery"
+                  ) && (
+                    <button
+                      className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition"
+                      onClick={() =>
+                        setCancelPopup({ show: true, orderId: order._id })
+                      }
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              ) : userData.role === "owner" ? (
+                <OwnerOrderCard data={order} key={order._id} />
+              ) : null;
+            })}
+          </div>
+        )}
       </div>
 
       {/* CANCEL POPUP */}
@@ -235,5 +236,3 @@ function MyOrders() {
 }
 
 export default MyOrders;
-
-
