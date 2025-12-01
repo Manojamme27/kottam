@@ -1,6 +1,19 @@
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 export default function CategoryCardCircle({ name, image, onClick, isSelected }) {
+    const textRef = useRef(null);
+    const containerRef = useRef(null);
+    const [shouldScroll, setShouldScroll] = useState(false);
+
+    // Detect long text
+    useEffect(() => {
+        if (textRef.current && containerRef.current) {
+            const isOverflowing =
+                textRef.current.scrollWidth > containerRef.current.clientWidth;
+            setShouldScroll(isOverflowing);
+        }
+    }, [name]);
+
     return (
         <div
             onClick={onClick}
@@ -23,16 +36,29 @@ export default function CategoryCardCircle({ name, image, onClick, isSelected })
                 />
             </div>
 
-            {/* CATEGORY NAME — Auto sliding text */}
+            {/* CATEGORY NAME with Fade + Auto Scroll */}
             <div
+                ref={containerRef}
                 className="
-                    mt-2 text-xs sm:text-sm font-medium text-gray-800 
-                    w-20 md:w-24 text-center overflow-hidden whitespace-nowrap relative
+                    relative mt-2 text-xs sm:text-sm font-medium text-gray-800
+                    w-20 md:w-24 overflow-hidden whitespace-nowrap text-center
                 "
             >
-                <span className="inline-block animate-scrollText px-1">
+                {/* fade left */}
+                <div className="absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-[#fff9f6] to-transparent pointer-events-none"></div>
+
+                {/* TEXT */}
+                <span
+                    ref={textRef}
+                    className={`inline-block px-1 ${
+                        shouldScroll ? "animate-premiumScroll" : ""
+                    }`}
+                >
                     {name}
                 </span>
+
+                {/* fade right */}
+                <div className="absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-[#fff9f6] to-transparent pointer-events-none"></div>
             </div>
 
             {/* Orange underline */}
