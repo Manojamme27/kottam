@@ -24,46 +24,48 @@ function CartPage() {
                     <h1 className='text-2xl font-bold text-start'>Your Cart</h1>
                 </div>
 
-                {cartItems?.length === 0 ? (
-    <div className="flex flex-col items-center justify-center mt-10">
+               {cartItems?.length === 0 ? (
+    <div className="flex justify-center mt-10 px-4">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-orange-100">
 
-        <div className="bg-white shadow-md rounded-2xl p-8 w-full max-w-sm text-center border border-orange-100">
-
-            {/* Icon circle */}
-            <div className="mx-auto mb-4 w-28 h-28 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 
-            flex items-center justify-center shadow-inner">
-                <svg width="55" height="55" viewBox="0 0 24 24" fill="none">
-                    <path d="M7 10h14l-1.5 9h-15L3 4H1" 
-                          stroke="#ff7b34" 
-                          strokeWidth="2.2" 
-                          strokeLinecap="round" 
+            {/* Illustration Circle */}
+            <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-200
+                            shadow-inner flex items-center justify-center mb-6">
+                <svg width="65" height="65" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 10h14l-1.5 9h-15L3 4H1"
+                          stroke="#ff7b34"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
                           strokeLinejoin="round"/>
-                    <circle cx="10" cy="21" r="1" fill="#ff7b34"/>
-                    <circle cx="18" cy="21" r="1" fill="#ff7b34"/>
+                    <circle cx="10" cy="21" r="1.3" fill="#ff7b34"/>
+                    <circle cx="18" cy="21" r="1.3" fill="#ff7b34"/>
                 </svg>
             </div>
 
             {/* Title */}
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-2 tracking-tight">
                 Your Cart is Empty
             </h2>
 
             {/* Subtitle */}
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-500 text-center text-sm leading-relaxed mb-7">
                 Looks like you haven't added anything yet.
             </p>
 
-            {/* CTA Button */}
+            {/* Button */}
             <button
                 onClick={() => navigate("/")}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl shadow transition"
+                className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 
+                           text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg 
+                           transition active:scale-95"
             >
                 Browse Items
             </button>
-        </div>
 
+        </div>
     </div>
 ) : (
+
 
                     <>
                         <div className='space-y-4'>
@@ -121,4 +123,5 @@ function CartPage() {
 }
 
 export default CartPage;
+
 
