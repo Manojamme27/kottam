@@ -65,12 +65,13 @@ function App() {
 
     // Ensure only 1 socket instance
     let socket = io(serverUrl, {
-      withCredentials: true,
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1500,
-    });
+  withCredentials: true,
+  transports: ["polling", "websocket"], // 👈 MUST
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1500,
+});
+
 
     socket.on("connect", () => {
       console.log("🔌 SOCKET CONNECTED:", socket.id);
