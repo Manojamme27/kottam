@@ -45,10 +45,22 @@ app.use("/uploads", express.static("uploads"));
 // -------------------------
 const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL,
+    origin: [
+      FRONTEND_URL,
+      "https://kottam-frontend.vercel.app",
+    ],
     credentials: true,
   },
+
+  // 🔥 CRITICAL FOR RENDER
+  transports: ["polling", "websocket"], // DO NOT remove polling
+  allowEIO3: true,
+
+  // 🔥 Prevent proxy timeouts
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
+
 app.set("io", io);
 
 // -------------------------
@@ -71,3 +83,4 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
