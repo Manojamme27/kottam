@@ -26,7 +26,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 
 function UserDashboard() {
-  const { currentCity, shopInMyCity, itemsInMyCity, searchItems, socket } =
+  const { currentCity, shopInMyCity, itemsInMyCity, searchItems,searchShops,  socket } =
     useSelector((state) => state.user);
 
   const cateScrollRef = useRef();
@@ -237,6 +237,33 @@ useEffect(() => {
             </div>
           </div>
         )}
+        {searchShops && searchShops.length > 0 && (
+  <div className="w-full max-w-6xl mx-auto bg-white shadow-md rounded-2xl mt-4 p-5">
+    <h1 className="text-[#2b2b2b] text-lg sm:text-xl font-semibold uppercase tracking-widest border-b border-gray-200 pb-2">
+      SHOPS
+    </h1>
+
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+      {searchShops.map((shop) => (
+        <div
+          key={shop._id}
+          onClick={() => navigate(`/shop/${shop._id}`)}
+          className="cursor-pointer bg-white rounded-xl border p-3 hover:shadow-md transition"
+        >
+          <img
+            src={shop.images?.[0] || shop.image}
+            alt={shop.name}
+            className="w-full h-32 object-cover rounded-lg"
+          />
+          <p className="mt-2 font-semibold text-gray-800 truncate">
+            {shop.name}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 
         {/* CATEGORIES */}
         <div className="w-full max-w-6xl mx-auto px-2.5 sticky top-[72px] z-40 bg-[#fff9f6] py-3">
@@ -377,6 +404,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
