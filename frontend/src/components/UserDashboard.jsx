@@ -230,7 +230,7 @@ useEffect(() => {
                 <FoodCardCompact
                   key={item._id}
                   data={item}
-                  onClick={() => setModalItem(item)}
+                   onClick={setModalItem}
 
                 />
               ))}
@@ -293,7 +293,7 @@ useEffect(() => {
                         <div className="w-full max-w-[170px]">
                           <FoodCardCompact
                             data={item}
-                            onClick={(d) => setModalItem(d)}
+                            onClick={setModalItem}
                           />
                         </div>
                       </div>
@@ -370,5 +370,6 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
