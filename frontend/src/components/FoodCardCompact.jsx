@@ -16,7 +16,10 @@ export default function FoodCardCompact({ data, onClick }) {
 
     return (
         <div
-            onClick={() => onClick && onClick(data)}
+    onClick={(e) => {
+        e.stopPropagation();
+        onClick && onClick(data);
+    }}
             className="cursor-pointer w-full bg-white rounded-2xl border border-[#ff4d2d]/70 p-2.5 shadow-sm hover:shadow-md transition-all hover:scale-[1.01]"
         >
             {/* 🖼 Image */}
