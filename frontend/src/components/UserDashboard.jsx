@@ -363,13 +363,21 @@ useEffect(() => {
       </div>
 
       {modalItem && (
-        <ItemModal item={modalItem} onClose={() => setModalItem(null)} />
-      )}
+  <ItemModal
+    item={modalItem}
+    onClose={() => {
+      setModalItem(null);
+      dispatch(setSearchItems(null)); // ✅ clear AFTER modal closes
+    }}
+  />
+)}
+
     </div>
   );
 }
 
 export default UserDashboard;
+
 
 
 
