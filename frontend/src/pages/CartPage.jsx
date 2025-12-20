@@ -85,13 +85,28 @@ function CartPage() {
                         <div className='mt-4 flex justify-end'>
                             <button
                                 onClick={() => {
-                                    if (totalAmount < 100) {
-                                        toast.error("Minimum order amount is ₹100");
-                                        setShowMinOrderPopup(true);
-                                        return;
-                                    }
-                                    navigate("/checkout");
-                                }}
+    if (!cartItems || cartItems.length === 0) return;
+
+    // 🔒 BLOCK MULTI-SHOP ORDERS
+    const uniqueShopIds = [
+        ...new Set(cartItems.map(item => item.shop))
+    ];
+
+    if (uniqueShopIds.length > 1) {
+        toast.error("You can order items from only one shop at a time");
+        return;
+    }
+
+    // 🔒 MINIMUM ORDER CHECK
+    if (totalAmount < 100) {
+        toast.error("Minimum order amount is ₹100");
+        setShowMinOrderPopup(true);
+        return;
+    }
+
+    navigate("/checkout");
+}}
+
                                 className="bg-[#ff4d2d] text-white py-3 rounded-xl font-semibold w-full hover:bg-[#e64526] transition"
                             >
                                 Proceed to Checkout
@@ -126,6 +141,7 @@ function CartPage() {
 }
 
 export default CartPage;
+
 
 
 
