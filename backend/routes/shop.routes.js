@@ -2,7 +2,6 @@ import express from "express";
 import { createEditShop, getMyShop, getShopByCity } from "../controllers/shop.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 import { upload } from "../middlewares/multer.js";
-import Shop from "../models/shop.model.js";
 import { toggleShopStatus } from "../controllers/shop.controllers.js";
 import { searchShops } from "../controllers/shop.controllers.js";
 
@@ -25,10 +24,11 @@ router.get("/get-by-city/:city", isAuth, getShopByCity);
 
 // TOGGLE SHOP OPEN/CLOSE
 router.put("/toggle-status", isAuth, toggleShopStatus);
-router.get("/search-shops", isAuth, searchShops);
+router.get("/search-shops",  searchShops);
 
 
 
 
 export default router;
+
 
