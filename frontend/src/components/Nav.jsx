@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RxCross2 } from "react-icons/rx";
 import axios from "axios";
 import { serverUrl } from "../App";
-import { setSearchItems, setUserData, setCurrentCity } from "../redux/userSlice";
+import { setSearchItems,setSearchShops, setUserData, setCurrentCity } from "../redux/userSlice";
 import { TbReceipt2 } from "react-icons/tb";
 import { MdAdd, MdAddCircleOutline } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
@@ -58,7 +58,8 @@ function Nav() {
             if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
                 setMobileSearchOpen(false);
                 setQuery("");            // clear text
-                dispatch(setSearchItems(null));  // clear results
+                dispatch(setSearchItems(null)); // clear results
+                dispatch(setSearchShops(null)); // ✅ ADD
             }
         }
 
@@ -102,11 +103,30 @@ function Nav() {
             console.log(error);
         }
     };
+    // ⭐ Search Shops
+const handleSearchShops = async () => {
+    try {
+        const result = await axios.get(
+            `${serverUrl}/api/shop/search-shops?query=${query}&city=${currentCity}`,
+            { withCredentials: true }
+        );
+        dispatch(setSearchShops(result.data));
+    } catch (error) {
+        console.log(error);
+    }
+};
+
 
     useEffect(() => {
-        if (query) handleSearchItems();
-        else dispatch(setSearchItems(null));
-    }, [query]);
+    if (query) {
+        handleSearchItems();
+        handleSearchShops();   // 👈 ADD
+    } else {
+        dispatch(setSearchItems(null));
+        dispatch(setSearchShops(null)); // 👈 ADD
+    }
+}, [query]);
+
 
     // ⭐ Close menus
     useEffect(() => {
@@ -486,4 +506,5 @@ function Nav() {
 }
 
 export default Nav;
+
 
