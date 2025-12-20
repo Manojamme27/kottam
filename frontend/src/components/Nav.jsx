@@ -121,10 +121,7 @@ const handleSearchShops = async () => {
     if (query) {
         handleSearchItems();
         handleSearchShops();   // 👈 ADD
-    } else {
-        dispatch(setSearchItems(null));
-        dispatch(setSearchShops(null)); // 👈 ADD
-    }
+    } 
 }, [query]);
 
 
@@ -506,5 +503,6 @@ const handleSearchShops = async () => {
 }
 
 export default Nav;
+
 
 
