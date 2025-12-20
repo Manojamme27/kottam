@@ -23,6 +23,23 @@ export const placeOrder = async (req, res) => {
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: "cart is empty" });
         }
+        // ============================================================
+// ❌ BLOCK MULTI-SHOP ORDERS
+// ============================================================
+const uniqueShopIds = [
+  ...new Set(
+    cartItems.map(item =>
+      typeof item.shop === "object" ? item.shop._id : item.shop
+    )
+  ),
+];
+
+if (uniqueShopIds.length > 1) {
+  return res.status(400).json({
+    message: "You can order items from only one shop at a time",
+  });
+}
+
         if (!deliveryAddress.text || !deliveryAddress.latitude || !deliveryAddress.longitude) {
             return res.status(400).json({ message: "send complete deliveryAddress" });
         }
@@ -673,5 +690,6 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
