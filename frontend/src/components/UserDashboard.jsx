@@ -215,7 +215,8 @@ useEffect(() => {
 
         {/* SEARCH RESULTS */}
         {searchItems && searchItems.length > 0 && (
-          <div className="w-full max-w-6xl mx-auto bg-white shadow-md rounded-2xl mt-4 p-5">
+          <div className="search-results w-full max-w-6xl mx-auto bg-white shadow-md rounded-2xl mt-4 p-5">
+
             <h1 className="text-[#2b2b2b] text-lg sm:text-xl font-semibold uppercase tracking-widest border-b border-gray-200 pb-2">
               SEARCH RESULTS
             </h1>
@@ -416,6 +417,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
