@@ -232,8 +232,6 @@ useEffect(() => {
   key={item._id}
   data={item}
   onClick={(item) => {
-    dispatch(setSearchItems(null));
-    dispatch(setSearchShops(null));
     setModalItem(item);
   }}
 />
@@ -413,6 +411,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
