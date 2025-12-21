@@ -228,11 +228,15 @@ useEffect(() => {
             >
               {searchItems.map((item) => (
                 <FoodCardCompact
-                  key={item._id}
-                  data={item}
-                   onClick={setModalItem}
+  key={item._id}
+  data={item}
+  onClick={(item) => {
+    dispatch(setSearchItems(null));
+    dispatch(setSearchShops(null));
+    setModalItem(item);
+  }}
+/>
 
-                />
               ))}
             </div>
           </div>
@@ -247,7 +251,12 @@ useEffect(() => {
       {searchShops.map((shop) => (
         <div
           key={shop._id}
-          onClick={() => navigate(`/shop/${shop._id}`)}
+          onClick={() => {
+  dispatch(setSearchItems(null));
+  dispatch(setSearchShops(null));
+  navigate(`/shop/${shop._id}`);
+}}
+
           className="cursor-pointer bg-white rounded-xl border p-3 hover:shadow-md transition"
         >
           <img
@@ -319,9 +328,14 @@ useEffect(() => {
                       <div key={item._id || idx} className="flex justify-center">
                         <div className="w-full max-w-[170px]">
                           <FoodCardCompact
-                            data={item}
-                            onClick={setModalItem}
-                          />
+  data={item}
+  onClick={(item) => {
+    dispatch(setSearchItems(null));
+    dispatch(setSearchShops(null));
+    setModalItem(item);
+  }}
+/>
+
                         </div>
                       </div>
                     ))}
@@ -391,12 +405,10 @@ useEffect(() => {
 
       {modalItem && (
   <ItemModal
-    item={modalItem}
-    onClose={() => {
-      setModalItem(null);
-      dispatch(setSearchItems(null)); // ✅ clear AFTER modal closes
-    }}
-  />
+  item={modalItem}
+  onClose={() => setModalItem(null)}
+/>
+
 )}
 
     </div>
@@ -404,6 +416,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
