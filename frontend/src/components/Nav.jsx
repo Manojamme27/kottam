@@ -55,13 +55,25 @@ function Nav() {
     };
     useEffect(() => {
         function handleOutsideClick(e) {
-            if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
-                setMobileSearchOpen(false);
-                setQuery("");            // clear text
-                dispatch(clearSearchResults());
+  // ❌ ignore clicks on search results & item cards
+  if (
+    e.target.closest(".search-results") ||
+    e.target.closest(".food-card") ||
+    e.target.closest(".shop-card")
+  ) {
+    return;
+  }
 
-            }
-        }
+  if (
+    mobileSearchRef.current &&
+    !mobileSearchRef.current.contains(e.target)
+  ) {
+    setMobileSearchOpen(false);
+    setQuery("");
+    dispatch(clearSearchResults());
+  }
+}
+
 
         if (mobileSearchOpen) {
             document.addEventListener("mousedown", handleOutsideClick);
@@ -512,6 +524,7 @@ const handleSearchShops = async () => {
 }
 
 export default Nav;
+
 
 
 
