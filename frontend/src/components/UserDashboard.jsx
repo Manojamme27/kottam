@@ -251,15 +251,11 @@ useEffect(() => {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
       {searchShops.map((shop) => (
         <div
-          key={shop._id}
-          onClick={() => {
-  dispatch(setSearchItems(null));
-  dispatch(setSearchShops(null));
-  navigate(`/shop/${shop._id}`);
-}}
+  key={shop._id}
+  onClick={() => navigate(`/shop/${shop._id}`)}
+  className="shop-card cursor-pointer bg-white rounded-xl border p-3 hover:shadow-md transition"
+>
 
-          className="cursor-pointer bg-white rounded-xl border p-3 hover:shadow-md transition"
-        >
           <img
             src={shop.images?.[0] || shop.image}
             alt={shop.name}
@@ -417,6 +413,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
