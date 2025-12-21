@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RxCross2 } from "react-icons/rx";
 import axios from "axios";
 import { serverUrl } from "../App";
-import { setSearchItems,setSearchShops, setUserData, setCurrentCity } from "../redux/userSlice";
+import { setSearchItems,setSearchShops, clearSearchResults,  setUserData, setCurrentCity } from "../redux/userSlice";
 import { TbReceipt2 } from "react-icons/tb";
 import { MdAdd, MdAddCircleOutline } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
@@ -58,8 +58,8 @@ function Nav() {
             if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
                 setMobileSearchOpen(false);
                 setQuery("");            // clear text
-                dispatch(setSearchItems(null)); // clear results
-                dispatch(setSearchShops(null)); // ✅ ADD
+                dispatch(clearSearchResults());
+
             }
         }
 
@@ -118,11 +118,15 @@ const handleSearchShops = async () => {
 
 
     useEffect(() => {
-    if (query) {
-        handleSearchItems();
-        handleSearchShops();   // 👈 ADD
-    } 
+  if (!query.trim()) {
+    dispatch(clearSearchResults());
+    return;
+  }
+
+  handleSearchItems();
+  handleSearchShops();
 }, [query]);
+
 
 
     // ⭐ Close menus
@@ -154,7 +158,12 @@ const handleSearchShops = async () => {
                 {/* Logo */}
                 <div
                     className="flex items-center gap-3 cursor-pointer hover:scale-105 transition"
-                    onClick={() => navigate("/")}
+                    onClick={() => {
+  dispatch(clearSearchResults());
+  setQuery("");
+  navigate("/");
+}}
+
                 >
                     <img src={logo} alt="" className="w-14 h-14 object-contain rounded-lg" />
                     <h1 className="text-2xl font-bold text-[#ff4d2d]">KOTTAM</h1>
@@ -503,6 +512,7 @@ const handleSearchShops = async () => {
 }
 
 export default Nav;
+
 
 
 
