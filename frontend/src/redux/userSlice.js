@@ -241,6 +241,11 @@ const userSlice = createSlice({
     setSearchShops: (state, action) => {
   state.searchShops = action.payload;
 },
+    clearSearchResults: (state) => {
+  state.searchItems = null;
+  state.searchShops = null;
+},
+
 
   },
 });
@@ -261,10 +266,12 @@ export const {
   updateOrderStatus,
   setSearchItems,
   setSearchShops, 
+  clearSearchResults,
   setTotalAmount,
   updateRealtimeOrderStatus,
   setSocket,
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
