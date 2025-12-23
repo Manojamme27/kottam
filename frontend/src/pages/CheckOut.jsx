@@ -331,7 +331,7 @@ function CheckOut() {
               </span>
               <div>
                 <p className='font-medium text-gray-800'>Cash On Delivery</p>
-                <p className='text-xs text-gray-500'>Pay when your food arrives</p>
+                <p className='text-xs text-gray-500'>Pay when your Item arrives</p>
               </div>
             </div>
 
@@ -411,6 +411,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
