@@ -187,6 +187,34 @@ export const searchShops = async (req, res) => {
     res.status(500).json({ message: "Failed to search shops" });
   }
 };
+export const getNearbyShops = async (req, res) => {
+  try {
+    const { latitude, longitude } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: "Latitude & Longitude required" });
+    }
+
+    const shops = await Shop.find({
+      isOpen: { $ne: false },
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [Number(longitude), Number(latitude)],
+          },
+          $maxDistance: 25000, // ✅ 25 KM
+        },
+      },
+    }).populate("items");
+
+    return res.status(200).json(shops);
+  } catch (error) {
+    console.error("Nearby shops error:", error);
+    res.status(500).json({ message: "Failed to fetch nearby shops" });
+  }
+};
+
 
 
 
