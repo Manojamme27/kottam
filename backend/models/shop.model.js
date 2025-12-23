@@ -31,6 +31,18 @@ const shopSchema=new mongoose.Schema({
         type:String,
         required:true
     },
+    location: {
+    type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true,
+    },
+},
+
     isOpen: {
         type: Boolean,
         default: true,
@@ -42,6 +54,9 @@ const shopSchema=new mongoose.Schema({
     }]
 
 },{timestamps:true})
+shopSchema.index({ location: "2dsphere" });
+
 
 const Shop=mongoose.model("Shop",shopSchema)
+
 export default Shop
