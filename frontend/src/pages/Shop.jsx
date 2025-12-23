@@ -197,7 +197,7 @@ function Shop() {
             {/* MENU */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
                 <h2 className="flex items-center justify-center gap-3 text-2xl sm:text-3xl font-bold mb-8 text-gray-800">
-                    <FaUtensils color="red" /> Our Menu
+                    <FaUtensils color="red" /> Our Items
                 </h2>
 
                 {/* MOBILE VIEW */}
@@ -361,3 +361,4 @@ function Shop() {
 }
 
 export default Shop;
+
