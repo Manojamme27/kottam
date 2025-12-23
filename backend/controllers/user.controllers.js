@@ -24,7 +24,8 @@ export const updateUserLocation = async (req, res) => {
         const { latitude, longitude } = req.body;
 
 
-        if (!latitude || !longitude) {
+       if (latitude == null || longitude == null) {
+
     return res.status(200).json({ message: "Location skipped (no coordinates)" });
 }
 
@@ -48,5 +49,6 @@ const user = await User.findByIdAndUpdate(
         return res.status(500).json({ message: `update location user error ${error}` });
     }
 };
+
 
 
