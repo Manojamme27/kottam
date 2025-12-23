@@ -1,42 +1,53 @@
-import axios from 'axios'
-import React, { useEffect } from 'react'
-import { serverUrl } from '../App'
-import { useDispatch, useSelector } from 'react-redux'
-import { setCurrentAddress, setCurrentCity, setCurrentState, setUserData } from '../redux/userSlice'
-import { setAddress, setLocation } from '../redux/mapSlice'
+import axios from "axios";
+import { useEffect, useRef } from "react";
+import { serverUrl } from "../App";
+import { useDispatch, useSelector } from "react-redux";
 
 function useUpdateLocation() {
-    const dispatch = useDispatch()
-    const { userData } = useSelector(state => state.user)
+  const { userData } = useSelector((state) => state.user);
+  const lastLocationRef = useRef(null);
 
-    useEffect(() => {
-        if (!userData) return;  // ❗ Do NOT update location if user is NOT logged in
+  useEffect(() => {
+    if (!userData) return;
 
-        const updateLocation = async (lat, lon) => {
-            try {
-                const result = await axios.post(
-                    `${serverUrl}/api/user/update-location`,
-                    { lat, lon },
-                    { withCredentials: true }
-                )
-                console.log(result.data)
-
-            } catch (error) {
-                // ❗ Ignore "token not found"
-                if (error.response?.data?.message !== "token not found") {
-                    console.log("Update location error:", error)
-                }
-            }
+    const updateLocation = async (lat, lon) => {
+      try {
+        await axios.post(
+          `${serverUrl}/api/user/update-location`,
+          {
+            latitude: lat,
+            longitude: lon,
+          },
+          { withCredentials: true }
+        );
+      } catch (error) {
+        if (error.response?.data?.message !== "token not found") {
+          console.log("Update location error:", error);
         }
+      }
+    };
 
-        const watcher = navigator.geolocation.watchPosition((pos) => {
-            updateLocation(pos.coords.latitude, pos.coords.longitude)
-        })
+    const watcher = navigator.geolocation.watchPosition((pos) => {
+      const { latitude, longitude } = pos.coords;
 
-        // ❗ Cleanup watcher when component unmounts
-        return () => navigator.geolocation.clearWatch(watcher);
+      // 🛑 prevent spam updates
+      if (lastLocationRef.current) {
+        const { lat, lon } = lastLocationRef.current;
+        const diff =
+          Math.abs(lat - latitude) + Math.abs(lon - longitude);
+        if (diff < 0.0005) return; // ~50m
+      }
 
-    }, [userData])
+      lastLocationRef.current = {
+        lat: latitude,
+        lon: longitude,
+      };
+
+      updateLocation(latitude, longitude);
+    });
+
+    return () => navigator.geolocation.clearWatch(watcher);
+  }, [userData]);
 }
 
-export default useUpdateLocation
+export default useUpdateLocation;
