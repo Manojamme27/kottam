@@ -475,7 +475,7 @@ function DeliveryBoy() {
                   <p className="font-semibold text-sm text-gray-900 flex items-center gap-1">
                     <FiShoppingBag className="text-[#ff4d2d]" />
                     {currentOrder?.shopOrder?.shop?.name ||
-                      "Assigned Restaurant"}
+                      "Assigned Shop"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
   Customer:{" "}
@@ -604,5 +604,6 @@ function DeliveryBoy() {
 }
 
 export default DeliveryBoy;
+
 
 
