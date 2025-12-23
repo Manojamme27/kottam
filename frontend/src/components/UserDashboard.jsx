@@ -8,7 +8,12 @@ import { useNavigate } from "react-router-dom";
 import ItemModal from "./ItemModal";
 import axios from "axios";
 import { serverUrl } from "../App";
-import { setShopsInMyCity, setItemsInMyCity } from "../redux/userSlice";
+import {
+  setShopsInMyCity,
+  setItemsInMyCity,
+  setSearchItems,
+  setSearchShops
+} from "../redux/userSlice";
 
 // banner images
 import banner1 from "../assets/banner1.png";
@@ -445,5 +450,6 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
