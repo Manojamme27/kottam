@@ -82,7 +82,7 @@ function OwnerDashboard() {
             </h2>
             <p className="text-gray-600 text-sm mb-5">
               Reach thousands of customers daily.
-            </p>
+📦            </p>
             <button
               className="bg-[#ff4d2d] hover:bg-[#e64526] text-white px-8 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition-transform"
               onClick={() => navigate("/create-edit-shop")}
@@ -105,7 +105,7 @@ function OwnerDashboard() {
               </h1>
             </div>
             <p className="text-gray-600 text-sm">
-              Manage menu • Track orders • Grow your restaurant 🍽️
+              Manage items • Track orders • Grow your business 📦
             </p>
           </div>
 
@@ -232,3 +232,4 @@ function StatCard({ title, value, color }) {
     </div>
   );
 }
+
