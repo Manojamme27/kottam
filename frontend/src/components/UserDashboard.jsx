@@ -146,21 +146,25 @@ useEffect(() => {
 
     // shop open/close OR shop edited
     socket.on("shop-updated", () => {
-      triggerQuickRefresh();
-    });
+  if (!userData?.location?.coordinates) return;
+  triggerQuickRefresh();
+});
 
     // owner updated item
     socket.on("item-updated", () => {
+      if (!userData?.location?.coordinates) return;
       triggerQuickRefresh();
     });
 
     // new shop added in your city
     socket.on("shop-added", () => {
+      if (!userData?.location?.coordinates) return;
       triggerQuickRefresh();
     });
 
     // item deleted or disabled
     socket.on("item-deleted", () => {
+      if (!userData?.location?.coordinates) return;
       triggerQuickRefresh();
     });
 
@@ -450,6 +454,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
