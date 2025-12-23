@@ -25,7 +25,12 @@ const uploadBufferToCloudinary = (fileBuffer, fileName) => {
 // CREATE OR EDIT SHOP
 export const createEditShop = async (req, res) => {
     try {
-        const { name, city, state, address, existingImages } = req.body;
+        const { name, city, state, address, existingImages, latitude, longitude } = req.body;
+        if (!latitude || !longitude) {
+            return res.status(400).json({
+                message: "Shop location (latitude & longitude) is required",
+            });
+        }
 
         // Parse old images
         let oldImages = [];
@@ -56,22 +61,37 @@ export const createEditShop = async (req, res) => {
 
         if (!shop) {
             shop = await Shop.create({
-                name,
-                city,
-                state,
-                address,
-                images: finalImages,
-                image: finalImages[0] || "",
-                owner: req.userId,
-            });
+    name,
+    city,
+    state,
+    address,
+    images: finalImages,
+    image: finalImages[0] || "",
+    owner: req.userId,
+
+    // ✅ GEO LOCATION
+    location: {
+        type: "Point",
+        coordinates: [Number(longitude), Number(latitude)],
+    },
+});
+
         } else {
-            shop.name = name;
-            shop.city = city;
-            shop.state = state;
-            shop.address = address;
-            shop.images = finalImages;
-            shop.image = finalImages[0] || shop.image;
-            await shop.save();
+shop.name = name;
+shop.city = city;
+shop.state = state;
+shop.address = address;
+shop.images = finalImages;
+shop.image = finalImages[0] || shop.image;
+
+// ✅ UPDATE LOCATION
+shop.location = {
+    type: "Point",
+    coordinates: [Number(longitude), Number(latitude)],
+};
+
+await shop.save();
+
         }
 
         shop = await shop.populate("owner items");
@@ -167,5 +187,6 @@ export const searchShops = async (req, res) => {
     res.status(500).json({ message: "Failed to search shops" });
   }
 };
+
 
 
