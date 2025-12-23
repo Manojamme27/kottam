@@ -85,7 +85,13 @@ useEffect(() => {
     }
   };
 
+  if (
+  userData?.location?.coordinates &&
+  userData.location.coordinates.length === 2
+) {
   fetchNearbyData();
+}
+
 }, [userData?.location]);
 
 
@@ -105,8 +111,15 @@ useEffect(() => {
         { withCredentials: true }
       );
 
-      dispatch(setShopsInMyCity(res.data));
-      dispatch(setItemsInMyCity(res.data.flatMap(s => s.items || [])));
+      if (Array.isArray(res.data) && res.data.length > 0) {
+  dispatch(setShopsInMyCity(res.data));
+
+  const items = res.data.flatMap(s => s.items || []);
+  if (items.length > 0) {
+    dispatch(setItemsInMyCity(items));
+  }
+}
+
 
     } catch {}
   }, 15000);
@@ -151,15 +164,29 @@ useEffect(() => {
   }, [socket]);
 
   const triggerQuickRefresh = async () => {
-    if (!currentCity) return;
-    try {
-      const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
-        withCredentials: true,
-      });
-      dispatch(setShopsInMyCity(res.data.shops));
-      dispatch(setItemsInMyCity(res.data.items));
-    } catch (err) {}
-  };
+  if (!userData?.location?.coordinates) return;
+
+  const [lng, lat] = userData.location.coordinates;
+
+  try {
+    const res = await axios.get(
+      `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+      { withCredentials: true }
+    );
+
+    if (Array.isArray(res.data) && res.data.length > 0) {
+      dispatch(setShopsInMyCity(res.data));
+
+      const items = res.data.flatMap(s => s.items || []);
+      if (items.length > 0) {
+        dispatch(setItemsInMyCity(items));
+      }
+    }
+  } catch {
+    // ❌ DO NOTHING — keep old UI
+  }
+};
+
 
   // -----------------------------
   // 🔥 CATEGORY FILTER
@@ -414,3 +441,4 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
