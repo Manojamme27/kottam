@@ -196,7 +196,7 @@ function OwnerDashboard() {
               <FaUtensils className="text-[#ff4d2d] w-16 h-16 mx-auto mb-5" />
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Add Items</h2>
               <p className="text-gray-600 text-sm mb-4">
-                Add delicious items to your menu.
+                Add items to your Shop.
               </p>
               <button
                 className="bg-[#ff4d2d] hover:bg-[#e64526] text-white px-8 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition-transform"
@@ -232,4 +232,5 @@ function StatCard({ title, value, color }) {
     </div>
   );
 }
+
 
