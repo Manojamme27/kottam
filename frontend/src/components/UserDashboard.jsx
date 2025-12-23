@@ -26,8 +26,16 @@ import "swiper/css";
 import "swiper/css/pagination";
 
 function UserDashboard() {
-  const { currentCity, shopInMyCity, itemsInMyCity, searchItems,searchShops,  socket } =
-    useSelector((state) => state.user);
+  const {
+  currentCity,
+  shopInMyCity,
+  itemsInMyCity,
+  searchItems,
+  searchShops,
+  socket,
+  userData
+} = useSelector((state) => state.user);
+
 
   const cateScrollRef = useRef();
   const navigate = useNavigate();
@@ -55,63 +63,57 @@ function UserDashboard() {
 // 🔥 AUTO REFRESH (FIRST LOAD)
 // -----------------------------
 useEffect(() => {
-  const refreshData = async () => {
-    if (!currentCity) return;
-    if (!document.cookie.includes("token")) return;
+  if (!userData?.location?.coordinates) return;
 
+  const [lng, lat] = userData.location.coordinates;
+
+  const fetchNearbyData = async () => {
     try {
-      const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
-        withCredentials: true,
-      });
+      const shopsRes = await axios.get(
+        `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+        { withCredentials: true }
+      );
 
-      if (res.status === 200 && res.data) {
-        // only update UI when valid data comes
-        if (Array.isArray(res.data.shops)) {
-          dispatch(setShopsInMyCity(res.data.shops));
-        }
-        if (Array.isArray(res.data.items)) {
-          dispatch(setItemsInMyCity(res.data.items));
-        }
-      }
+      dispatch(setShopsInMyCity(shopsRes.data));
+
+      // collect items from nearby shops
+      const items = shopsRes.data.flatMap(shop => shop.items || []);
+      dispatch(setItemsInMyCity(items));
+
     } catch (err) {
-      console.log("Auto refresh error (ignored):", err?.response?.data);
-      // ❌ DO NOT CLEAR shops/items here
+      console.log("Nearby fetch error:", err);
     }
   };
 
-  refreshData();
-}, [currentCity]);
+  fetchNearbyData();
+}, [userData?.location]);
+
 
 
 // -----------------------------
 // 🔥 BACKGROUND REFRESH every 15 sec
 // -----------------------------
 useEffect(() => {
+  if (!userData?.location?.coordinates) return;
+
+  const [lng, lat] = userData.location.coordinates;
+
   const interval = setInterval(async () => {
-    if (!currentCity) return;
-    if (!document.cookie.includes("token")) return;
-
     try {
-      const res = await axios.get(`${serverUrl}/api/user/location-refresh`, {
-        withCredentials: true,
-      });
+      const res = await axios.get(
+        `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+        { withCredentials: true }
+      );
 
-      if (res.status === 200 && res.data) {
-        if (Array.isArray(res.data.shops)) {
-          dispatch(setShopsInMyCity(res.data.shops));
-        }
-        if (Array.isArray(res.data.items)) {
-          dispatch(setItemsInMyCity(res.data.items));
-        }
-      }
-    } catch (err) {
-      console.log("Background refresh error (ignored)");
-      // ❌ DO NOT CLEAR shops/items here
-    }
+      dispatch(setShopsInMyCity(res.data));
+      dispatch(setItemsInMyCity(res.data.flatMap(s => s.items || [])));
+
+    } catch {}
   }, 15000);
 
   return () => clearInterval(interval);
-}, [currentCity]);
+}, [userData?.location]);
+
 
 
   // -----------------------------
@@ -342,7 +344,8 @@ useEffect(() => {
         {/* Best Shops */}
         <div className="w-full max-w-6xl mx-auto px-3 mt-10 mb-12">
           <h2 className="text-gray-700 text-base sm:text-lg font-semibold uppercase tracking-[0.15em] mb-3 sm:mb-4">
-            Best Shops in {currentCity}
+            Best Shops Near You
+
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -411,6 +414,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
