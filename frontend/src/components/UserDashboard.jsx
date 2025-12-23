@@ -74,11 +74,15 @@ useEffect(() => {
         { withCredentials: true }
       );
 
-      dispatch(setShopsInMyCity(shopsRes.data));
+     if (Array.isArray(shopsRes.data) && shopsRes.data.length > 0) {
+  dispatch(setShopsInMyCity(shopsRes.data));
 
-      // collect items from nearby shops
-      const items = shopsRes.data.flatMap(shop => shop.items || []);
-      dispatch(setItemsInMyCity(items));
+  const items = shopsRes.data.flatMap(shop => shop.items || []);
+  if (items.length > 0) {
+    dispatch(setItemsInMyCity(items));
+  }
+}
+
 
     } catch (err) {
       console.log("Nearby fetch error:", err);
@@ -92,7 +96,7 @@ useEffect(() => {
   fetchNearbyData();
 }
 
-}, [userData?.location]);
+}, [userData?.location?.coordinates]);
 
 
 
@@ -441,4 +445,5 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
