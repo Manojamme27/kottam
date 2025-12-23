@@ -45,6 +45,7 @@ function EditItem() {
         "Cleaning Essentials",
         "Atta Dal & Rice",
         "Tea Coffee & Health Drinks",
+        "Clothing",
     ];
 
     // ✅ Fetch item details
@@ -355,3 +356,4 @@ function EditItem() {
 }
 
 export default EditItem;
+
