@@ -45,6 +45,7 @@ function AddItem() {
         "Atta Dal & Rice",
         "Tea Coffee & Health Drinks",
         "Clothing",
+        "FastFood",
     ];
 
     // 🔹 Handle selecting multiple images
@@ -291,4 +292,5 @@ function AddItem() {
 }
 
 export default AddItem;
+
 
