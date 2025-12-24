@@ -15,6 +15,7 @@ import Cleaning from "./assets/cleaning essentials.webp"
 import Atta from "./assets/Atta&Dal.png"
 import Tea from "./assets/Tea_coffee.png"
 import Clothing from "./assets/clothing.png"
+import FastFood from "./assets/fastfood.png"
 
 export const categories = [
     { "category": "All", "image": image11 },
@@ -34,6 +35,8 @@ export const categories = [
     { "category": "Atta Dal & Rice", "image": Atta },
     { "category": "Tea Coffee & Health Drinks", "image": Tea },
     { "category": "Clothing", "image": Clothing },
+    { "category": "FastFood", "image": FastFood },
 
 ]
+
 
