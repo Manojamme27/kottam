@@ -47,6 +47,7 @@ function AddItem() {
         "Clothing",
         "FastFood",
         "Restaurant",
+        "Bakery",
     ];
 
     // 🔹 Handle selecting multiple images
@@ -293,6 +294,7 @@ function AddItem() {
 }
 
 export default AddItem;
+
 
 
 
