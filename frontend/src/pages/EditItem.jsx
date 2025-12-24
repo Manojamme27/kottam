@@ -46,6 +46,7 @@ function EditItem() {
         "Atta Dal & Rice",
         "Tea Coffee & Health Drinks",
         "Clothing",
+        "FastFood",
     ];
 
     // ✅ Fetch item details
@@ -356,4 +357,5 @@ function EditItem() {
 }
 
 export default EditItem;
+
 
