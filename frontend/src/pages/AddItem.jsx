@@ -46,6 +46,7 @@ function AddItem() {
         "Tea Coffee & Health Drinks",
         "Clothing",
         "FastFood",
+        "Restaurant",
     ];
 
     // 🔹 Handle selecting multiple images
@@ -292,5 +293,6 @@ function AddItem() {
 }
 
 export default AddItem;
+
 
 
