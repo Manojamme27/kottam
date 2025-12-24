@@ -17,6 +17,7 @@ import Tea from "./assets/Tea_coffee.png"
 import Clothing from "./assets/clothing.png"
 import FastFood from "./assets/fastfood.png"
 import Restaurant from "./assets/shop.png"
+import Bakery from "./assets/bakery.png"
 
 export const categories = [
     { "category": "All", "image": image11 },
@@ -38,8 +39,10 @@ export const categories = [
     { "category": "Clothing", "image": Clothing },
     { "category": "FastFood", "image": FastFood },
      { "category": "Restaurant", "image": Restaurant},
+    { "category": "Bakery", "image": Bakery},
 
 ]
+
 
 
 
