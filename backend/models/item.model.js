@@ -23,7 +23,7 @@ const itemSchema = new mongoose.Schema({
             "Personal Care", "Beauty Store", "Stationary",
             "Cold Drinks & Juices", "Pizza & Burger", "Organic & Health",
             "Cleaning Essentials", "Atta Dal & Rice",
-            "Tea Coffee & Health Drinks","Clothing",
+            "Tea Coffee & Health Drinks","Clothing","FastFood",
         ],
         required: true
     },
@@ -47,4 +47,5 @@ const itemSchema = new mongoose.Schema({
 
 const Item = mongoose.model("Item", itemSchema);
 export default Item;
+
 
