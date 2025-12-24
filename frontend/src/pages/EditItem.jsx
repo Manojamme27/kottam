@@ -47,6 +47,7 @@ function EditItem() {
         "Tea Coffee & Health Drinks",
         "Clothing",
         "FastFood",
+        "Restaurant",
     ];
 
     // ✅ Fetch item details
@@ -357,5 +358,6 @@ function EditItem() {
 }
 
 export default EditItem;
+
 
 
