@@ -48,6 +48,7 @@ function EditItem() {
         "Clothing",
         "FastFood",
         "Restaurant",
+        "Bakery",
     ];
 
     // ✅ Fetch item details
@@ -358,6 +359,7 @@ function EditItem() {
 }
 
 export default EditItem;
+
 
 
 
