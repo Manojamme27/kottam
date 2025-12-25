@@ -27,11 +27,14 @@ router.get("/get-by-city/:city", isAuth, getShopByCity);
 router.put("/toggle-status", isAuth, toggleShopStatus);
 router.get("/search-shops",  searchShops);
 router.get("/nearby", isAuth, getNearbyShops);
+router.get("/all", isAuth, getAllShops);
+
 
 
 
 
 export default router;
+
 
 
 
