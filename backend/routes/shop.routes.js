@@ -1,5 +1,5 @@
 import express from "express";
-import { createEditShop, getMyShop, getShopByCity } from "../controllers/shop.controllers.js";
+import { createEditShop, getMyShop, getShopByCity,getAllShops } from "../controllers/shop.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 import { upload } from "../middlewares/multer.js";
 import { toggleShopStatus } from "../controllers/shop.controllers.js";
@@ -34,6 +34,7 @@ router.get("/all", isAuth, getAllShops);
 
 
 export default router;
+
 
 
 
