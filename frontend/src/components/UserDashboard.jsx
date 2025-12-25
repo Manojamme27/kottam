@@ -72,36 +72,44 @@ useEffect(() => {
 
   const [lng, lat] = userData.location.coordinates;
 
-  const fetchNearbyData = async () => {
+  const fetchAllData = async () => {
     try {
-      const shopsRes = await axios.get(
+      // 1️⃣ Fetch ALL shops
+      const allRes = await axios.get(
+        `${serverUrl}/api/shop/all`,
+        { withCredentials: true }
+      );
+
+      // 2️⃣ Fetch NEARBY shops
+      const nearRes = await axios.get(
         `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
         { withCredentials: true }
       );
 
-     if (Array.isArray(shopsRes.data) && shopsRes.data.length > 0) {
-  dispatch(setShopsInMyCity(shopsRes.data));
+      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+      const nearbyShops = Array.isArray(nearRes.data) ? nearRes.data : [];
 
-  const items = shopsRes.data.flatMap(shop => shop.items || []);
-  if (items.length > 0) {
-    dispatch(setItemsInMyCity(items));
-  }
-}
+      // 3️⃣ Mark nearby shops
+      const nearbyIds = new Set(nearbyShops.map(s => s._id));
 
+      const mergedShops = allShops.map(shop => ({
+        ...shop,
+        isNearby: nearbyIds.has(shop._id),
+      }));
+
+      dispatch(setShopsInMyCity(mergedShops));
+
+      // 4️⃣ Collect items
+      const items = mergedShops.flatMap(s => s.items || []);
+      dispatch(setItemsInMyCity(items));
 
     } catch (err) {
-      console.log("Nearby fetch error:", err);
+      console.log("Shop fetch error:", err);
     }
   };
 
-  if (
-  userData?.location?.coordinates &&
-  userData.location.coordinates.length === 2
-) {
-  fetchNearbyData();
-}
-
-}, [userData?.location?.coordinates]);
+  fetchAllData();
+}, [userData?.location]);
 
 
 
@@ -115,22 +123,33 @@ useEffect(() => {
 
   const interval = setInterval(async () => {
     try {
-      const res = await axios.get(
+      const allRes = await axios.get(
+        `${serverUrl}/api/shop/all`,
+        { withCredentials: true }
+      );
+
+      const nearRes = await axios.get(
         `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
         { withCredentials: true }
       );
 
-      if (Array.isArray(res.data) && res.data.length > 0) {
-  dispatch(setShopsInMyCity(res.data));
+      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+      const nearbyIds = new Set(
+        (nearRes.data || []).map(s => s._id)
+      );
 
-  const items = res.data.flatMap(s => s.items || []);
-  if (items.length > 0) {
-    dispatch(setItemsInMyCity(items));
-  }
-}
+      const merged = allShops.map(shop => ({
+        ...shop,
+        isNearby: nearbyIds.has(shop._id),
+      }));
 
-
-    } catch {}
+      if (merged.length > 0) {
+        dispatch(setShopsInMyCity(merged));
+        dispatch(setItemsInMyCity(merged.flatMap(s => s.items || [])));
+      }
+    } catch {
+      // keep old data
+    }
   }, 15000);
 
   return () => clearInterval(interval);
@@ -454,6 +473,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
