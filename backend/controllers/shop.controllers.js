@@ -214,6 +214,20 @@ export const getNearbyShops = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch nearby shops" });
   }
 };
+export const getAllShops = async (req, res) => {
+  try {
+    const shops = await Shop.find({ isOpen: { $ne: false } })
+      .populate("items");
+
+    return res.status(200).json(shops);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch all shops",
+    });
+  }
+};
+
+
 
 
 
