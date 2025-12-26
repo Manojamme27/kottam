@@ -15,12 +15,13 @@ import {
   setSearchShops
 } from "../redux/userSlice";
 
-// banners
+// banner images
 import banner1 from "../assets/banner1.png";
 import banner2 from "../assets/banner2.png";
 import banner3 from "../assets/banner3.png";
 import banner4 from "../assets/banner4.png";
 
+// fix image
 import { getImageUrl } from "../utils/getImageUrl";
 
 // swiper
@@ -31,266 +32,492 @@ import "swiper/css/pagination";
 
 function UserDashboard() {
   const {
-    shopInMyCity,
-    itemsInMyCity,
-    searchItems,
-    searchShops,
-    socket,
-    userData
-  } = useSelector((state) => state.user);
+  currentCity,
+  shopInMyCity,
+  itemsInMyCity,
+  searchItems,
+  searchShops,
+  socket,
+  userData
+} = useSelector((state) => state.user);
 
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+
   const cateScrollRef = useRef();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [updatedItemsList, setUpdatedItemsList] = useState([]);
   const [modalItem, setModalItem] = useState(null);
+
+  // ⭐ NEW state for selected category underline
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  /* =====================================================
-     🔥 INSTANT LOAD FROM CACHE
-  ===================================================== */
+
+
+  
   useEffect(() => {
-    try {
-      const shops = localStorage.getItem("shops_cache");
-      const items = localStorage.getItem("items_cache");
+  const cachedShops = localStorage.getItem("shops_cache");
+  const cachedItems = localStorage.getItem("items_cache");
 
-      if (shops) dispatch(setShopsInMyCity(JSON.parse(shops)));
-      if (items) dispatch(setItemsInMyCity(JSON.parse(items)));
-    } catch {}
-  }, [dispatch]);
+  if (cachedShops) {
+    dispatch(setShopsInMyCity(JSON.parse(cachedShops)));
+  }
 
-  /* =====================================================
-     🔥 FILTER OPEN ITEMS
-  ===================================================== */
+  if (cachedItems) {
+    dispatch(setItemsInMyCity(JSON.parse(cachedItems)));
+  }
+}, [dispatch]);
+
+
+
+  // -----------------------------
+  // 🔥 Filter OPEN SHOPS items
+  // -----------------------------
   useEffect(() => {
     if (!Array.isArray(itemsInMyCity)) {
       setUpdatedItemsList([]);
       return;
     }
 
-    setUpdatedItemsList(
-      itemsInMyCity.filter(item => item.shop?.isOpen !== false)
-    );
+    const filtered = itemsInMyCity.filter((item) => item.shop?.isOpen !== false);
+    setUpdatedItemsList(filtered);
   }, [itemsInMyCity]);
+// -----------------------------
+// 🔥 AUTO REFRESH (FIRST LOAD)
+// -----------------------------
+useEffect(() => {
+  if (!userData?.location?.coordinates) return;
 
-  /* =====================================================
-     🔥 FIRST FULL FETCH (ALL + NEARBY TAG)
-  ===================================================== */
-  useEffect(() => {
-    if (!userData?.location?.coordinates?.length) return;
+  const [lng, lat] = userData.location.coordinates;
 
-    const [lng, lat] = userData.location.coordinates;
-
-    const fetchAll = async () => {
-      try {
-        const [allRes, nearRes] = await Promise.all([
-          axios.get(`${serverUrl}/api/shop/all`, { withCredentials: true }),
-          axios.get(
-            `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-            { withCredentials: true }
-          )
-        ]);
-
-        const allShops = Array.isArray(allRes.data) ? allRes.data : [];
-        const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
-
-        const merged = allShops.map(shop => ({
-          ...shop,
-          isNearby: nearbyIds.has(shop._id),
-        }));
-
-        const items = merged.flatMap(s => s.items || []);
-
-        dispatch(setShopsInMyCity(merged));
-        dispatch(setItemsInMyCity(items));
-
-        localStorage.setItem("shops_cache", JSON.stringify(merged));
-        localStorage.setItem("items_cache", JSON.stringify(items));
-      } catch (e) {
-        console.log("Initial fetch error:", e);
-      }
-    };
-
-    fetchAll();
-  }, [userData?.location, dispatch]);
-
-  /* =====================================================
-     🔥 BACKGROUND REFRESH (NEARBY ONLY – SAFE)
-  ===================================================== */
-  useEffect(() => {
-    if (!userData?.location?.coordinates?.length) return;
-
-    const [lng, lat] = userData.location.coordinates;
-
-    const interval = setInterval(async () => {
-      try {
-        const nearRes = await axios.get(
-          `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-          { withCredentials: true }
-        );
-
-        const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
-
-        dispatch(setShopsInMyCity(prev =>
-          Array.isArray(prev)
-            ? prev.map(shop => ({
-                ...shop,
-                isNearby: nearbyIds.has(shop._id),
-              }))
-            : prev
-        ));
-      } catch {}
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, [userData?.location, dispatch]);
-
-  /* =====================================================
-     🔥 SAFE SOCKET REFRESH
-  ===================================================== */
-  const triggerQuickRefresh = async () => {
-    if (!userData?.location?.coordinates?.length) return;
-
-    const [lng, lat] = userData.location.coordinates;
-
+  const fetchAllData = async () => {
     try {
+      // 1️⃣ Fetch ALL shops
+      const allRes = await axios.get(
+        `${serverUrl}/api/shop/all`,
+        { withCredentials: true }
+      );
+
+      // 2️⃣ Fetch NEARBY shops
       const nearRes = await axios.get(
         `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
         { withCredentials: true }
       );
 
-      const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
+      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+      const nearbyShops = Array.isArray(nearRes.data) ? nearRes.data : [];
 
-      dispatch(setShopsInMyCity(prev =>
-        Array.isArray(prev)
-          ? prev.map(shop => ({
-              ...shop,
-              isNearby: nearbyIds.has(shop._id),
-            }))
-          : prev
-      ));
-    } catch {}
+      // 3️⃣ Mark nearby shops
+      const nearbyIds = new Set(nearbyShops.map(s => s._id));
+
+      const mergedShops = allShops.map(shop => ({
+        ...shop,
+        isNearby: nearbyIds.has(shop._id),
+      }));
+
+      dispatch(setShopsInMyCity(mergedShops));
+
+      // 4️⃣ Collect items
+      const items = mergedShops.flatMap(s => s.items || []);
+      dispatch(setItemsInMyCity(items));
+      localStorage.setItem("shops_cache", JSON.stringify(mergedShops));
+localStorage.setItem("items_cache", JSON.stringify(items));
+
+
+    } catch (err) {
+      console.log("Shop fetch error:", err);
+    }
   };
+  
 
+
+  fetchAllData();
+}, [userData?.location]);
+
+
+
+// -----------------------------
+// 🔥 BACKGROUND REFRESH every 15 sec
+// -----------------------------
+useEffect(() => {
+  if (!userData?.location?.coordinates) return;
+
+  const [lng, lat] = userData.location.coordinates;
+
+  const interval = setInterval(async () => {
+    try {
+      const nearRes = await axios.get(
+  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+  { withCredentials: true }
+);
+
+const nearbyIds = new Set(nearRes.data.map(s => s._id));
+
+dispatch(setShopsInMyCity(prev =>
+  prev.map(shop => ({
+    ...shop,
+    isNearby: nearbyIds.has(shop._id),
+  }))
+));
+
+
+      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+      const nearbyIds = new Set(
+        (nearRes.data || []).map(s => s._id)
+      );
+
+      const merged = allShops.map(shop => ({
+        ...shop,
+        isNearby: nearbyIds.has(shop._id),
+      }));
+
+      if (merged.length > 0) {
+        dispatch(setShopsInMyCity(merged));
+
+const items = merged.flatMap(s => s.items || []);
+dispatch(setItemsInMyCity(items));
+
+localStorage.setItem("shops_cache", JSON.stringify(merged));
+localStorage.setItem("items_cache", JSON.stringify(items));
+;
+      }
+    } catch {
+      // keep old data
+    }
+  }, 15000);
+
+  return () => clearInterval(interval);
+}, [userData?.location]);
+
+
+
+  // -----------------------------
+  // 🔥 REAL-TIME SOCKET UPDATES
+  // -----------------------------
   useEffect(() => {
-    if (!socket || !userData?.location?.coordinates) return;
+    if (!socket) return;
 
-    socket.on("shop-updated", triggerQuickRefresh);
-    socket.on("item-updated", triggerQuickRefresh);
-    socket.on("shop-added", triggerQuickRefresh);
-    socket.on("item-deleted", triggerQuickRefresh);
+    // shop open/close OR shop edited
+    socket.on("shop-updated", () => {
+  if (!userData?.location?.coordinates) return;
+  triggerQuickRefresh();
+});
+
+    // owner updated item
+    socket.on("item-updated", () => {
+      if (!userData?.location?.coordinates) return;
+      triggerQuickRefresh();
+    });
+
+    // new shop added in your city
+    socket.on("shop-added", () => {
+      if (!userData?.location?.coordinates) return;
+      triggerQuickRefresh();
+    });
+
+    // item deleted or disabled
+    socket.on("item-deleted", () => {
+      if (!userData?.location?.coordinates) return;
+      triggerQuickRefresh();
+    });
 
     return () => {
-      socket.off("shop-updated", triggerQuickRefresh);
-      socket.off("item-updated", triggerQuickRefresh);
-      socket.off("shop-added", triggerQuickRefresh);
-      socket.off("item-deleted", triggerQuickRefresh);
+      socket.off("shop-updated");
+      socket.off("item-updated");
+      socket.off("shop-added");
+      socket.off("item-deleted");
     };
-  }, [socket, userData?.location]);
+  }, [socket]);
 
-  /* =====================================================
-     🔥 CATEGORY FILTER
-  ===================================================== */
+  const triggerQuickRefresh = async () => {
+  if (!userData?.location?.coordinates) return;
+
+  const [lng, lat] = userData.location.coordinates;
+
+  try {
+    const nearRes = await axios.get(
+  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+  { withCredentials: true }
+);
+
+const nearbyIds = new Set(nearRes.data.map(s => s._id));
+
+dispatch(setShopsInMyCity(prev =>
+  prev.map(shop => ({
+    ...shop,
+    isNearby: nearbyIds.has(shop._id),
+  }))
+));
+
+
+    const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+    const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
+
+    const merged = allShops.map(shop => ({
+      ...shop,
+      isNearby: nearbyIds.has(shop._id),
+    }));
+
+    const items = merged.flatMap(s => s.items || []);
+
+    dispatch(setShopsInMyCity(merged));
+    dispatch(setItemsInMyCity(items));
+
+  } catch {
+    // DO NOTHING
+  }
+};
+
+
+
+  // -----------------------------
+  // 🔥 CATEGORY FILTER
+  // -----------------------------
   const handleFilterByCategory = (category) => {
     if (!Array.isArray(itemsInMyCity)) return;
 
+    // open shop items only
     const openItems = itemsInMyCity.filter(
-      item => item.shop?.isOpen !== false
+      (item) => item.shop?.isOpen !== false
     );
 
-    setUpdatedItemsList(
-      category === "All"
-        ? openItems
-        : openItems.filter(i => i.category === category)
-    );
+    if (!category || category === "All") {
+      setUpdatedItemsList(openItems);
+    } else {
+      const filteredList = openItems.filter((i) => i.category === category);
+      setUpdatedItemsList(filteredList);
+    }
   };
 
-  /* =====================================================
-     🔥 UI (UNCHANGED)
-  ===================================================== */
   return (
     <div className="w-screen min-h-screen flex flex-col bg-[#fff9f6]">
       <Nav />
 
       <div className="relative">
-        {/* BANNERS */}
-        <div className="w-full flex justify-center relative z-0 -mt-4">
+        {/* SLIDER BANNERS */}
+        <div className="w-full flex justify-center relative z-0 -mt-3.5 sm:-mt-4 md:-mt-[18px] lg:-mt-5">
           <div className="w-full max-w-6xl">
             <Swiper
               modules={[Autoplay, Pagination]}
-              loop
-              autoplay={{ delay: 2500 }}
-              pagination={{ clickable: true }}
+              spaceBetween={0}
+              slidesPerView={1}
+              loop={true}
+              autoplay={{
+                delay: 2500,
+                disableOnInteraction: false,
+              }}
+              pagination={{
+                clickable: true,
+              }}
+              className="rounded-none sm:rounded-2xl overflow-hidden"
             >
-              {[banner1, banner2, banner3, banner4].map((b, i) => (
+              {[banner1, banner2, banner3, banner4].map((banner, i) => (
                 <SwiperSlide key={i}>
-                  <img src={b} className="w-full h-64 object-cover" />
+                  <img
+                    src={banner}
+                    alt={`Banner ${i + 1}`}
+                    className="w-full h-60 sm:h-[230px] md:h-[300px] lg:h-[330px] object-cover"
+                  />
                 </SwiperSlide>
               ))}
             </Swiper>
           </div>
         </div>
 
-        {/* CATEGORIES */}
-        <div className="w-full max-w-6xl mx-auto px-3 mt-4">
-          <div ref={cateScrollRef} className="flex gap-4 overflow-x-auto">
-            {categories.map((c, i) => (
-              <CategoryCardCircle
-                key={i}
-                name={c.category}
-                image={c.image}
-                isSelected={selectedCategory === c.category}
-                onClick={() => {
-                  setSelectedCategory(c.category);
-                  handleFilterByCategory(c.category);
-                }}
-              />
-            ))}
-          </div>
-        </div>
+        {/* SEARCH RESULTS */}
+        {searchItems && searchItems.length > 0 && (
+          <div className="search-results w-full max-w-6xl mx-auto bg-white shadow-md rounded-2xl mt-4 p-5">
 
-        {/* RECOMMENDED */}
-        <div className="w-full max-w-6xl mx-auto px-3 mt-6">
-          <div className="flex gap-3 overflow-x-auto">
-            {updatedItemsList.map(item => (
-              <FoodCardCompact
-                key={item._id}
-                data={item}
-                onClick={() => {
-                  dispatch(setSearchItems(null));
-                  dispatch(setSearchShops(null));
-                  setModalItem(item);
-                }}
-              />
-            ))}
-          </div>
-        </div>
+            <h1 className="text-[#2b2b2b] text-lg sm:text-xl font-semibold uppercase tracking-widest border-b border-gray-200 pb-2">
+              SEARCH RESULTS
+            </h1>
 
-        {/* SHOPS */}
-        <div className="w-full max-w-6xl mx-auto px-3 mt-10 mb-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {shopInMyCity?.filter(s => s.isOpen !== false).map(shop => (
             <div
-              key={shop._id}
-              onClick={() => navigate(`/shop/${shop._id}`)}
-              className="cursor-pointer bg-white rounded-xl shadow"
+              className="grid gap-4 sm:gap-5"
+              style={{
+                gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+              }}
             >
-              <Swiper autoplay loop>
-                {(shop.images?.length ? shop.images : [shop.image]).map((img, i) => (
-                  <SwiperSlide key={i}>
-                    <img src={getImageUrl(img)} className="w-full h-56 object-cover" />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-              <div className="p-4 font-semibold">{shop.name}</div>
+              {searchItems.map((item) => (
+                <FoodCardCompact
+  key={item._id}
+  data={item}
+  onClick={(item) => {
+    setModalItem(item);
+  }}
+/>
+
+              ))}
             </div>
-          ))}
+          </div>
+        )}
+        {searchShops && searchShops.length > 0 && (
+  <div className="w-full max-w-6xl mx-auto bg-white shadow-md rounded-2xl mt-4 p-5">
+    <h1 className="text-[#2b2b2b] text-lg sm:text-xl font-semibold uppercase tracking-widest border-b border-gray-200 pb-2">
+      SHOPS
+    </h1>
+
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+      {searchShops.map((shop) => (
+        <div
+  key={shop._id}
+  onClick={() => navigate(`/shop/${shop._id}`)}
+  className="shop-card cursor-pointer bg-white rounded-xl border p-3 hover:shadow-md transition"
+>
+
+          <img
+            src={shop.images?.[0] || shop.image}
+            alt={shop.name}
+            className="w-full h-32 object-cover rounded-lg"
+          />
+          <p className="mt-2 font-semibold text-gray-800 truncate">
+            {shop.name}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+
+        {/* CATEGORIES */}
+        <div className="w-full max-w-6xl mx-auto px-2.5 sticky top-[72px] z-40 bg-[#fff9f6] py-3">
+          <h2 className="text-gray-700 text-base sm:text-lg font-semibold uppercase tracking-[0.15em] mb-3 sm:mb-4">
+            Categories
+          </h2>
+
+          <div
+            ref={cateScrollRef}
+            className="flex gap-4 overflow-x-auto pb-2 no-scrollbar"
+          >
+            {categories.map((cate, idx) => (
+              <CategoryCardCircle
+                key={idx}
+                name={cate.category}
+                image={cate.image}
+                isSelected={selectedCategory === cate.category}
+                onClick={() => {
+                  setSelectedCategory(cate.category);
+                  handleFilterByCategory(cate.category);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Recommended Items */}
+        <div className="w-full max-w-6xl mx-auto px-3 mt-6">
+          <h2 className="text-gray-700 text-base sm:text-lg font-semibold uppercase tracking-[0.15em] mb-3 sm:mb-4">
+            Recommended For You
+          </h2>
+
+          <div className="relative">
+            <div
+              className="overflow-x-auto no-scrollbar pb-4"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridAutoFlow: "column",
+                  gridTemplateRows: "repeat(2, auto)",
+                  gridAutoColumns: "minmax(140px, 170px)",
+                  gap: "10px 10px",
+                  padding: "3px",
+                  alignItems: "start",
+                }}
+              >
+                {Array.isArray(updatedItemsList) &&
+                  updatedItemsList
+                    .filter((item) => item.shop?.isOpen !== false)
+                    .map((item, idx) => (
+                      <div key={item._id || idx} className="flex justify-center">
+                        <div className="w-full max-w-[170px]">
+                          <FoodCardCompact
+  data={item}
+  onClick={(item) => {
+    dispatch(setSearchItems(null));
+    dispatch(setSearchShops(null));
+    setModalItem(item);
+  }}
+/>
+
+                        </div>
+                      </div>
+                    ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Best Shops */}
+        <div className="w-full max-w-6xl mx-auto px-3 mt-10 mb-12">
+          <h2 className="text-gray-700 text-base sm:text-lg font-semibold uppercase tracking-[0.15em] mb-3 sm:mb-4">
+            Best Shops Near You
+
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {shopInMyCity
+              ?.filter((shop) => shop.isOpen !== false)
+              .map((shop) => (
+                <div
+                  key={shop._id}
+                  onClick={() => navigate(`/shop/${shop._id}`)}
+                  className="cursor-pointer bg-white rounded-2xl border border-[#ff4d2d]/20 shadow-sm hover:shadow-md transition-transform duration-300 hover:scale-[1.01] overflow-hidden"
+                >
+                  <div className="relative w-full h-52 sm:h-60 md:h-64">
+                    <Swiper
+                      modules={[Autoplay, Pagination]}
+                      loop={true}
+                      autoplay={{ delay: 2000 }}
+                      pagination={{ clickable: true }}
+                      className="w-full h-full"
+                    >
+                      {(shop.images?.length ? shop.images : [shop.image]).map(
+                        (img, idx) => (
+                          <SwiperSlide key={idx}>
+                            <img
+                              src={getImageUrl(img)}
+                              alt={`${shop.name}-${idx}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </SwiperSlide>
+                        )
+                      )}
+                    </Swiper>
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="text-gray-900 font-semibold text-lg truncate">
+                      {shop.name}
+                    </h3>
+
+                    <div className="mt-3 text-sm font-medium text-gray-600">
+                      Customer Favourite 🌟
+                    </div>
+
+                    <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-0.5 rounded-lg">
+                      ★ 4.{Math.floor(Math.random() * 5)}
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      By {Math.floor(Math.random() * 9) + 1}.9k+
+                    </span>
+                  </div>
+                </div>
+              ))}
+          </div>
         </div>
       </div>
 
       {modalItem && (
-        <ItemModal item={modalItem} onClose={() => setModalItem(null)} />
-      )}
+  <ItemModal
+  item={modalItem}
+  onClose={() => setModalItem(null)}
+/>
+
+)}
+
     </div>
   );
 }
