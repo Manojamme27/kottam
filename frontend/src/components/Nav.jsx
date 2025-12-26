@@ -107,7 +107,8 @@ function Nav() {
     const handleSearchItems = async () => {
         try {
             const result = await axios.get(
-                `${serverUrl}/api/item/search-items?query=${query}&city=${currentCity}`,
+                `${serverUrl}/api/item/search-items?query=${query}
+`,
                 { withCredentials: true }
             );
             dispatch(setSearchItems(result.data));
@@ -119,7 +120,7 @@ function Nav() {
 const handleSearchShops = async () => {
     try {
         const result = await axios.get(
-            `${serverUrl}/api/shop/search-shops?query=${query}&city=${currentCity}`,
+            `${serverUrl}/api/shop/search-shops?query=${query}`,
             { withCredentials: true }
         );
         dispatch(setSearchShops(result.data));
@@ -524,6 +525,7 @@ const handleSearchShops = async () => {
 }
 
 export default Nav;
+
 
 
 
