@@ -48,6 +48,8 @@ function UserDashboard() {
   const [updatedItemsList, setUpdatedItemsList] = useState([]);
   const [modalItem, setModalItem] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("All");
+
 
   /* ===========================
      🔥 LOAD FROM CACHE (INSTANT)
@@ -63,18 +65,20 @@ function UserDashboard() {
   /* ===========================
      🔥 FILTER OPEN ITEMS
   ============================ */
-  useEffect(() => {
-  if (!Array.isArray(shopInMyCity)) {
-    setUpdatedItemsList([]);
-    return;
-  }
-
-  const allItems = shopInMyCity
+ useEffect(() => {
+  const allItems = safeShops
     .filter(shop => shop?.isOpen !== false)
     .flatMap(shop => Array.isArray(shop.items) ? shop.items : []);
 
-  setUpdatedItemsList(allItems);
-}, [shopInMyCity]);
+  if (activeCategory === "All") {
+    setUpdatedItemsList(allItems);
+  } else {
+    setUpdatedItemsList(
+      allItems.filter(item => item.category === activeCategory)
+    );
+  }
+}, [safeShops, activeCategory]);
+
 
 
   /* ===========================
@@ -196,16 +200,17 @@ function UserDashboard() {
   // 🔥 CATEGORY FILTER
   // -----------------------------
   const handleFilterByCategory = (category) => {
-  if (!Array.isArray(itemsInMyCity)) return;
+  setActiveCategory(category);
 
-  if (!category || category === "All") {
-    setUpdatedItemsList(itemsInMyCity);
+  if (category === "All") {
+    setUpdatedItemsList(safeItems);
   } else {
     setUpdatedItemsList(
-      itemsInMyCity.filter(i => i.category === category)
+      safeItems.filter(item => item.category === category)
     );
   }
 };
+
 
 
   return (
@@ -440,6 +445,7 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
 
