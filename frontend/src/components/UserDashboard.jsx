@@ -347,22 +347,21 @@ function UserDashboard() {
                 }}
               >
                 {Array.isArray(updatedItemsList) &&
-                  updatedItemsList.map(...)
-                    .map((item, idx) => (
-                      <div key={item._id || idx} className="flex justify-center">
-                        <div className="w-full max-w-[170px]">
-                          <FoodCardCompact
-  data={item}
-  onClick={(item) => {
-    dispatch(setSearchItems(null));
-    dispatch(setSearchShops(null));
-    setModalItem(item);
-  }}
-/>
+  updatedItemsList.map((item, idx) => (
+    <div key={item._id || idx} className="flex justify-center">
+      <div className="w-full max-w-[170px]">
+        <FoodCardCompact
+          data={item}
+          onClick={(item) => {
+            dispatch(setSearchItems(null));
+            dispatch(setSearchShops(null));
+            setModalItem(item);
+          }}
+        />
+      </div>
+    </div>
+  ))}
 
-                        </div>
-                      </div>
-                    ))}
               </div>
             </div>
           </div>
@@ -441,6 +440,7 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
 
