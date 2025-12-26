@@ -197,7 +197,10 @@ export const getNearbyShops = async (req, res) => {
 export const getAllShops = async (req, res) => {
   try {
     const shops = await Shop.find({ isOpen: { $ne: false } })
-      .populate("items");
+      .populate({
+  path: "items",
+  match: { isAvailable: { $ne: false } }
+})
 
     return res.status(200).json(shops);
   } catch (error) {
@@ -206,6 +209,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
