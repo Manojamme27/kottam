@@ -64,10 +64,18 @@ function UserDashboard() {
      🔥 FILTER OPEN ITEMS
   ============================ */
   useEffect(() => {
-    setUpdatedItemsList(
-      safeItems.filter((item) => item.shop?.isOpen !== false)
-    );
-  }, [safeItems]);
+  if (!Array.isArray(shopInMyCity)) {
+    setUpdatedItemsList([]);
+    return;
+  }
+
+  const allItems = shopInMyCity
+    .filter(shop => shop?.isOpen !== false)
+    .flatMap(shop => Array.isArray(shop.items) ? shop.items : []);
+
+  setUpdatedItemsList(allItems);
+}, [shopInMyCity]);
+
 
   /* ===========================
      🔥 FIRST FETCH (ALL + NEARBY)
@@ -437,6 +445,7 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
 
