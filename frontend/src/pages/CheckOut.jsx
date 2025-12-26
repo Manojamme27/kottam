@@ -118,12 +118,27 @@ function CheckOut() {
       const result = await axios.get(
         `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`
       );
-      const addr =
-        result?.data?.results[0].address_line2 ||
-        result?.data?.results[0].address_line1 ||
-        "Unknown location";
-      dispatch(setAddress(addr));
-      setAddressInput(addr);
+      const place = result?.data?.results?.[0];
+
+if (!place) return;
+
+const fullAddress = [
+  place.house_number && place.street
+    ? `${place.house_number} ${place.street}`
+    : place.street,
+  place.suburb,
+  place.neighbourhood,
+  place.district,
+  place.city,
+  place.state,
+  place.postcode
+]
+  .filter(Boolean)
+  .join(", ");
+
+dispatch(setAddress(fullAddress));
+setAddressInput(fullAddress);
+
     } catch (error) {
       console.log("Reverse geocoding failed:", error);
     }
@@ -411,6 +426,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
