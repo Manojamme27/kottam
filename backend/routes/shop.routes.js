@@ -1,41 +1,36 @@
 import express from "express";
-import { createEditShop, getMyShop, getShopByCity,getAllShops } from "../controllers/shop.controllers.js";
+import {
+  createEditShop,
+  getMyShop,
+  getAllShops,
+  toggleShopStatus,
+  searchShops,
+  getNearbyShops
+} from "../controllers/shop.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 import { upload } from "../middlewares/multer.js";
-import { toggleShopStatus } from "../controllers/shop.controllers.js";
-import { searchShops } from "../controllers/shop.controllers.js";
-import { getNearbyShops } from "../controllers/shop.controllers.js";
-
-
-
-
-
-
 
 const router = express.Router();
 
-// ⭐ MULTIPLE IMAGES → use `upload.array("images")`
+// CREATE / EDIT SHOP
 router.post("/create-edit", isAuth, upload.array("images"), createEditShop);
 
-// GET MY SHOP
+// GET LOGGED-IN OWNER SHOP
 router.get("/get-my", isAuth, getMyShop);
 
-// GET SHOPS BY CITY
-router.get("/get-by-city/:city", isAuth, getShopByCity);
+// ❌ DISABLED – city based filtering breaks global view
+// router.get("/get-by-city/:city", isAuth, getShopByCity);
 
-// TOGGLE SHOP OPEN/CLOSE
+// TOGGLE SHOP STATUS
 router.put("/toggle-status", isAuth, toggleShopStatus);
-router.get("/search-shops",  searchShops);
+
+// GLOBAL SEARCH (NO CITY)
+router.get("/search-shops", searchShops);
+
+// NEARBY (ONLY FOR TAGGING / BADGE)
 router.get("/nearby", isAuth, getNearbyShops);
+
+// ✅ GLOBAL SHOPS + ITEMS (MAIN SOURCE)
 router.get("/all", isAuth, getAllShops);
 
-
-
-
-
 export default router;
-
-
-
-
-
