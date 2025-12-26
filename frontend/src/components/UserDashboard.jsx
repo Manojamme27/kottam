@@ -73,43 +73,35 @@ function UserDashboard() {
      🔥 FIRST FETCH (ALL + NEARBY)
   ============================ */
   useEffect(() => {
-    if (!userData?.location?.coordinates) return;
+  const fetchAllData = async () => {
+    try {
+      const allRes = await axios.get(
+        `${serverUrl}/api/shop/all`,
+        { withCredentials: true }
+      );
 
-    const [lng, lat] = userData.location.coordinates;
+      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
 
-    const fetchAllData = async () => {
-      try {
-        const allRes = await axios.get(`${serverUrl}/api/shop/all`, {
-          withCredentials: true,
-        });
+      // 👇 NO LOCATION FILTER HERE
+      const shopsWithFlag = allShops.map(shop => ({
+        ...shop,
+        isNearby: false, // default
+      }));
 
-        const nearRes = await axios.get(
-          `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-          { withCredentials: true }
-        );
+      const items = shopsWithFlag.flatMap(s => s.items || []);
 
-        const allShops = Array.isArray(allRes.data) ? allRes.data : [];
-        const nearbyIds = new Set((nearRes.data || []).map((s) => s._id));
+      dispatch(setShopsInMyCity(shopsWithFlag));
+      dispatch(setItemsInMyCity(items));
 
-        const mergedShops = allShops.map((shop) => ({
-          ...shop,
-          isNearby: nearbyIds.has(shop._id),
-        }));
+      localStorage.setItem("shops_cache", JSON.stringify(shopsWithFlag));
+      localStorage.setItem("items_cache", JSON.stringify(items));
+    } catch (e) {
+      console.log("Fetch all shops failed", e);
+    }
+  };
 
-        const items = mergedShops.flatMap((s) => s.items || []);
-
-        dispatch(setShopsInMyCity(mergedShops));
-        dispatch(setItemsInMyCity(items));
-
-        localStorage.setItem("shops_cache", JSON.stringify(mergedShops));
-        localStorage.setItem("items_cache", JSON.stringify(items));
-      } catch (e) {
-        console.log("Initial fetch failed:", e);
-      }
-    };
-
-    fetchAllData();
-  }, [userData?.location, dispatch]);
+  fetchAllData();
+}, [dispatch]);
 
   /* ===========================
      🔥 BACKGROUND NEARBY REFRESH
@@ -445,5 +437,6 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
