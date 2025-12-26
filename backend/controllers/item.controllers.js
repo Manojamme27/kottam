@@ -224,41 +224,26 @@ export const getItemsByShop = async (req, res) => {
 };
 
 
-// ✅ Search items (only OPEN shops)
 export const searchItems = async (req, res) => {
-    try {
-        const { query, city } = req.query;
-        if (!query || !city) {
-            return res.status(200).json([]);
-        }
+  try {
+    const { query } = req.query;
 
-        const shops = await Shop.find({
-            city: { $regex: new RegExp(`^${city}$`, "i") },
-            isOpen: true
-        });
-
-        if (!shops.length) {
-            return res.status(200).json([]);
-        }
-
-        const shopIds = shops.map(s => s._id);
-
-        const items = await Item.find({
-            shop: { $in: shopIds },
-            $or: [
-                { name: { $regex: query, $options: "i" } },
-                { category: { $regex: query, $options: "i" } }
-            ]
-        }).populate("shop", "name image isOpen");
-
-        const filtered = items.filter(i => i.shop?.isOpen === true);
-
-        return res.status(200).json(filtered);
-
-    } catch (error) {
-        return res.status(500).json({ message: `search item error ${error}` });
+    if (!query) {
+      return res.status(400).json({ message: "query required" });
     }
+
+    const items = await Item.find({
+      name: { $regex: query, $options: "i" },
+      isAvailable: { $ne: false },
+    }).populate("shop", "name isOpen");
+
+    res.status(200).json(items);
+  } catch (error) {
+    console.error("searchItems error:", error);
+    res.status(500).json({ message: "Failed to search items" });
+  }
 };
+
 
 
 // ✅ Item rating
@@ -291,4 +276,5 @@ export const rating = async (req, res) => {
         return res.status(500).json({ message: `rating error ${error}` });
     }
 };
+
 
