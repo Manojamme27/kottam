@@ -18,22 +18,26 @@ const savedTotal = savedCart.reduce(
 const userSlice = createSlice({
   name: "user",
   initialState: {
-    userData: savedUser || null,
-    currentCity: null,
-    currentState: null,
-    currentAddress: null,
-    shopInMyCity: null,
-    itemsInMyCity: null,
-shopInMyCity: cachedShops,
-  itemsInMyCity: cachedItems,
-    cartItems: savedCart,
-    totalAmount: savedTotal,
+  userData: savedUser || null,
 
-    myOrders: [],
-    searchItems: null,
-    searchShops: null, 
-    socket: null,
-  },
+  currentCity: null,
+  currentState: null,
+  currentAddress: null,
+
+  shopInMyCity: cachedShops,     // NOW MEANS: ALL SHOPS
+  itemsInMyCity: cachedItems,    // NOW MEANS: ALL ITEMS
+
+  cartItems: savedCart,
+  totalAmount: savedTotal,
+
+  myOrders: [],
+
+  searchItems: [],               // ✅ SAFE
+  searchShops: [],               // ✅ SAFE
+
+  socket: null,
+},
+
 
   reducers: {
     // ======================================================
@@ -240,15 +244,22 @@ setItemsInMyCity: (state, action) => {
     },
 
     setSearchItems: (state, action) => {
-      state.searchItems = action.payload;
-    },
-    setSearchShops: (state, action) => {
-  state.searchShops = action.payload;
+  state.searchItems = Array.isArray(action.payload)
+    ? action.payload
+    : [];
 },
-    clearSearchResults: (state) => {
-  state.searchItems = null;
-  state.searchShops = null;
+
+setSearchShops: (state, action) => {
+  state.searchShops = Array.isArray(action.payload)
+    ? action.payload
+    : [];
 },
+
+clearSearchResults: (state) => {
+  state.searchItems = [];
+  state.searchShops = [];
+},
+
 
 
   },
@@ -277,6 +288,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
