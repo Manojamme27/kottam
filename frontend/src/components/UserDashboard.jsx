@@ -154,32 +154,14 @@ useEffect(() => {
 const nearbyIds = new Set(nearRes.data.map(s => s._id));
 
 dispatch(setShopsInMyCity(prev =>
-  prev.map(shop => ({
-    ...shop,
-    isNearby: nearbyIds.has(shop._id),
-  }))
-));
-
-
-      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
-      const nearbyIds = new Set(
-        (nearRes.data || []).map(s => s._id)
-      );
-
-      const merged = allShops.map(shop => ({
+  Array.isArray(prev)
+    ? prev.map(shop => ({
         ...shop,
         isNearby: nearbyIds.has(shop._id),
-      }));
+      }))
+    : prev
+));
 
-      if (merged.length > 0) {
-        dispatch(setShopsInMyCity(merged));
-
-const items = merged.flatMap(s => s.items || []);
-dispatch(setItemsInMyCity(items));
-
-localStorage.setItem("shops_cache", JSON.stringify(merged));
-localStorage.setItem("items_cache", JSON.stringify(items));
-;
       }
     } catch {
       // keep old data
@@ -227,44 +209,30 @@ localStorage.setItem("items_cache", JSON.stringify(items));
       socket.off("shop-added");
       socket.off("item-deleted");
     };
-  }, [socket]);
+  }, [socket, userData?.location]);
 
-  const triggerQuickRefresh = async () => {
+ const triggerQuickRefresh = async () => {
   if (!userData?.location?.coordinates) return;
+  if (!Array.isArray(shopInMyCity)) return;
 
   const [lng, lat] = userData.location.coordinates;
 
   try {
     const nearRes = await axios.get(
-  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-  { withCredentials: true }
-);
+      `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+      { withCredentials: true }
+    );
 
-const nearbyIds = new Set(nearRes.data.map(s => s._id));
-
-dispatch(setShopsInMyCity(prev =>
-  prev.map(shop => ({
-    ...shop,
-    isNearby: nearbyIds.has(shop._id),
-  }))
-));
-
-
-    const allShops = Array.isArray(allRes.data) ? allRes.data : [];
     const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
 
-    const merged = allShops.map(shop => ({
+    const updated = shopInMyCity.map(shop => ({
       ...shop,
       isNearby: nearbyIds.has(shop._id),
     }));
 
-    const items = merged.flatMap(s => s.items || []);
-
-    dispatch(setShopsInMyCity(merged));
-    dispatch(setItemsInMyCity(items));
-
-  } catch {
-    // DO NOTHING
+    dispatch(setShopsInMyCity(updated));
+  } catch (e) {
+    console.log("Quick refresh skipped");
   }
 };
 
