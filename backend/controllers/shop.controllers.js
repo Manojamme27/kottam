@@ -198,9 +198,12 @@ export const getAllShops = async (req, res) => {
   try {
     const shops = await Shop.find({ isOpen: { $ne: false } })
       .populate({
-  path: "items",
-  match: { isAvailable: { $ne: false } }
-})
+        path: "items",
+        populate: {
+          path: "shop",
+          select: "name",
+        },
+      });
 
     return res.status(200).json(shops);
   } catch (error) {
