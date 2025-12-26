@@ -117,13 +117,15 @@ useEffect(() => {
       // 4️⃣ Collect items
       const items = mergedShops.flatMap(s => s.items || []);
       dispatch(setItemsInMyCity(items));
+      localStorage.setItem("shops_cache", JSON.stringify(mergedShops));
+localStorage.setItem("items_cache", JSON.stringify(items));
+
 
     } catch (err) {
       console.log("Shop fetch error:", err);
     }
   };
-  localStorage.setItem("shops_cache", JSON.stringify(mergedShops));
-localStorage.setItem("items_cache", JSON.stringify(items));
+  
 
 
   fetchAllData();
@@ -225,26 +227,33 @@ localStorage.setItem("items_cache", JSON.stringify(items));
   const [lng, lat] = userData.location.coordinates;
 
   try {
-    const res = await axios.get(
+    const allRes = await axios.get(`${serverUrl}/api/shop/all`, { withCredentials: true });
+    const nearRes = await axios.get(
       `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
       { withCredentials: true }
     );
 
-    if (Array.isArray(res.data) && res.data.length > 0) {
-      dispatch(setShopsInMyCity(res.data));
+    const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+    const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
 
-const items = res.data.flatMap(s => s.items || []);
-dispatch(setItemsInMyCity(items));
+    const merged = allShops.map(shop => ({
+      ...shop,
+      isNearby: nearbyIds.has(shop._id),
+    }));
 
-localStorage.setItem("shops_cache", JSON.stringify(res.data));
-localStorage.setItem("items_cache", JSON.stringify(items));
+    const items = merged.flatMap(s => s.items || []);
 
-      }
-    }
+    dispatch(setShopsInMyCity(merged));
+    dispatch(setItemsInMyCity(items));
+
+    localStorage.setItem("shops_cache", JSON.stringify(merged));
+    localStorage.setItem("items_cache", JSON.stringify(items));
+
   } catch {
-    // ❌ DO NOTHING — keep old UI
+    // DO NOTHING
   }
 };
+
 
 
   // -----------------------------
@@ -500,6 +509,7 @@ localStorage.setItem("items_cache", JSON.stringify(items));
 }
 
 export default UserDashboard;
+
 
 
 
