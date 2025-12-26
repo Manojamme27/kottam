@@ -196,20 +196,17 @@ function UserDashboard() {
   // 🔥 CATEGORY FILTER
   // -----------------------------
   const handleFilterByCategory = (category) => {
-    if (!Array.isArray(itemsInMyCity)) return;
+  if (!Array.isArray(itemsInMyCity)) return;
 
-    // open shop items only
-    const openItems = itemsInMyCity.filter(
-      (item) => item.shop?.isOpen !== false
+  if (!category || category === "All") {
+    setUpdatedItemsList(itemsInMyCity);
+  } else {
+    setUpdatedItemsList(
+      itemsInMyCity.filter(i => i.category === category)
     );
+  }
+};
 
-    if (!category || category === "All") {
-      setUpdatedItemsList(openItems);
-    } else {
-      const filteredList = openItems.filter((i) => i.category === category);
-      setUpdatedItemsList(filteredList);
-    }
-  };
 
   return (
     <div className="w-screen min-h-screen flex flex-col bg-[#fff9f6]">
@@ -350,8 +347,7 @@ function UserDashboard() {
                 }}
               >
                 {Array.isArray(updatedItemsList) &&
-                  updatedItemsList
-                    .filter((item) => item.shop?.isOpen !== false)
+                  updatedItemsList.map(...)
                     .map((item, idx) => (
                       <div key={item._id || idx} className="flex justify-center">
                         <div className="w-full max-w-[170px]">
@@ -445,6 +441,7 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
 
