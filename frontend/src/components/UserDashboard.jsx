@@ -145,28 +145,27 @@ useEffect(() => {
   const [lng, lat] = userData.location.coordinates;
 
   const interval = setInterval(async () => {
-    try {
-      const nearRes = await axios.get(
-  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-  { withCredentials: true }
-);
+  try {
+    const nearRes = await axios.get(
+      `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+      { withCredentials: true }
+    );
 
-const nearbyIds = new Set(nearRes.data.map(s => s._id));
+    const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
 
-dispatch(setShopsInMyCity(prev =>
-  Array.isArray(prev)
-    ? prev.map(shop => ({
-        ...shop,
-        isNearby: nearbyIds.has(shop._id),
-      }))
-    : prev
-));
+    dispatch(setShopsInMyCity(prev =>
+      Array.isArray(prev)
+        ? prev.map(shop => ({
+            ...shop,
+            isNearby: nearbyIds.has(shop._id),
+          }))
+        : prev
+    ));
+  } catch {
+    // keep old data
+  }
+}, 15000);
 
-      }
-    } catch {
-      // keep old data
-    }
-  }, 15000);
 
   return () => clearInterval(interval);
 }, [userData?.location]);
@@ -213,7 +212,6 @@ dispatch(setShopsInMyCity(prev =>
 
  const triggerQuickRefresh = async () => {
   if (!userData?.location?.coordinates) return;
-  if (!Array.isArray(shopInMyCity)) return;
 
   const [lng, lat] = userData.location.coordinates;
 
@@ -225,16 +223,19 @@ dispatch(setShopsInMyCity(prev =>
 
     const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
 
-    const updated = shopInMyCity.map(shop => ({
-      ...shop,
-      isNearby: nearbyIds.has(shop._id),
-    }));
-
-    dispatch(setShopsInMyCity(updated));
-  } catch (e) {
-    console.log("Quick refresh skipped");
+    dispatch(setShopsInMyCity(prev =>
+      Array.isArray(prev)
+        ? prev.map(shop => ({
+            ...shop,
+            isNearby: nearbyIds.has(shop._id),
+          }))
+        : prev
+    ));
+  } catch {
+    // safe fail
   }
 };
+
 
 
 
@@ -491,3 +492,4 @@ dispatch(setShopsInMyCity(prev =>
 }
 
 export default UserDashboard;
+
