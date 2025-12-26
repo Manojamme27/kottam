@@ -52,6 +52,21 @@ function UserDashboard() {
   // ⭐ NEW state for selected category underline
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  
+  useEffect(() => {
+  const cachedShops = localStorage.getItem("shops_cache");
+  const cachedItems = localStorage.getItem("items_cache");
+
+  if (cachedShops) {
+    dispatch(setShopsInMyCity(JSON.parse(cachedShops)));
+  }
+
+  if (cachedItems) {
+    dispatch(setItemsInMyCity(JSON.parse(cachedItems)));
+  }
+}, []);
+
+
   // -----------------------------
   // 🔥 Filter OPEN SHOPS items
   // -----------------------------
@@ -485,6 +500,7 @@ localStorage.setItem("items_cache", JSON.stringify(items));
 }
 
 export default UserDashboard;
+
 
 
 
