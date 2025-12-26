@@ -72,13 +72,13 @@ shopInMyCity: cachedShops,
       state.currentAddress = action.payload;
     },
 
-    setShopsInMyCity: (state, action) => {
-      state.shopInMyCity = action.payload;
-    },
+   setShopsInMyCity: (state, action) => {
+  state.shopInMyCity = Array.isArray(action.payload) ? action.payload : [];
+},
 
-    setItemsInMyCity: (state, action) => {
-      state.itemsInMyCity = action.payload;
-    },
+setItemsInMyCity: (state, action) => {
+  state.itemsInMyCity = Array.isArray(action.payload) ? action.payload : [];
+},
 
     setSocket: (state, action) => {
       state.socket = action.payload;
@@ -277,6 +277,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
