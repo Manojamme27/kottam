@@ -52,6 +52,8 @@ function UserDashboard() {
   // ⭐ NEW state for selected category underline
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+
+
   
   useEffect(() => {
   const cachedShops = localStorage.getItem("shops_cache");
@@ -64,7 +66,8 @@ function UserDashboard() {
   if (cachedItems) {
     dispatch(setItemsInMyCity(JSON.parse(cachedItems)));
   }
-}, []);
+}, [dispatch]);
+
 
 
   // -----------------------------
@@ -143,15 +146,20 @@ useEffect(() => {
 
   const interval = setInterval(async () => {
     try {
-      const allRes = await axios.get(
-        `${serverUrl}/api/shop/all`,
-        { withCredentials: true }
-      );
-
       const nearRes = await axios.get(
-        `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-        { withCredentials: true }
-      );
+  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+  { withCredentials: true }
+);
+
+const nearbyIds = new Set(nearRes.data.map(s => s._id));
+
+dispatch(setShopsInMyCity(prev =>
+  prev.map(shop => ({
+    ...shop,
+    isNearby: nearbyIds.has(shop._id),
+  }))
+));
+
 
       const allShops = Array.isArray(allRes.data) ? allRes.data : [];
       const nearbyIds = new Set(
@@ -227,11 +235,20 @@ localStorage.setItem("items_cache", JSON.stringify(items));
   const [lng, lat] = userData.location.coordinates;
 
   try {
-    const allRes = await axios.get(`${serverUrl}/api/shop/all`, { withCredentials: true });
     const nearRes = await axios.get(
-      `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-      { withCredentials: true }
-    );
+  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+  { withCredentials: true }
+);
+
+const nearbyIds = new Set(nearRes.data.map(s => s._id));
+
+dispatch(setShopsInMyCity(prev =>
+  prev.map(shop => ({
+    ...shop,
+    isNearby: nearbyIds.has(shop._id),
+  }))
+));
+
 
     const allShops = Array.isArray(allRes.data) ? allRes.data : [];
     const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
@@ -245,9 +262,6 @@ localStorage.setItem("items_cache", JSON.stringify(items));
 
     dispatch(setShopsInMyCity(merged));
     dispatch(setItemsInMyCity(items));
-
-    localStorage.setItem("shops_cache", JSON.stringify(merged));
-    localStorage.setItem("items_cache", JSON.stringify(items));
 
   } catch {
     // DO NOTHING
@@ -509,6 +523,7 @@ localStorage.setItem("items_cache", JSON.stringify(items));
 }
 
 export default UserDashboard;
+
 
 
 
