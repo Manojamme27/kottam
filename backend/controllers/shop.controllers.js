@@ -150,9 +150,10 @@ export const searchShops = async (req, res) => {
   try {
     const { query } = req.query;
 
-    if (!query) {
-      return res.status(400).json({ message: "query required" });
-    }
+if (!query) {
+  return res.status(400).json({ message: "query required" });
+}
+
 
     const shops = await Shop.find({
       name: { $regex: query, $options: "i" },
@@ -205,6 +206,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
