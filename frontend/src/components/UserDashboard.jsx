@@ -32,15 +32,13 @@ import "swiper/css/pagination";
 
 function UserDashboard() {
   const {
-  currentCity,
-  shopInMyCity,
-  itemsInMyCity,
-  searchItems,
-  searchShops,
-  socket,
-  userData
-} = useSelector((state) => state.user);
-
+    shopInMyCity,
+    itemsInMyCity,
+    searchItems,
+    searchShops,
+    socket,
+    userData
+  } = useSelector((state) => state.user);
 
   const cateScrollRef = useRef();
   const navigate = useNavigate();
@@ -48,246 +46,166 @@ function UserDashboard() {
 
   const [updatedItemsList, setUpdatedItemsList] = useState([]);
   const [modalItem, setModalItem] = useState(null);
-
-  // ⭐ NEW state for selected category underline
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-
-
-  
+  /* =====================================================
+     🔥 INSTANT LOAD FROM CACHE (VERY IMPORTANT)
+  ===================================================== */
   useEffect(() => {
-  const cachedShops = localStorage.getItem("shops_cache");
-  const cachedItems = localStorage.getItem("items_cache");
+    const cachedShops = localStorage.getItem("shops_cache");
+    const cachedItems = localStorage.getItem("items_cache");
 
-  if (cachedShops) {
-    dispatch(setShopsInMyCity(JSON.parse(cachedShops)));
-  }
+    if (cachedShops) dispatch(setShopsInMyCity(JSON.parse(cachedShops)));
+    if (cachedItems) dispatch(setItemsInMyCity(JSON.parse(cachedItems)));
+  }, [dispatch]);
 
-  if (cachedItems) {
-    dispatch(setItemsInMyCity(JSON.parse(cachedItems)));
-  }
-}, [dispatch]);
-
-
-
-  // -----------------------------
-  // 🔥 Filter OPEN SHOPS items
-  // -----------------------------
+  /* =====================================================
+     🔥 FILTER OPEN SHOP ITEMS
+  ===================================================== */
   useEffect(() => {
     if (!Array.isArray(itemsInMyCity)) {
       setUpdatedItemsList([]);
       return;
     }
 
-    const filtered = itemsInMyCity.filter((item) => item.shop?.isOpen !== false);
-    setUpdatedItemsList(filtered);
+    setUpdatedItemsList(
+      itemsInMyCity.filter(item => item.shop?.isOpen !== false)
+    );
   }, [itemsInMyCity]);
-// -----------------------------
-// 🔥 AUTO REFRESH (FIRST LOAD)
-// -----------------------------
-useEffect(() => {
-  if (!userData?.location?.coordinates) return;
 
-  const [lng, lat] = userData.location.coordinates;
-
-  const fetchAllData = async () => {
-    try {
-      // 1️⃣ Fetch ALL shops
-      const allRes = await axios.get(
-        `${serverUrl}/api/shop/all`,
-        { withCredentials: true }
-      );
-
-      // 2️⃣ Fetch NEARBY shops
-      const nearRes = await axios.get(
-        `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-        { withCredentials: true }
-      );
-
-      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
-      const nearbyShops = Array.isArray(nearRes.data) ? nearRes.data : [];
-
-      // 3️⃣ Mark nearby shops
-      const nearbyIds = new Set(nearbyShops.map(s => s._id));
-
-      const mergedShops = allShops.map(shop => ({
-        ...shop,
-        isNearby: nearbyIds.has(shop._id),
-      }));
-
-      dispatch(setShopsInMyCity(mergedShops));
-
-      // 4️⃣ Collect items
-      const items = mergedShops.flatMap(s => s.items || []);
-      dispatch(setItemsInMyCity(items));
-      localStorage.setItem("shops_cache", JSON.stringify(mergedShops));
-localStorage.setItem("items_cache", JSON.stringify(items));
-
-
-    } catch (err) {
-      console.log("Shop fetch error:", err);
-    }
-  };
-  
-
-
-  fetchAllData();
-}, [userData?.location]);
-
-
-
-// -----------------------------
-// 🔥 BACKGROUND REFRESH every 15 sec
-// -----------------------------
-useEffect(() => {
-  if (!userData?.location?.coordinates) return;
-
-  const [lng, lat] = userData.location.coordinates;
-
-  const interval = setInterval(async () => {
-    try {
-      const nearRes = await axios.get(
-  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-  { withCredentials: true }
-);
-
-const nearbyIds = new Set(nearRes.data.map(s => s._id));
-
-dispatch(setShopsInMyCity(prev =>
-  prev.map(shop => ({
-    ...shop,
-    isNearby: nearbyIds.has(shop._id),
-  }))
-));
-
-
-      const allShops = Array.isArray(allRes.data) ? allRes.data : [];
-      const nearbyIds = new Set(
-        (nearRes.data || []).map(s => s._id)
-      );
-
-      const merged = allShops.map(shop => ({
-        ...shop,
-        isNearby: nearbyIds.has(shop._id),
-      }));
-
-      if (merged.length > 0) {
-        dispatch(setShopsInMyCity(merged));
-
-const items = merged.flatMap(s => s.items || []);
-dispatch(setItemsInMyCity(items));
-
-localStorage.setItem("shops_cache", JSON.stringify(merged));
-localStorage.setItem("items_cache", JSON.stringify(items));
-;
-      }
-    } catch {
-      // keep old data
-    }
-  }, 15000);
-
-  return () => clearInterval(interval);
-}, [userData?.location]);
-
-
-
-  // -----------------------------
-  // 🔥 REAL-TIME SOCKET UPDATES
-  // -----------------------------
+  /* =====================================================
+     🔥 FIRST REAL FETCH (ALL SHOPS + NEARBY TAG)
+  ===================================================== */
   useEffect(() => {
-    if (!socket) return;
+    if (!userData?.location?.coordinates?.length) return;
 
-    // shop open/close OR shop edited
-    socket.on("shop-updated", () => {
-  if (!userData?.location?.coordinates) return;
-  triggerQuickRefresh();
-});
+    const [lng, lat] = userData.location.coordinates;
 
-    // owner updated item
-    socket.on("item-updated", () => {
-      if (!userData?.location?.coordinates) return;
-      triggerQuickRefresh();
-    });
+    const fetchAllData = async () => {
+      try {
+        const allRes = await axios.get(
+          `${serverUrl}/api/shop/all`,
+          { withCredentials: true }
+        );
 
-    // new shop added in your city
-    socket.on("shop-added", () => {
-      if (!userData?.location?.coordinates) return;
-      triggerQuickRefresh();
-    });
+        const nearRes = await axios.get(
+          `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+          { withCredentials: true }
+        );
 
-    // item deleted or disabled
-    socket.on("item-deleted", () => {
-      if (!userData?.location?.coordinates) return;
-      triggerQuickRefresh();
-    });
+        const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+        const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
+
+        const mergedShops = allShops.map(shop => ({
+          ...shop,
+          isNearby: nearbyIds.has(shop._id),
+        }));
+
+        const items = mergedShops.flatMap(s => s.items || []);
+
+        dispatch(setShopsInMyCity(mergedShops));
+        dispatch(setItemsInMyCity(items));
+
+        localStorage.setItem("shops_cache", JSON.stringify(mergedShops));
+        localStorage.setItem("items_cache", JSON.stringify(items));
+      } catch (err) {
+        console.log("Initial shop fetch error:", err);
+      }
+    };
+
+    fetchAllData();
+  }, [userData?.location, dispatch]);
+
+  /* =====================================================
+     🔥 LIGHTWEIGHT BACKGROUND REFRESH (NEARBY ONLY)
+  ===================================================== */
+  useEffect(() => {
+    if (!userData?.location?.coordinates?.length) return;
+
+    const [lng, lat] = userData.location.coordinates;
+
+    const interval = setInterval(async () => {
+      try {
+        const nearRes = await axios.get(
+          `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+          { withCredentials: true }
+        );
+
+        const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
+
+        dispatch(setShopsInMyCity(prev =>
+          prev.map(shop => ({
+            ...shop,
+            isNearby: nearbyIds.has(shop._id),
+          }))
+        ));
+      } catch {
+        // keep existing UI
+      }
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [userData?.location, dispatch]);
+
+  /* =====================================================
+     🔥 SOCKET REAL-TIME UPDATES (FAST + SAFE)
+  ===================================================== */
+  useEffect(() => {
+    if (!socket || !userData?.location?.coordinates) return;
+
+    const refreshNearby = async () => {
+      const [lng, lat] = userData.location.coordinates;
+
+      try {
+        const nearRes = await axios.get(
+          `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
+          { withCredentials: true }
+        );
+
+        const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
+
+        dispatch(setShopsInMyCity(prev =>
+          prev.map(shop => ({
+            ...shop,
+            isNearby: nearbyIds.has(shop._id),
+          }))
+        ));
+      } catch {}
+    };
+
+    socket.on("shop-updated", refreshNearby);
+    socket.on("item-updated", refreshNearby);
+    socket.on("shop-added", refreshNearby);
+    socket.on("item-deleted", refreshNearby);
 
     return () => {
-      socket.off("shop-updated");
-      socket.off("item-updated");
-      socket.off("shop-added");
-      socket.off("item-deleted");
+      socket.off("shop-updated", refreshNearby);
+      socket.off("item-updated", refreshNearby);
+      socket.off("shop-added", refreshNearby);
+      socket.off("item-deleted", refreshNearby);
     };
-  }, [socket]);
+  }, [socket, userData?.location, dispatch]);
 
-  const triggerQuickRefresh = async () => {
-  if (!userData?.location?.coordinates) return;
-
-  const [lng, lat] = userData.location.coordinates;
-
-  try {
-    const nearRes = await axios.get(
-  `${serverUrl}/api/shop/nearby?latitude=${lat}&longitude=${lng}`,
-  { withCredentials: true }
-);
-
-const nearbyIds = new Set(nearRes.data.map(s => s._id));
-
-dispatch(setShopsInMyCity(prev =>
-  prev.map(shop => ({
-    ...shop,
-    isNearby: nearbyIds.has(shop._id),
-  }))
-));
-
-
-    const allShops = Array.isArray(allRes.data) ? allRes.data : [];
-    const nearbyIds = new Set((nearRes.data || []).map(s => s._id));
-
-    const merged = allShops.map(shop => ({
-      ...shop,
-      isNearby: nearbyIds.has(shop._id),
-    }));
-
-    const items = merged.flatMap(s => s.items || []);
-
-    dispatch(setShopsInMyCity(merged));
-    dispatch(setItemsInMyCity(items));
-
-  } catch {
-    // DO NOTHING
-  }
-};
-
-
-
-  // -----------------------------
-  // 🔥 CATEGORY FILTER
-  // -----------------------------
+  /* =====================================================
+     🔥 CATEGORY FILTER
+  ===================================================== */
   const handleFilterByCategory = (category) => {
     if (!Array.isArray(itemsInMyCity)) return;
 
-    // open shop items only
     const openItems = itemsInMyCity.filter(
-      (item) => item.shop?.isOpen !== false
+      item => item.shop?.isOpen !== false
     );
 
-    if (!category || category === "All") {
-      setUpdatedItemsList(openItems);
-    } else {
-      const filteredList = openItems.filter((i) => i.category === category);
-      setUpdatedItemsList(filteredList);
-    }
+    setUpdatedItemsList(
+      category === "All"
+        ? openItems
+        : openItems.filter(i => i.category === category)
+    );
   };
+
+  /* =====================================================
+     🔥 UI (UNCHANGED)
+  ===================================================== */
 
   return (
     <div className="w-screen min-h-screen flex flex-col bg-[#fff9f6]">
@@ -523,6 +441,7 @@ dispatch(setShopsInMyCity(prev =>
 }
 
 export default UserDashboard;
+
 
 
 
