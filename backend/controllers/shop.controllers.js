@@ -169,14 +169,13 @@ export const toggleShopStatus = async (req, res) => {
 };
 export const searchShops = async (req, res) => {
   try {
-    const { query, city } = req.query;
+    const { query } = req.query;
 
-    if (!query || !city) {
-      return res.status(400).json({ message: "query and city required" });
+    if (!query) {
+      return res.status(400).json({ message: "query required" });
     }
 
     const shops = await Shop.find({
-      city: { $regex: new RegExp(`^${city}$`, "i") },
       name: { $regex: query, $options: "i" },
       isOpen: { $ne: false },
     }).select("name image images _id");
@@ -187,6 +186,7 @@ export const searchShops = async (req, res) => {
     res.status(500).json({ message: "Failed to search shops" });
   }
 };
+
 export const getNearbyShops = async (req, res) => {
   try {
     const { latitude, longitude } = req.query;
@@ -226,6 +226,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
