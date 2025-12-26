@@ -107,6 +107,9 @@ useEffect(() => {
       console.log("Shop fetch error:", err);
     }
   };
+  localStorage.setItem("shops_cache", JSON.stringify(mergedShops));
+localStorage.setItem("items_cache", JSON.stringify(items));
+
 
   fetchAllData();
 }, [userData?.location]);
@@ -145,7 +148,13 @@ useEffect(() => {
 
       if (merged.length > 0) {
         dispatch(setShopsInMyCity(merged));
-        dispatch(setItemsInMyCity(merged.flatMap(s => s.items || [])));
+
+const items = merged.flatMap(s => s.items || []);
+dispatch(setItemsInMyCity(items));
+
+localStorage.setItem("shops_cache", JSON.stringify(merged));
+localStorage.setItem("items_cache", JSON.stringify(items));
+;
       }
     } catch {
       // keep old data
@@ -209,9 +218,12 @@ useEffect(() => {
     if (Array.isArray(res.data) && res.data.length > 0) {
       dispatch(setShopsInMyCity(res.data));
 
-      const items = res.data.flatMap(s => s.items || []);
-      if (items.length > 0) {
-        dispatch(setItemsInMyCity(items));
+const items = res.data.flatMap(s => s.items || []);
+dispatch(setItemsInMyCity(items));
+
+localStorage.setItem("shops_cache", JSON.stringify(res.data));
+localStorage.setItem("items_cache", JSON.stringify(items));
+
       }
     }
   } catch {
@@ -473,6 +485,7 @@ useEffect(() => {
 }
 
 export default UserDashboard;
+
 
 
 
