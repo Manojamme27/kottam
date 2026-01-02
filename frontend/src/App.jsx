@@ -48,21 +48,14 @@ function App() {
   const { userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
-  // ✅ SAFE HOOK INITIALIZATION (NO CRASH)
-useGetCurrentUser();
-
-// Only run AFTER login
-useEffect(() => {
-  if (!userData?._id) return;
-
+  // Initialize hooks
+  useGetCurrentUser();
   useUpdateLocation();
   useGetCity();
   useGetMyshop();
   useGetShopByCity();
   useGetItemsByCity();
   useGetMyOrders();
-}, [userData?._id]);
-
 
   // ===============================
   // ⚡ SOCKET SETUP (FULL REALTIME)
@@ -72,13 +65,12 @@ useEffect(() => {
 
     // Ensure only 1 socket instance
     let socket = io(serverUrl, {
-  withCredentials: true,
-  transports: ["polling", "websocket"], // 👈 MUST
-  reconnection: true,
-  reconnectionAttempts: Infinity,
-  reconnectionDelay: 1500,
-});
-
+      withCredentials: true,
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1500,
+    });
 
     socket.on("connect", () => {
       console.log("🔌 SOCKET CONNECTED:", socket.id);
