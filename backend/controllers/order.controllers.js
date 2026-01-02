@@ -236,74 +236,69 @@ export const verifyPayment = async (req, res) => {
 // ============================================================
 //  GET MY ORDERS (USER / OWNER)
 // ============================================================
+// ============================================================
+//  GET MY ORDERS (USER / OWNER)
+// ============================================================
 export const getMyOrders = async (req, res) => {
   try {
-    const userId = req.userId;
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    // 🔥 ALWAYS treat as USER by default
-    const orders = await Order.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .populate("shopOrders.shop", "name")
-      .populate("shopOrders.owner", "name email mobile")
-      .populate("shopOrders.shopOrderItems.item", "name image price")
-      .lean();
+    // ================= USER VIEW =================
+    if (user.role === "user") {
+      const orders = await Order.find({ user: req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "name email mobile")
+        .populate("shopOrders.shopOrderItems.item", "name image price");
 
-    // ✅ HARD SAFETY: ensure status always exists
-    orders.forEach(order => {
-      order.shopOrders.forEach(so => {
-        if (!so.status) so.status = "pending";
-      });
-    });
+      return res.status(200).json(orders);
+    }
 
-    return res.status(200).json(orders);
+    // ================= OWNER VIEW =================
+    if (user.role === "owner") {
+      const orders = await Order.find({ "shopOrders.owner": req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "name email mobile")
+        .populate("user", "fullName email mobile")
+        .populate("shopOrders.shopOrderItems.item", "name image price")
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+
+      const filtered = [];
+
+      for (const order of orders) {
+        const validShopOrders = order.shopOrders.filter(
+          (so) =>
+            String(so.owner?._id || so.owner) === String(req.userId)
+        );
+
+        if (validShopOrders.length === 0) continue;
+
+        filtered.push({
+          _id: order._id,
+          paymentMethod: order.paymentMethod,
+          user: order.user,
+          createdAt: order.createdAt,
+          deliveryAddress: order.deliveryAddress,
+          payment: order.payment,
+          shopOrders: validShopOrders,
+        });
+      }
+
+      return res.status(200).json(filtered);
+    }
+
+    return res.status(403).json({ message: "Invalid role" });
 
   } catch (error) {
     console.error("GET MY ORDERS ERROR ❌", error);
-    return res.status(500).json({
-      message: "Failed to fetch orders",
-    });
+    return res.status(500).json({ message: "Get orders failed" });
   }
 };
 
-        // OWNER VIEW
-        if (user.role === "owner") {
-            const orders = await Order.find({ "shopOrders.owner": req.userId })
-                .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "name")
-                .populate("shopOrders.owner", "name email mobile")
-                .populate("user", "fullName email mobile")
-                .populate("shopOrders.shopOrderItems.item", "name image price")
-                .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
-            
-            const filtered = [];
-
-            for (const order of orders) {
-                const valid = order.shopOrders.filter(
-                    so => String(so.owner?._id || so.owner) === String(req.userId)
-                );
-
-                if (!valid || valid.length === 0) continue;
-
-                filtered.push({
-  _id: order._id,
-  paymentMethod: order.paymentMethod,
-  user: order.user,
-  createdAt: order.createdAt,
-  deliveryAddress: order.deliveryAddress,
-  payment: order.payment,
-  shopOrders: valid.length === 1 ? valid[0] : valid
-});
-
-            }
-
-            return res.status(200).json(filtered);
-        }
-
-    } catch (error) {
-        console.log("GET MY ORDERS ERROR ❌", error);
-        return res.status(500).json({ message: `get User order error ${error}` });
-    }
-};
 // ============================================================
 //  UPDATE ORDER STATUS
 // ============================================================
@@ -703,6 +698,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
