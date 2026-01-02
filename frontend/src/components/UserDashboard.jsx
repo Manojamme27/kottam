@@ -123,7 +123,7 @@ function UserDashboard() {
      🔥 BACKGROUND NEARBY REFRESH
   ============================ */
   useEffect(() => {
-    if (!userData?.location?.coordinates) return;
+    if (!userData?._id || !userData?.location?.coordinates) return;
 
     const [lng, lat] = userData.location.coordinates;
 
@@ -144,9 +144,11 @@ function UserDashboard() {
         }));
 
         dispatch(setShopsInMyCity(updated));
-      } catch {
-        // silent fail (NO UI BREAK)
-      }
+      } catch (err) {
+  if (err?.response?.data?.message !== "token not found") {
+    console.error(err);
+  }
+}
     }, 15000);
 
     return () => clearInterval(interval);
@@ -156,7 +158,8 @@ function UserDashboard() {
      🔥 SOCKET REAL-TIME REFRESH
   ============================ */
   const triggerQuickRefresh = async () => {
-    if (!userData?.location?.coordinates) return;
+    if (!userData?._id || !userData?.location?.coordinates) return;
+
     if (!Array.isArray(shopInMyCity)) return;
 
     const [lng, lat] = userData.location.coordinates;
@@ -175,9 +178,11 @@ function UserDashboard() {
       }));
 
       dispatch(setShopsInMyCity(updated));
-    } catch {
-      // keep UI stable
-    }
+    } catch (err) {
+  if (err?.response?.data?.message !== "token not found") {
+    console.error(err);
+  }
+}
   };
 
   useEffect(() => {
@@ -458,6 +463,7 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
 
