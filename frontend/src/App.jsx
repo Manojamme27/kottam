@@ -53,7 +53,7 @@ function App() {
   useUpdateLocation();
   useGetCity();
   useGetMyshop();
-  useGetShopByCity();
+  // useGetShopByCity();
   useGetItemsByCity();
   useGetMyOrders();
 
