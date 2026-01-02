@@ -19,6 +19,8 @@ import { markAllRead } from "../redux/ownerSlice";
 function Nav() {
     const { userData, currentCity, cartItems } = useSelector((state) => state.user);
     const { notifications } = useSelector((state) => state.owner);
+    const isLoggedIn = Boolean(userData && userData._id);
+
 
     const [showInfo, setShowInfo] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
@@ -215,15 +217,18 @@ const handleSearchShops = async () => {
 
 
                     {/* Notifications */}
-                    {userData.role === "owner" && (
+                   {isLoggedIn && userData.role === "owner" && (
+
                         <div className="relative" ref={notifRef}>
                             <FaBell
                                 size={24}
                                 className="text-[#ff4d2d] cursor-pointer"
                                 onClick={() => {
-                                    setShowNotif(!showNotif);
-                                    dispatch(markAllRead());
-                                }}
+  if (!isLoggedIn) return;
+  setShowNotif(!showNotif);
+  dispatch(markAllRead());
+}}
+
                             />
 
                             {notifications.some((n) => !n.read) && (
@@ -262,7 +267,8 @@ const handleSearchShops = async () => {
                     )}
 
                     {/* My Orders */}
-                    {(userData.role === "user" || userData.role === "owner") && (
+                    {isLoggedIn && (userData.role === "user" || userData.role === "owner") && (
+
                         <button
                             onClick={() => navigate("/my-orders")}
                             className="hidden md:flex items-center gap-2 bg-[#ff4d2d] text-white px-4 py-2 rounded-lg shadow"
@@ -291,7 +297,8 @@ const handleSearchShops = async () => {
                 
 
                     {/* Cart */}
-                    {userData.role === "user" && (
+                    {isLoggedIn && userData.role === "user" && (
+
                         <div onClick={() => navigate("/cart")} className="relative cursor-pointer">
                             <FiShoppingCart size={25} className="text-[#ff4d2d]" />
                             <span className="absolute right-[-9px] -top-3 text-[#ff4d2d] font-semibold">
@@ -304,7 +311,7 @@ const handleSearchShops = async () => {
                     <div ref={dropdownRef} className="relative">
                         <div
                             className="w-10 h-10 rounded-full bg-[#ff4d2d] text-white flex items-center justify-center cursor-pointer"
-                            onClick={() => setShowInfo(!showInfo)}
+                           onClick={() => isLoggedIn && setShowInfo(!showInfo)}
                         >
                             {userData?.fullName?.slice(0, 1)}
                         </div>
@@ -339,7 +346,8 @@ const handleSearchShops = async () => {
                         )}
                     </div>
                     {/* MOBILE ONLY: Location bubble under profile */}
-                    {userData.role === "user" && (
+                    {isLoggedIn && userData.role === "user" && (
+
                         <div className="absolute top-[60px] right-1 md:hidden z-20">
                             <div
                                 onClick={() => setShowLocationPopup(true)}
@@ -525,6 +533,7 @@ const handleSearchShops = async () => {
 }
 
 export default Nav;
+
 
 
 
