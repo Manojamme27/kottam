@@ -1,38 +1,28 @@
-import { useEffect } from "react";
-import axios from "axios";
-import { useDispatch } from "react-redux";
-import { setUserData } from "../redux/userSlice";
-import { serverUrl } from "../App";
+import axios from 'axios'
+import React, { useEffect } from 'react'
+import { serverUrl } from '../App'
+import { useDispatch } from 'react-redux'
+import { setUserData } from '../redux/userSlice.js'
 
-const useGetCurrentUser = () => {
-  const dispatch = useDispatch();
+function useGetCurrentUser() {
+  const dispatch = useDispatch()
 
   useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get(
-        `${serverUrl}/api/user/current`,
-        {
-          withCredentials: true,
-          // ✅ DO NOT retry endlessly if token missing
-          validateStatus: (status) => status < 500,
+    const fetchUser = async () => {
+      try {
+        const result = await axios.get(`${serverUrl}/api/user/current`, { withCredentials: true })
+        dispatch(setUserData(result.data))
+      } catch (error) {
+        // ❗ Do NOT show "token not found"
+        if (error.response?.data?.message !== "token not found") {
+          console.log("Current user error:", error)
         }
-      );
-
-      if (res.status === 200 && res.data?._id) {
-        dispatch(setUserData(res.data));
-      } else {
-        dispatch(setUserData(null));
+        // silently ignore (user is simply not logged in)
       }
-    } catch {
-      dispatch(setUserData(null));
     }
-  };
 
-  fetchUser();
-}, [dispatch]);
+    fetchUser()
+  }, [])
+}
 
-};
-
-export default useGetCurrentUser;
-
+export default useGetCurrentUser
