@@ -246,10 +246,18 @@ export const getMyOrders = async (req, res) => {
         // USER VIEW
         if (user.role === "user") {
             const orders = await Order.find({ user: req.userId })
-                .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "name")
-                .populate("shopOrders.owner", "name email mobile")
-                .populate("shopOrders.shopOrderItems.item", "name image price");
+  .sort({ createdAt: -1 })
+  .populate("shopOrders.shop", "name")
+  .populate("shopOrders.owner", "name email mobile")
+  .populate("shopOrders.shopOrderItems.item", "name image price")
+  .lean();
+
+// ✅ FORCE DEFAULT STATUS
+orders.forEach(order => {
+  order.shopOrders.forEach(so => {
+    if (!so.status) so.status = "pending";
+  });
+});
 
             return res.status(200).json(orders);
         }
@@ -263,13 +271,7 @@ export const getMyOrders = async (req, res) => {
                 .populate("user", "fullName email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price")
                 .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
-            .lean();
-            orders.forEach(order => {
-  order.shopOrders.forEach(so => {
-    if (!so.status) so.status = "pending";
-  });
-});
-
+            
             const filtered = [];
 
             for (const order of orders) {
@@ -698,6 +700,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
