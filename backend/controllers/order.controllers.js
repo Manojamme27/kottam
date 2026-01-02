@@ -273,14 +273,15 @@ export const getMyOrders = async (req, res) => {
                 if (!valid || valid.length === 0) continue;
 
                 filtered.push({
-                    _id: order._id,
-                    paymentMethod: order.paymentMethod,
-                    user: order.user,
-                    createdAt: order.createdAt,
-                    deliveryAddress: order.deliveryAddress,
-                    payment: order.payment,
-                    shopOrders: valid
-                });
+  _id: order._id,
+  paymentMethod: order.paymentMethod,
+  user: order.user,
+  createdAt: order.createdAt,
+  deliveryAddress: order.deliveryAddress,
+  payment: order.payment,
+  shopOrders: valid.length === 1 ? valid[0] : valid
+});
+
             }
 
             return res.status(200).json(filtered);
@@ -690,6 +691,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
