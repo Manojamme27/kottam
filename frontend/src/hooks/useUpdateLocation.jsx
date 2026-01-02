@@ -1,28 +1,42 @@
-import { useEffect } from "react";
-import axios from "axios";
-import { useSelector } from "react-redux";
-import { serverUrl } from "../App";
+import axios from 'axios'
+import React, { useEffect } from 'react'
+import { serverUrl } from '../App'
+import { useDispatch, useSelector } from 'react-redux'
+import { setCurrentAddress, setCurrentCity, setCurrentState, setUserData } from '../redux/userSlice'
+import { setAddress, setLocation } from '../redux/mapSlice'
 
-const useUpdateLocation = () => {
-  const { userData } = useSelector((state) => state.user);
+function useUpdateLocation() {
+    const dispatch = useDispatch()
+    const { userData } = useSelector(state => state.user)
 
-  useEffect(() => {
-    if (!userData?._id) return;
-    if (!userData?.location?.coordinates) return;
+    useEffect(() => {
+        if (!userData) return;  // ❗ Do NOT update location if user is NOT logged in
 
-    const [lng, lat] = userData.location.coordinates;
+        const updateLocation = async (lat, lon) => {
+            try {
+                const result = await axios.post(
+                    `${serverUrl}/api/user/update-location`,
+                    { lat, lon },
+                    { withCredentials: true }
+                )
+                console.log(result.data)
 
-    axios.post(
-      `${serverUrl}/api/user/update-location`,
-      {
-        latitude: lat,
-        longitude: lng,
-      },
-      { withCredentials: true }
-    ).catch(() => {
-      // silent fail (do NOT break UI)
-    });
-  }, [userData?._id]);
-};
+            } catch (error) {
+                // ❗ Ignore "token not found"
+                if (error.response?.data?.message !== "token not found") {
+                    console.log("Update location error:", error)
+                }
+            }
+        }
 
-export default useUpdateLocation;
+        const watcher = navigator.geolocation.watchPosition((pos) => {
+            updateLocation(pos.coords.latitude, pos.coords.longitude)
+        })
+
+        // ❗ Cleanup watcher when component unmounts
+        return () => navigator.geolocation.clearWatch(watcher);
+
+    }, [userData])
+}
+
+export default useUpdateLocation
