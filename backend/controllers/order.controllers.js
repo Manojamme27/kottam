@@ -237,30 +237,33 @@ export const verifyPayment = async (req, res) => {
 //  GET MY ORDERS (USER / OWNER)
 // ============================================================
 export const getMyOrders = async (req, res) => {
-    try {
-        const user = await User.findById(req.userId);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+  try {
+    const userId = req.userId;
 
-        // USER VIEW
-        if (user.role === "user") {
-            const orders = await Order.find({ user: req.userId })
-  .sort({ createdAt: -1 })
-  .populate("shopOrders.shop", "name")
-  .populate("shopOrders.owner", "name email mobile")
-  .populate("shopOrders.shopOrderItems.item", "name image price")
-  .lean();
+    // 🔥 ALWAYS treat as USER by default
+    const orders = await Order.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .populate("shopOrders.shop", "name")
+      .populate("shopOrders.owner", "name email mobile")
+      .populate("shopOrders.shopOrderItems.item", "name image price")
+      .lean();
 
-// ✅ FORCE DEFAULT STATUS
-orders.forEach(order => {
-  order.shopOrders.forEach(so => {
-    if (!so.status) so.status = "pending";
-  });
-});
+    // ✅ HARD SAFETY: ensure status always exists
+    orders.forEach(order => {
+      order.shopOrders.forEach(so => {
+        if (!so.status) so.status = "pending";
+      });
+    });
 
-            return res.status(200).json(orders);
-        }
+    return res.status(200).json(orders);
+
+  } catch (error) {
+    console.error("GET MY ORDERS ERROR ❌", error);
+    return res.status(500).json({
+      message: "Failed to fetch orders",
+    });
+  }
+};
 
         // OWNER VIEW
         if (user.role === "owner") {
@@ -700,6 +703,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
