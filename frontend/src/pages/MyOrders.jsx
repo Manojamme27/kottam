@@ -14,6 +14,13 @@ import { toast } from "react-toastify";
 
 function MyOrders() {
   const { userData, myOrders, socket } = useSelector((state) => state.user);
+  // ✅ BLOCK UNAUTHENTICATED ACCESS
+useEffect(() => {
+  if (!userData?._id) {
+    navigate("/signin");
+  }
+}, [userData, navigate]);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -34,12 +41,14 @@ function MyOrders() {
   // CANCEL ORDER
   // ============================================
   const handleCancelOrder = async () => {
-    try {
-      const res = await axios.put(
-        `${serverUrl}/api/order/cancel/${cancelPopup.orderId}`,
-        {},
-        { withCredentials: true }
-      );
+  if (!userData?._id) return; // ✅ FIX
+
+  try {
+    const res = await axios.put(
+      `${serverUrl}/api/order/cancel/${cancelPopup.orderId}`,
+      {},
+      { withCredentials: true }
+    );
 
       if (res.status === 200) {
         toast.success("Order cancelled successfully!", {
@@ -77,9 +86,11 @@ function MyOrders() {
   // SOCKET: NEW ORDER + STATUS UPDATE
   // ============================================
   useEffect(() => {
-    if (!socket) return;
+  if (!socket || !userData?._id) return; // ✅ FIX
+
 
     const handleNewOrder = (order) => {
+      if (!userData?._id) return;
       if (userData.role === "owner") {
         dispatch(
           setMyOrders([
@@ -94,6 +105,7 @@ function MyOrders() {
     };
 
     const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
+      if (!userData?._id) return;
       if (String(userId) === String(userData._id)) {
         dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
       }
@@ -236,3 +248,4 @@ function MyOrders() {
 }
 
 export default MyOrders;
+
