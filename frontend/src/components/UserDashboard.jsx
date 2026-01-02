@@ -49,6 +49,8 @@ function UserDashboard() {
   const [modalItem, setModalItem] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
+
 
 
   /* ===========================
@@ -93,11 +95,9 @@ function UserDashboard() {
       );
 
       const allShops = Array.isArray(allRes.data) ? allRes.data : [];
-
-      // 👇 NO LOCATION FILTER HERE
       const shopsWithFlag = allShops.map(shop => ({
         ...shop,
-        isNearby: false, // default
+        isNearby: false,
       }));
 
       const items = shopsWithFlag.flatMap(s => s.items || []);
@@ -109,11 +109,14 @@ function UserDashboard() {
       localStorage.setItem("items_cache", JSON.stringify(items));
     } catch (e) {
       console.log("Fetch all shops failed", e);
+    } finally {
+      setLoading(false); // ✅ IMPORTANT
     }
   };
 
   fetchAllData();
 }, [dispatch]);
+
 
   /* ===========================
      🔥 BACKGROUND NEARBY REFRESH
@@ -328,6 +331,14 @@ function UserDashboard() {
             ))}
           </div>
         </div>
+        {loading && (
+  <div className="w-full max-w-6xl mx-auto px-3 mt-6">
+    <p className="text-gray-500 text-center">
+      Loading shops & items...
+    </p>
+  </div>
+)}
+
 
         {/* Recommended Items */}
         <div className="w-full max-w-6xl mx-auto px-3 mt-6">
@@ -351,8 +362,18 @@ function UserDashboard() {
                   alignItems: "start",
                 }}
               >
-                {Array.isArray(updatedItemsList) &&
+               {/* 🔄 Loading state */}
+{loading && (
+  <div className="col-span-full text-center text-gray-500 py-6">
+    Loading items...
+  </div>
+)}
+
+{/* ✅ Render items only after loading */}
+{!loading &&
+  Array.isArray(updatedItemsList) &&
   updatedItemsList.map((item, idx) => (
+
     <div key={item._id || idx} className="flex justify-center">
       <div className="w-full max-w-[170px]">
         <FoodCardCompact
@@ -445,6 +466,7 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
 
