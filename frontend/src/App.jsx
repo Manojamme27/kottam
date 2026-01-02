@@ -48,19 +48,18 @@ function App() {
   const { userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
-  // Initialize hooks
-  // ✅ PUBLIC (safe for everyone)
-useGetCity();
-useGetShopByCity();
-useGetItemsByCity();
+  // ✅ SAFE HOOK INITIALIZATION (NO CRASH)
+useGetCurrentUser();
 
-// ✅ AUTH ONLY (user must exist)
+// Only run AFTER login
 useEffect(() => {
   if (!userData?._id) return;
 
-  useGetCurrentUser();
   useUpdateLocation();
+  useGetCity();
   useGetMyshop();
+  useGetShopByCity();
+  useGetItemsByCity();
   useGetMyOrders();
 }, [userData?._id]);
 
