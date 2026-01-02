@@ -13,6 +13,8 @@ import { serverUrl } from "../App";
 import { toast } from "react-toastify";
 
 function MyOrders() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { userData, myOrders, socket } = useSelector((state) => state.user);
   // ✅ BLOCK UNAUTHENTICATED ACCESS
 useEffect(() => {
@@ -20,9 +22,6 @@ useEffect(() => {
     navigate("/signin");
   }
 }, [userData, navigate]);
-
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const [cancelPopup, setCancelPopup] = useState({
     show: false,
@@ -248,4 +247,5 @@ useEffect(() => {
 }
 
 export default MyOrders;
+
 
