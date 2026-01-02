@@ -8,21 +8,31 @@ const useGetCurrentUser = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(
-          `${serverUrl}/api/user/current`,
-          { withCredentials: true }
-        );
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get(
+        `${serverUrl}/api/user/current`,
+        {
+          withCredentials: true,
+          // ✅ DO NOT retry endlessly if token missing
+          validateStatus: (status) => status < 500,
+        }
+      );
+
+      if (res.status === 200 && res.data?._id) {
         dispatch(setUserData(res.data));
-      } catch (error) {
-        // ✅ This is NORMAL for logged-out / incognito users
+      } else {
         dispatch(setUserData(null));
       }
-    };
+    } catch {
+      dispatch(setUserData(null));
+    }
+  };
 
-    fetchUser();
-  }, [dispatch]);
+  fetchUser();
+}, [dispatch]);
+
 };
 
 export default useGetCurrentUser;
+
