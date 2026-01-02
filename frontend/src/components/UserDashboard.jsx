@@ -47,7 +47,6 @@ function UserDashboard() {
 
   const [updatedItemsList, setUpdatedItemsList] = useState([]);
   const [modalItem, setModalItem] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [activeCategory, setActiveCategory] = useState("All");
   const [loading, setLoading] = useState(true);
 
@@ -86,7 +85,7 @@ function UserDashboard() {
   /* ===========================
      🔥 FIRST FETCH (ALL + NEARBY)
   ============================ */
-  useEffect(() => {
+ useEffect(() => {
   const fetchAllData = async () => {
     try {
       const allRes = await axios.get(
@@ -95,6 +94,7 @@ function UserDashboard() {
       );
 
       const allShops = Array.isArray(allRes.data) ? allRes.data : [];
+
       const shopsWithFlag = allShops.map(shop => ({
         ...shop,
         isNearby: false,
@@ -110,12 +110,13 @@ function UserDashboard() {
     } catch (e) {
       console.log("Fetch all shops failed", e);
     } finally {
-      setLoading(false); // ✅ IMPORTANT
+      setLoading(false); // ✅ VERY IMPORTANT
     }
   };
 
   fetchAllData();
 }, [dispatch]);
+
 
 
   /* ===========================
@@ -204,16 +205,7 @@ function UserDashboard() {
   // -----------------------------
   const handleFilterByCategory = (category) => {
   setActiveCategory(category);
-
-  if (category === "All") {
-    setUpdatedItemsList(safeItems);
-  } else {
-    setUpdatedItemsList(
-      safeItems.filter(item => item.category === category)
-    );
-  }
 };
-
 
 
   return (
@@ -322,9 +314,8 @@ function UserDashboard() {
                 key={idx}
                 name={cate.category}
                 image={cate.image}
-                isSelected={selectedCategory === cate.category}
+                isSelected={activeCategory === cate.category}
                 onClick={() => {
-                  setSelectedCategory(cate.category);
                   handleFilterByCategory(cate.category);
                 }}
               />
@@ -401,9 +392,10 @@ function UserDashboard() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {shopInMyCity
-              ?.filter((shop) => shop.isOpen !== false)
-              .map((shop) => (
+            {!loading &&
+  shopInMyCity
+    ?.filter((shop) => shop.isOpen !== false)
+    .map((shop) => (
                 <div
                   key={shop._id}
                   onClick={() => navigate(`/shop/${shop._id}`)}
@@ -466,6 +458,7 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
+
 
 
 
