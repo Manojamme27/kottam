@@ -9,8 +9,9 @@ import User from "../models/user.model.js"
 const userRouter = express.Router()
 
 
-userRouter.get("/current",isAuth, getCurrentUser)
-userRouter.post('/update-location',isAuth,updateUserLocation)
+userRouter.get("/current", isAuth, getCurrentUser);
+userRouter.get("/current-user", isAuth, getCurrentUser);
+userRouter.put('/update-location', isAuth, updateUserLocation)
 userRouter.get("/location-refresh", isAuth, async (req, res) => {
     try {
         const user = await User.findById(req.userId);
@@ -45,5 +46,6 @@ userRouter.get("/location-refresh", isAuth, async (req, res) => {
 
 
 export default userRouter
+
 
 
