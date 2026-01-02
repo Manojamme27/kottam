@@ -58,10 +58,12 @@ const userSlice = createSlice({
 
         localStorage.setItem("userData", JSON.stringify(action.payload));
       } else {
-        state.cartItems = [];
-        state.totalAmount = 0;
-        localStorage.removeItem("userData");
-      }
+  state.cartItems = [];
+  state.totalAmount = 0;
+  state.myOrders = []; // ✅ FIX: clear orders on logout
+  localStorage.removeItem("userData");
+}
+
     },
 
     setCurrentCity: (state, action) => {
@@ -187,12 +189,17 @@ setItemsInMyCity: (state, action) => {
     // ORDERS SYSTEM (YOUR LOGIC + PATCHED)
     // ======================================================
     setMyOrders: (state, action) => {
-      state.myOrders = action.payload;
-    },
+  if (!state.userData?._id) return; // ✅ PREVENT token error
+  state.myOrders = Array.isArray(action.payload)
+    ? action.payload
+    : [];
+},
+
 
     addMyOrder: (state, action) => {
-      state.myOrders = [action.payload, ...state.myOrders];
-    },
+  if (!state.userData?._id) return; // ✅ PREVENT token error
+  state.myOrders = [action.payload, ...state.myOrders];
+},
 
     // ⭐ PATCHED — ALWAYS SAFE FOR BOTH USER & OWNER
     updateOrderStatus: (state, action) => {
@@ -288,6 +295,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
