@@ -12,11 +12,14 @@ import orderRouter from "./routes/order.routes.js";
 import http from "http";
 import { socketHandler } from "./socket.js";
 import { Server } from "socket.io";
+import path from "path";
 
 const app = express();
 const server = http.createServer(app);
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "https://kottam-frontend.vercel.app";
+
 
 // -------------------------
 // FIX 1: CORS FOR COOKIES
@@ -38,8 +41,10 @@ app.use(cookieParser());
 // -------------------------
 // FIX 3: STATIC FILES
 // -------------------------
-app.use("/uploads", express.static("uploads"));
-
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"))
+);
 // -------------------------
 // FIX 4: SOCKET.IO WITH FRONTEND_URL
 // -------------------------
@@ -83,4 +88,5 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
