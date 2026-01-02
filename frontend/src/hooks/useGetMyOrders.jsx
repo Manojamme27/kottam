@@ -11,7 +11,8 @@ function useGetMyOrders() {
   useEffect(() => {
 
     // ⛔ Wait until user is logged in
-    if (!userData?._id) return;
+    if (!userData?._id || userData.role !== "owner") return;
+
 
     const fetchOrders = async () => {
       try {
@@ -34,3 +35,4 @@ function useGetMyOrders() {
 }
 
 export default useGetMyOrders
+
