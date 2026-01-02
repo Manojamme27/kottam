@@ -1,53 +1,28 @@
+import { useEffect } from "react";
 import axios from "axios";
-import { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import { serverUrl } from "../App";
-import { useDispatch, useSelector } from "react-redux";
 
-function useUpdateLocation() {
+const useUpdateLocation = () => {
   const { userData } = useSelector((state) => state.user);
-  const lastLocationRef = useRef(null);
 
   useEffect(() => {
-    if (!userData) return;
+    if (!userData?._id) return;
+    if (!userData?.location?.coordinates) return;
 
-    const updateLocation = async (lat, lon) => {
-      try {
-        await axios.post(
-          `${serverUrl}/api/user/update-location`,
-          {
-            latitude: lat,
-            longitude: lon,
-          },
-          { withCredentials: true }
-        );
-      } catch (error) {
-        if (error.response?.data?.message !== "token not found") {
-          console.log("Update location error:", error);
-        }
-      }
-    };
+    const [lng, lat] = userData.location.coordinates;
 
-    const watcher = navigator.geolocation.watchPosition((pos) => {
-      const { latitude, longitude } = pos.coords;
-
-      // 🛑 prevent spam updates
-      if (lastLocationRef.current) {
-        const { lat, lon } = lastLocationRef.current;
-        const diff =
-          Math.abs(lat - latitude) + Math.abs(lon - longitude);
-        if (diff < 0.0005) return; // ~50m
-      }
-
-      lastLocationRef.current = {
-        lat: latitude,
-        lon: longitude,
-      };
-
-      updateLocation(latitude, longitude);
+    axios.post(
+      `${serverUrl}/api/user/update-location`,
+      {
+        latitude: lat,
+        longitude: lng,
+      },
+      { withCredentials: true }
+    ).catch(() => {
+      // silent fail (do NOT break UI)
     });
-
-    return () => navigator.geolocation.clearWatch(watcher);
-  }, [userData]);
-}
+  }, [userData?._id]);
+};
 
 export default useUpdateLocation;
