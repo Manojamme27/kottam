@@ -90,6 +90,7 @@ if (subtotal < 100) {
                     owner: shop.owner._id,
                     subtotal,
                     deliveryFee,
+                    status: "pending",  
                     shopOrderItems: items.map((i) => ({
                         item: i.id,
                         price: i.price,
@@ -262,6 +263,12 @@ export const getMyOrders = async (req, res) => {
                 .populate("user", "fullName email mobile")
                 .populate("shopOrders.shopOrderItems.item", "name image price")
                 .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+            .lean();
+            orders.forEach(order => {
+  order.shopOrders.forEach(so => {
+    if (!so.status) so.status = "pending";
+  });
+});
 
             const filtered = [];
 
@@ -691,6 +698,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
