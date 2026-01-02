@@ -31,6 +31,7 @@ router.get("/search-shops", searchShops);
 router.get("/nearby", isAuth, getNearbyShops);
 
 // ✅ GLOBAL SHOPS + ITEMS (MAIN SOURCE)
-router.get("/all", isAuth, getAllShops);
+router.get("/all", getAllShops);
 
 export default router;
+
