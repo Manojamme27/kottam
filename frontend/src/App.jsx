@@ -49,13 +49,21 @@ function App() {
   const dispatch = useDispatch();
 
   // Initialize hooks
+  // ✅ PUBLIC (safe for everyone)
+useGetCity();
+useGetShopByCity();
+useGetItemsByCity();
+
+// ✅ AUTH ONLY (user must exist)
+useEffect(() => {
+  if (!userData?._id) return;
+
   useGetCurrentUser();
   useUpdateLocation();
-  useGetCity();
   useGetMyshop();
-  useGetShopByCity();
-  useGetItemsByCity();
   useGetMyOrders();
+}, [userData?._id]);
+
 
   // ===============================
   // ⚡ SOCKET SETUP (FULL REALTIME)
