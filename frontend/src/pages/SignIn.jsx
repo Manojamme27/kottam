@@ -30,8 +30,10 @@ function SignIn() {
                 email, password
             }, { withCredentials: true })
             dispatch(setUserData(result.data))
-            setErr("")
-            setLoading(false)
+setErr("")
+setLoading(false)
+navigate("/") // 🔥 REQUIRED
+
         } catch (error) {
             setErr(error?.response?.data?.message)
             setLoading(false)
@@ -41,9 +43,17 @@ function SignIn() {
         const provider = new GoogleAuthProvider()
         const result = await signInWithPopup(auth, provider)
         try {
-            const { data } = await axios.post(`${serverUrl}/api/auth/google-auth`, {
-                email: result.user.email,
-            }, { withCredentials: true })
+            const { data } = await axios.post(
+  `${serverUrl}/api/auth/google-auth`,
+  {
+    fullName: result.user.displayName,
+    email: result.user.email,
+    mobile: "",
+    role: "user",
+  },
+  { withCredentials: true }
+)
+
             dispatch(setUserData(data))
         } catch (error) {
             console.log(error)
@@ -94,5 +104,6 @@ function SignIn() {
         </div>
     )
 }
+
 
 export default SignIn
