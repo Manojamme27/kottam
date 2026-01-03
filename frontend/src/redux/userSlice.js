@@ -5,12 +5,6 @@ const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
 
 
-// Load user's cart
-const savedCart = JSON.parse(localStorage.getItem(cartKey)) || [];
-const savedTotal = savedCart.reduce(
-  (sum, i) => sum + i.price * i.quantity,
-  0
-);
 
 const userSlice = createSlice({
   name: "user",
@@ -25,8 +19,9 @@ const userSlice = createSlice({
   shopInMyCity: cachedShops,     // NOW MEANS: ALL SHOPS
   itemsInMyCity: cachedItems,    // NOW MEANS: ALL ITEMS
 
-  cartItems: savedCart,
-  totalAmount: savedTotal,
+  cartItems: [],
+totalAmount: 0,
+
 
   myOrders: [],
 
@@ -294,6 +289,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
