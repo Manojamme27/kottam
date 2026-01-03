@@ -47,7 +47,6 @@ const playSound = () => {
 
 function App() {
   const { userData } = useSelector(state => state.user);
-  const { userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
   // Initialize hooks
