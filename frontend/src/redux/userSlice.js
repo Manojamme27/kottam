@@ -1,9 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 // Load saved user
-const savedUser = JSON.parse(localStorage.getItem("userData"));
-const userId = savedUser?._id || "guest";
-const cartKey = `cartItems_${userId}`;
 const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
 
@@ -18,7 +15,8 @@ const savedTotal = savedCart.reduce(
 const userSlice = createSlice({
   name: "user",
   initialState: {
-  userData: savedUser || null,
+  userData: undefined, // 🔥 VERY IMPORTANT
+
 
   currentCity: null,
   currentState: null,
@@ -44,27 +42,28 @@ const userSlice = createSlice({
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
-      state.userData = action.payload;
+  state.userData = action.payload;
 
-      if (action.payload?._id) {
-        const key = `cartItems_${action.payload._id}`;
-        const userCart = JSON.parse(localStorage.getItem(key)) || [];
+  if (action.payload?._id) {
+    const key = `cartItems_${action.payload._id}`;
+    const userCart = JSON.parse(localStorage.getItem(key)) || [];
 
-        state.cartItems = userCart;
-        state.totalAmount = userCart.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0
-        );
+    state.cartItems = userCart;
+    state.totalAmount = userCart.reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
 
-        localStorage.setItem("userData", JSON.stringify(action.payload));
-      } else {
-  state.cartItems = [];
-  state.totalAmount = 0;
-  state.myOrders = []; // ✅ FIX: clear orders on logout
-  localStorage.removeItem("userData");
-}
+    localStorage.setItem("userData", JSON.stringify(action.payload));
+  } else {
+    // 🔥 Only clear AFTER auth check is complete
+    state.cartItems = [];
+    state.totalAmount = 0;
+    state.myOrders = [];
+    localStorage.removeItem("userData");
+  }
+},
 
-    },
 
     setCurrentCity: (state, action) => {
       state.currentCity = action.payload;
@@ -295,6 +294,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
