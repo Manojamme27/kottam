@@ -122,7 +122,7 @@ function CheckOut() {
  const getAddressByLatLng = async (lat, lng) => {
   try {
     const res = await fetch(
-      `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`
+      `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`,
       { withCredentials: false }
     );
 
@@ -163,7 +163,7 @@ function CheckOut() {
     const res = await fetch(
       `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
         addressInput
-      )}&apiKey=${apiKey}`
+      )}&apiKey=${apiKey}`,
       { withCredentials: false }
     );
 
@@ -474,6 +474,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
