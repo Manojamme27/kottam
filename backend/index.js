@@ -29,15 +29,22 @@ const FRONTEND_URL = "https://kottam-frontend.vercel.app";
 // -------------------------
 app.use(
   cors({
-    origin: [
-      "https://kottam-frontend.vercel.app",
-      "http://localhost:5173",
-    ],
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "https://kottam-frontend.vercel.app",
+        "http://localhost:5173",
+      ];
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
-
 
 // -------------------------
 // FIX 2: JSON + COOKIES
@@ -57,12 +64,9 @@ app.use(
 // -------------------------
 const io = new Server(server, {
   cors: {
-  origin: [
-    "https://kottam-frontend.vercel.app",
-    "http://localhost:5173",
-  ],
-  credentials: true,
-},
+    origin: "https://kottam-frontend.vercel.app",
+    credentials: true,
+  },
 
 
   // 🔥 CRITICAL FOR RENDER
@@ -96,6 +100,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
