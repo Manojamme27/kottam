@@ -31,14 +31,13 @@ app.use(
   cors({
     origin: [
       "https://kottam-frontend.vercel.app",
-      "http://localhost:5173"
+      "http://localhost:5173",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
-    exposedHeaders: ["set-cookie"],   // ✅ ADD THIS
   })
 );
+
 
 // -------------------------
 // FIX 2: JSON + COOKIES
@@ -97,6 +96,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
