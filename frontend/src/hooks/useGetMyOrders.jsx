@@ -9,7 +9,6 @@ function useGetMyOrders() {
   const { userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    // ✅ Fetch for BOTH user & owner
     if (!userData?._id) return;
 
     const fetchOrders = async () => {
@@ -21,8 +20,12 @@ function useGetMyOrders() {
 
         dispatch(setMyOrders(res.data));
       } catch (error) {
-        console.log("🔥 ERROR RESPONSE (ORDERS):", error.response?.data);
-        console.log("🔥 FULL ERROR (ORDERS):", error);
+        if (error.response?.status === 401) {
+          // ✅ NORMAL → ignore silently
+          return;
+        }
+
+        console.error("getMyOrders failed:", error);
       }
     };
 
