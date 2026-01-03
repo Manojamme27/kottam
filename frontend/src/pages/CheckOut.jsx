@@ -122,9 +122,13 @@ function CheckOut() {
   const getAddressByLatLng = async (lat, lng) => {
     try {
       const result = await axios.get(
-        `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`
-      
-      );
+  `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`,
+  {
+    withCredentials: false,
+    headers: {}
+  }
+);
+
       const place = result?.data?.results?.[0];
 
 if (!place) return;
@@ -153,12 +157,22 @@ setAddressInput(fullAddress);
 
   const getLatLngByAddress = async () => {
     try {
-      const result = await axios.get(
-        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
-          addressInput
-        )}&apiKey=${apiKey}`
-  
-      );
+      // 🔒 SAFETY CHECK (ADD THIS FIRST)
+if (!addressInput || addressInput.trim() === "") {
+  toast.error("Please enter delivery address");
+  return;
+}
+
+const result = await axios.get(
+  `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
+    addressInput
+  )}&apiKey=${apiKey}`,
+  {
+    withCredentials: false,
+    headers: {}
+  }
+);
+
       const { lat, lon } = result.data.features[0].properties;
       dispatch(setLocation({ lat, lon }));
     } catch (error) {
@@ -167,6 +181,11 @@ setAddressInput(fullAddress);
   };
 
   const handlePlaceOrder = async () => {
+    if (!addressInput || !location?.lat || !location?.lon) {
+  toast.error("Please select delivery address");
+  return;
+}
+
     if (!userData?._id) {
   toast.error("Please login to place an order");
   navigate("/signin");
@@ -452,6 +471,7 @@ setAddressInput(fullAddress);
 }
 
 export default CheckOut;
+
 
 
 
