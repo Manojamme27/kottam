@@ -185,7 +185,7 @@ setAddressInput(fullAddress);
   setPlacingOrder(true);
   try {
     const result = await axios.post(
-  `${serverUrl}/api/order/place`,
+  `${serverUrl}/api/order/place-order`,
   {
     paymentMethod,
     deliveryAddress: {
@@ -433,6 +433,7 @@ setAddressInput(fullAddress);
 }
 
 export default CheckOut;
+
 
 
 
