@@ -211,17 +211,28 @@ setAddressInput(fullAddress);
       openRazorpayWindow(orderId, razorOrder);
     }
 
-  } catch (error) {
-    const msg = error?.response?.data?.message;
+} catch (error) {
+  // 🔐 SESSION EXPIRED / NOT AUTHENTICATED
+  if (error.response?.status === 401) {
+    toast.error("Session expired. Please login again.", {
+      position: "top-center",
+    });
 
-    if (msg) {
-        toast.error(msg, { position: "top-center" });
-    } else {
-        toast.error("Failed to place order. Try again later.", { position: "top-center" });
-    }
+    navigate("/signin");   // ⬅️ VERY IMPORTANT
+    return;
+  }
 
-    console.log("Place order error:", error);
+  // ❌ OTHER BACKEND ERRORS
+  const msg = error?.response?.data?.message;
+
+  toast.error(
+    msg || "Failed to place order. Try again later.",
+    { position: "top-center" }
+  );
+
+  console.log("Place order error:", error);
 }
+
 
 
   setPlacingOrder(false);
@@ -433,6 +444,7 @@ setAddressInput(fullAddress);
 }
 
 export default CheckOut;
+
 
 
 
