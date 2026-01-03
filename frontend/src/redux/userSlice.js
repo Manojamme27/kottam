@@ -61,7 +61,6 @@ const userSlice = createSlice({
     state.userData = null;
     state.cartItems = [];
     state.totalAmount = 0;
-    state.myOrders = [];
     localStorage.removeItem("userData");
     localStorage.removeItem("authToken");
   }
@@ -297,6 +296,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
