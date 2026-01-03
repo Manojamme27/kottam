@@ -17,7 +17,7 @@ itemRouter.get("/get-by-shop/:shopId",isAuth,getItemsByShop)
 itemRouter.get("/search-items",isAuth,searchItems)
 itemRouter.post("/rating",isAuth,rating)
 // PUBLIC – no auth
-router.get("/public/get-by-city/:city", async (req, res) => {
+itemRouter.get("/public/get-by-city/:city", async (req, res) => {
   try {
     const { city } = req.params;
 
@@ -39,3 +39,4 @@ router.get("/public/get-by-city/:city", async (req, res) => {
 
 
 export default itemRouter
+
