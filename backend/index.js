@@ -17,8 +17,11 @@ import path from "path";
 const app = express();
 const server = http.createServer(app);
 
-const FRONTEND_URL =
-  process.env.FRONTEND_URL || "https://kottam-frontend.vercel.app";
+const FRONTEND_URL = [
+  "http://localhost:5173",
+  "https://kottam-frontend.vercel.app",
+];
+
 
 
 // -------------------------
@@ -88,5 +91,6 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
