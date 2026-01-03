@@ -1,64 +1,59 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 // Load saved user
-const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
-const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
+const savedUser = JSON.parse(localStorage.getItem("userData"));
+const userId = savedUser?._id || "guest";
+const cartKey = `cartItems_${userId}`;
 
-
+// Load user's cart
+const savedCart = JSON.parse(localStorage.getItem(cartKey)) || [];
+const savedTotal = savedCart.reduce(
+  (sum, i) => sum + i.price * i.quantity,
+  0
+);
 
 const userSlice = createSlice({
   name: "user",
   initialState: {
-  userData: undefined, // 🔥 VERY IMPORTANT
+    userData: savedUser || null,
+    currentCity: null,
+    currentState: null,
+    currentAddress: null,
+    shopInMyCity: null,
+    itemsInMyCity: null,
 
+    cartItems: savedCart,
+    totalAmount: savedTotal,
 
-  currentCity: null,
-  currentState: null,
-  currentAddress: null,
-
-  shopInMyCity: cachedShops,     // NOW MEANS: ALL SHOPS
-  itemsInMyCity: cachedItems,    // NOW MEANS: ALL ITEMS
-
-  cartItems: [],
-totalAmount: 0,
-
-
-  myOrders: [],
-
-  searchItems: [],               // ✅ SAFE
-  searchShops: [],               // ✅ SAFE
-
-  socket: null,
-},
-
+    myOrders: [],
+    searchItems: null,
+    socket: null,
+  },
 
   reducers: {
     // ======================================================
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
-  state.userData = action.payload;
+      state.userData = action.payload;
 
-  if (action.payload?._id) {
-    const key = `cartItems_${action.payload._id}`;
-    const userCart = JSON.parse(localStorage.getItem(key)) || [];
+      if (action.payload?._id) {
+        const key = `cartItems_${action.payload._id}`;
+        const userCart = JSON.parse(localStorage.getItem(key)) || [];
 
-    state.cartItems = userCart;
-    state.totalAmount = userCart.reduce(
-      (sum, i) => sum + i.price * i.quantity,
-      0
-    );
+        state.cartItems = userCart;
+        state.totalAmount = userCart.reduce(
+          (sum, i) => sum + i.price * i.quantity,
+          0
+        );
 
-    localStorage.setItem("userData", JSON.stringify(action.payload));
-  } else {
-    // 🔥 Only clear AFTER auth check is complete
-    state.cartItems = [];
-    state.totalAmount = 0;
-    state.myOrders = [];
-    localStorage.removeItem("userData");
-  }
-},
-
+        localStorage.setItem("userData", JSON.stringify(action.payload));
+      } else {
+        state.cartItems = [];
+        state.totalAmount = 0;
+        localStorage.removeItem("userData");
+      }
+    },
 
     setCurrentCity: (state, action) => {
       state.currentCity = action.payload;
@@ -72,13 +67,13 @@ totalAmount: 0,
       state.currentAddress = action.payload;
     },
 
-   setShopsInMyCity: (state, action) => {
-  state.shopInMyCity = Array.isArray(action.payload) ? action.payload : [];
-},
+    setShopsInMyCity: (state, action) => {
+      state.shopInMyCity = action.payload;
+    },
 
-setItemsInMyCity: (state, action) => {
-  state.itemsInMyCity = Array.isArray(action.payload) ? action.payload : [];
-},
+    setItemsInMyCity: (state, action) => {
+      state.itemsInMyCity = action.payload;
+    },
 
     setSocket: (state, action) => {
       state.socket = action.payload;
@@ -183,17 +178,12 @@ setItemsInMyCity: (state, action) => {
     // ORDERS SYSTEM (YOUR LOGIC + PATCHED)
     // ======================================================
     setMyOrders: (state, action) => {
-  if (!state.userData?._id) return; // ✅ PREVENT token error
-  state.myOrders = Array.isArray(action.payload)
-    ? action.payload
-    : [];
-},
-
+      state.myOrders = action.payload;
+    },
 
     addMyOrder: (state, action) => {
-  if (!state.userData?._id) return; // ✅ PREVENT token error
-  state.myOrders = [action.payload, ...state.myOrders];
-},
+      state.myOrders = [action.payload, ...state.myOrders];
+    },
 
     // ⭐ PATCHED — ALWAYS SAFE FOR BOTH USER & OWNER
     updateOrderStatus: (state, action) => {
@@ -245,24 +235,8 @@ setItemsInMyCity: (state, action) => {
     },
 
     setSearchItems: (state, action) => {
-  state.searchItems = Array.isArray(action.payload)
-    ? action.payload
-    : [];
-},
-
-setSearchShops: (state, action) => {
-  state.searchShops = Array.isArray(action.payload)
-    ? action.payload
-    : [];
-},
-
-clearSearchResults: (state) => {
-  state.searchItems = [];
-  state.searchShops = [];
-},
-
-
-
+      state.searchItems = action.payload;
+    },
   },
 });
 
@@ -281,19 +255,9 @@ export const {
   addMyOrder,
   updateOrderStatus,
   setSearchItems,
-  setSearchShops, 
-  clearSearchResults,
   setTotalAmount,
   updateRealtimeOrderStatus,
   setSocket,
 } = userSlice.actions;
 
 export default userSlice.reducer;
-
-
-
-
-
-
-
-
