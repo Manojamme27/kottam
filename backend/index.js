@@ -45,6 +45,10 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 
 // -------------------------
 // FIX 2: JSON + COOKIES
@@ -100,6 +104,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
