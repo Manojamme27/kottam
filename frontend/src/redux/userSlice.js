@@ -4,6 +4,9 @@ import { createSlice } from "@reduxjs/toolkit";
 const savedUser = JSON.parse(localStorage.getItem("userData"));
 const userId = savedUser?._id || "guest";
 const cartKey = `cartItems_${userId}`;
+const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
+const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
+
 
 // Load user's cart
 const savedCart = JSON.parse(localStorage.getItem(cartKey)) || [];
@@ -16,19 +19,25 @@ const userSlice = createSlice({
   name: "user",
   initialState: {
     userData: savedUser || null,
+
     currentCity: null,
     currentState: null,
     currentAddress: null,
-    shopInMyCity: null,
-    itemsInMyCity: null,
+
+    shopInMyCity: cachedShops,     // NOW MEANS: ALL SHOPS
+    itemsInMyCity: cachedItems,    // NOW MEANS: ALL ITEMS
 
     cartItems: savedCart,
     totalAmount: savedTotal,
 
     myOrders: [],
-    searchItems: null,
+
+    searchItems: [],               // ✅ SAFE
+    searchShops: [],               // ✅ SAFE
+
     socket: null,
   },
+
 
   reducers: {
     // ======================================================
@@ -51,8 +60,10 @@ const userSlice = createSlice({
       } else {
         state.cartItems = [];
         state.totalAmount = 0;
+        state.myOrders = []; // ✅ FIX: clear orders on logout
         localStorage.removeItem("userData");
       }
+
     },
 
     setCurrentCity: (state, action) => {
@@ -68,11 +79,11 @@ const userSlice = createSlice({
     },
 
     setShopsInMyCity: (state, action) => {
-      state.shopInMyCity = action.payload;
+      state.shopInMyCity = Array.isArray(action.payload) ? action.payload : [];
     },
 
     setItemsInMyCity: (state, action) => {
-      state.itemsInMyCity = action.payload;
+      state.itemsInMyCity = Array.isArray(action.payload) ? action.payload : [];
     },
 
     setSocket: (state, action) => {
@@ -89,8 +100,8 @@ const userSlice = createSlice({
         typeof item.shop === "string"
           ? item.shop
           : item.shop?._id
-          ? item.shop._id
-          : null;
+            ? item.shop._id
+            : null;
 
       const existing = state.cartItems.find((i) => i.id === item.id);
 
@@ -124,8 +135,8 @@ const userSlice = createSlice({
           typeof item.shop === "string"
             ? item.shop
             : item.shop?._id
-            ? item.shop._id
-            : shop;
+              ? item.shop._id
+              : shop;
       }
 
       state.totalAmount = state.cartItems.reduce(
@@ -178,10 +189,15 @@ const userSlice = createSlice({
     // ORDERS SYSTEM (YOUR LOGIC + PATCHED)
     // ======================================================
     setMyOrders: (state, action) => {
-      state.myOrders = action.payload;
+      if (!state.userData?._id) return; // ✅ PREVENT token error
+      state.myOrders = Array.isArray(action.payload)
+        ? action.payload
+        : [];
     },
 
+
     addMyOrder: (state, action) => {
+      if (!state.userData?._id) return; // ✅ PREVENT token error
       state.myOrders = [action.payload, ...state.myOrders];
     },
 
@@ -235,8 +251,24 @@ const userSlice = createSlice({
     },
 
     setSearchItems: (state, action) => {
-      state.searchItems = action.payload;
+      state.searchItems = Array.isArray(action.payload)
+        ? action.payload
+        : [];
     },
+
+    setSearchShops: (state, action) => {
+      state.searchShops = Array.isArray(action.payload)
+        ? action.payload
+        : [];
+    },
+
+    clearSearchResults: (state) => {
+      state.searchItems = [];
+      state.searchShops = [];
+    },
+
+
+
   },
 });
 
@@ -255,9 +287,16 @@ export const {
   addMyOrder,
   updateOrderStatus,
   setSearchItems,
+  setSearchShops,
+  clearSearchResults,
   setTotalAmount,
   updateRealtimeOrderStatus,
   setSocket,
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
+
+
+
+
