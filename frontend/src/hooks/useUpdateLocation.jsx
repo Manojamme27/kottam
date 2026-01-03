@@ -14,7 +14,7 @@ const useUpdateLocation = () => {
     const [lng, lat] = userData.location.coordinates;
 
     // ✅ FIRE AND FORGET — NEVER BREAK UI
-    axios.post(
+    axios.put(
       `${serverUrl}/api/user/update-location`,
       { latitude: lat, longitude: lng },
       { withCredentials: true }
@@ -26,3 +26,4 @@ const useUpdateLocation = () => {
 };
 
 export default useUpdateLocation;
+
