@@ -10,8 +10,7 @@ function useGetShopByCity() {
 
   useEffect(() => {
 
-    // ✅ Prevent "token not found"
-    if (!userData?._id) return;   // wait until logged in
+
     if (!currentCity) return;     // wait until city loaded
 
     const fetchShops = async () => {
@@ -34,3 +33,4 @@ function useGetShopByCity() {
 }
 
 export default useGetShopByCity
+
