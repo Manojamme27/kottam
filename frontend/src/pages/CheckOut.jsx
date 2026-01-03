@@ -123,6 +123,7 @@ function CheckOut() {
   try {
     const res = await fetch(
       `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`
+      { withCredentials: false }
     );
 
     const data = await res.json();
@@ -163,6 +164,7 @@ function CheckOut() {
       `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
         addressInput
       )}&apiKey=${apiKey}`
+      { withCredentials: false }
     );
 
     const data = await res.json();
@@ -236,13 +238,10 @@ function CheckOut() {
 } catch (error) {
   // 🔐 SESSION EXPIRED / NOT AUTHENTICATED
   if (error.response?.status === 401) {
-    toast.error("Session expired. Please login again.", {
-      position: "top-center",
-    });
+  toast.error("Unable to place order. Please retry.");
+  return;
+}
 
-    navigate("/signin");   // ⬅️ VERY IMPORTANT
-    return;
-  }
 
   // ❌ OTHER BACKEND ERRORS
   const msg = error?.response?.data?.message;
@@ -299,6 +298,15 @@ function CheckOut() {
     const rzp = new window.Razorpay(options);
     rzp.open();
   };
+  useEffect(() => {
+  if (
+    location?.lat &&
+    location?.lon &&
+    !addressInput
+  ) {
+    getAddressByLatLng(location.lat, location.lon);
+  }
+}, [location?.lat, location?.lon]);
 
   useEffect(() => {
     setAddressInput(address);
@@ -466,6 +474,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
