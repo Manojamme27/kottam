@@ -8,7 +8,7 @@ import { acceptOrder, getCurrentOrder, getDeliveryBoyAssignment, getMyOrders, ge
 
 const orderRouter = express.Router()
 orderRouter.get("/stats/owner", isAuth, getOwnerStats);
-orderRouter.post("/place-order", isAuth, placeOrder)
+orderRouter.post("/place-order", placeOrder)
 orderRouter.post("/verify-payment", isAuth, verifyPayment)
 orderRouter.get("/my-orders", isAuth, getMyOrders)
 orderRouter.get("/get-assignments", isAuth, getDeliveryBoyAssignment)
@@ -24,4 +24,5 @@ orderRouter.get("/get-order-by-id/:orderId", isAuth, getOrderById);
 
 
 export default orderRouter
+
 
