@@ -119,59 +119,62 @@ function CheckOut() {
   getAddressByLatLng(latitude, longitude);
 };
 
-  const getAddressByLatLng = async (lat, lng) => {
-    try {
-      const result = await axios.get(
-  `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`,
-  {
-    withCredentials: false,
-    headers: {}
+ const getAddressByLatLng = async (lat, lng) => {
+  try {
+    const res = await fetch(
+      `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`
+    );
+
+    const data = await res.json();
+    const place = data?.results?.[0];
+    if (!place) return;
+
+    const fullAddress = [
+      place.house_number && place.street
+        ? `${place.house_number} ${place.street}`
+        : place.street,
+      place.suburb,
+      place.neighbourhood,
+      place.district,
+      place.city,
+      place.state,
+      place.postcode,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    dispatch(setAddress(fullAddress));
+    setAddressInput(fullAddress);
+
+  } catch (err) {
+    console.log("Reverse geocoding failed:", err);
   }
-);
+};
 
-      const place = result?.data?.results?.[0];
-
-if (!place) return;
-
-const fullAddress = [
-  place.house_number && place.street
-    ? `${place.house_number} ${place.street}`
-    : place.street,
-  place.suburb,
-  place.neighbourhood,
-  place.district,
-  place.city,
-  place.state,
-  place.postcode
-]
-  .filter(Boolean)
-  .join(", ");
-
-dispatch(setAddress(fullAddress));
-setAddressInput(fullAddress);
-
-    } catch (error) {
-      console.log("Reverse geocoding failed:", error);
-    }
-  };
 
   const getLatLngByAddress = async () => {
-    try {
-      // 🔒 SAFETY CHECK (ADD THIS FIRST)
-if (!addressInput || addressInput.trim() === "") {
-  toast.error("Please enter delivery address");
-  return;
-}
-
-const result = await axios.get(
-  `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
-    addressInput
-  )}&apiKey=${apiKey}`,
-  {
-    withCredentials: false,
-    headers: {}
+  if (!addressInput || addressInput.trim() === "") {
+    toast.error("Please enter delivery address");
+    return;
   }
-);
+
+  try {
+    const res = await fetch(
+      `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
+        addressInput
+      )}&apiKey=${apiKey}`
+    );
+
+    const data = await res.json();
+    const place = data?.features?.[0]?.properties;
+    if (!place) return;
+
+    dispatch(setLocation({ lat: place.lat, lon: place.lon }));
+  } catch (err) {
+    console.log("Geocoding failed:", err);
+  }
+};
+
 
       const { lat, lon } = result.data.features[0].properties;
       dispatch(setLocation({ lat, lon }));
@@ -471,6 +474,7 @@ const result = await axios.get(
 }
 
 export default CheckOut;
+
 
 
 
