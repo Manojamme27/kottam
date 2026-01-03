@@ -15,10 +15,15 @@ const useGetCurrentUser = () => {
         { withCredentials: true }
       );
       dispatch(setUserData(res.data));
-    } catch {
-      // 🔥 IMPORTANT: DO NOTHING
-      // Do NOT force logout
-    }
+    } catch (error) {
+  if (error.response?.status === 401) {
+    // ✅ EXPECTED when user is not logged in
+    return;
+  }
+
+  console.error("getCurrentUser failed:", error);
+}
+
   };
 
   fetchUser();
@@ -27,5 +32,6 @@ const useGetCurrentUser = () => {
 };
 
 export default useGetCurrentUser;
+
 
 
