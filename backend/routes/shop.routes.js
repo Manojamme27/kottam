@@ -28,7 +28,7 @@ router.put("/toggle-status", isAuth, toggleShopStatus);
 router.get("/search-shops", searchShops);
 
 // NEARBY (ONLY FOR TAGGING / BADGE)
-router.get("/nearby", isAuth, getNearbyShops);
+router.get("/nearby",  getNearbyShops);
 
 // ✅ GLOBAL SHOPS + ITEMS (MAIN SOURCE)
 router.get("/all", getAllShops);
@@ -50,5 +50,6 @@ router.get("/public/get-by-city/:city", async (req, res) => {
 
 
 export default router;
+
 
 
