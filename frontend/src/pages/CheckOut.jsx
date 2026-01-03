@@ -165,6 +165,12 @@ setAddressInput(fullAddress);
   };
 
   const handlePlaceOrder = async () => {
+    if (!userData?._id) {
+  toast.error("Please login to place an order");
+  navigate("/signin");
+  return;
+}
+
   if (placingOrder) return; // prevents double click
     const shopTotals = {};
   cartItems.forEach((item) => {
@@ -444,6 +450,7 @@ setAddressInput(fullAddress);
 }
 
 export default CheckOut;
+
 
 
 
