@@ -1,39 +1,31 @@
-import axios from 'axios'
-import { useEffect } from 'react'
-import { serverUrl } from '../App'
-import { useDispatch, useSelector } from 'react-redux'
-import { setItemsInMyCity } from '../redux/userSlice.js'
+import { useEffect } from "react";
+import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { setItemsInMyCity } from "../redux/userSlice";
+import { serverUrl } from "../App";
 
 function useGetItemsByCity() {
-  const dispatch = useDispatch()
-  const { currentCity, userData } = useSelector(state => state.user)
+  const dispatch = useDispatch();
+  const { currentCity } = useSelector(state => state.user);
 
   useEffect(() => {
-
-    // ⛔ STOP if city undefined or empty
     if (!currentCity) return;
 
     const fetchItems = async () => {
       try {
-        const result = await axios.get(
-          `${serverUrl}/api/item/get-by-city/${currentCity}`,
-          { withCredentials: true }
-        )
-
-        dispatch(setItemsInMyCity(result.data))
-        console.log("Items Loaded:", result.data)
-
+        const res = await axios.get(
+          `${serverUrl}/api/item/get-by-city/${currentCity}`
+          // ❌ NO withCredentials
+        );
+        dispatch(setItemsInMyCity(res.data));
       } catch (error) {
-        console.log("🔥 ERROR RESPONSE:", error.response?.data)
-        console.log("🔥 FULL ERROR:", error)
+        console.error("Item load failed:", error);
+        dispatch(setItemsInMyCity([]));
       }
-    }
+    };
 
-    fetchItems()
-
-  }, [currentCity, userData]) // 🔥 depends on BOTH user load + city
+    fetchItems();
+  }, [currentCity]);
 }
 
-export default useGetItemsByCity
-
-
+export default useGetItemsByCity;
