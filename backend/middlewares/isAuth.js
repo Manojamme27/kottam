@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 const isAuth = (req, res, next) => {
     try {
         // ✅ 1. READ COOKIE SAFELY
-        const token = req.cookies?.token;
+       const token =
+  req.cookies?.token ||
+  req.headers.authorization?.split(" ")[1];
+
 
         if (!token) {
             return res.status(401).json({
@@ -50,3 +53,4 @@ const isAuth = (req, res, next) => {
 };
 
 export default isAuth;
+
