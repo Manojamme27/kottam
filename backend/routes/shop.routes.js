@@ -32,6 +32,23 @@ router.get("/nearby", isAuth, getNearbyShops);
 
 // ✅ GLOBAL SHOPS + ITEMS (MAIN SOURCE)
 router.get("/all", getAllShops);
+// PUBLIC – for homepage / incognito
+router.get("/public/get-by-city/:city", async (req, res) => {
+  try {
+    const { city } = req.params;
+
+    const shops = await Shop.find({
+      city: { $regex: new RegExp(`^${city}$`, "i") },
+      isOpen: true,
+    });
+
+    return res.status(200).json(shops);
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to load shops" });
+  }
+});
+
 
 export default router;
+
 
