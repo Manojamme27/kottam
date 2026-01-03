@@ -48,6 +48,14 @@ const playSound = () => {
 };
 
 function App() {
+  useEffect(() => {
+  const token = localStorage.getItem("authToken");
+
+  if (token) {
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+  }
+}, []);
+
   const { userData } = useSelector(state => state.user);
   const dispatch = useDispatch();
 
