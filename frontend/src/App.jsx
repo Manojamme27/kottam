@@ -48,18 +48,15 @@ const playSound = () => {
 };
 
 function App() {
-  useEffect(() => {
-  const token = localStorage.getItem("authToken");
-
+ 
   const { userData } = useSelector(state => state.user);
   const dispatch = useDispatch();
 
-  // Initialize hooks
+  // ✅ Hooks MUST be here (top-level)
   useGetCurrentUser();
   useUpdateLocation();
   useGetCity();
   useGetMyshop();
-  // useGetShopByCity();
   useGetItemsByCity();
   useGetMyOrders();
 
