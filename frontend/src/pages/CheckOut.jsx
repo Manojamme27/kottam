@@ -128,7 +128,11 @@ function CheckOut() {
 
     const data = await res.json();
     const place = data?.results?.[0];
-    if (!place) return;
+    if (!place) {
+  console.warn("Geoapify returned no address");
+  return;
+}
+
 
     const fullAddress = [
       place.house_number && place.street
@@ -474,6 +478,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
