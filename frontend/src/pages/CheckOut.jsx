@@ -123,7 +123,7 @@ function CheckOut() {
     try {
       const result = await axios.get(
         `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&format=json&apiKey=${apiKey}`
-        { withCredentials: false }
+      
       );
       const place = result?.data?.results?.[0];
 
@@ -157,7 +157,7 @@ setAddressInput(fullAddress);
         `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
           addressInput
         )}&apiKey=${apiKey}`
-        { withCredentials: false }
+  
       );
       const { lat, lon } = result.data.features[0].properties;
       dispatch(setLocation({ lat, lon }));
@@ -452,6 +452,7 @@ setAddressInput(fullAddress);
 }
 
 export default CheckOut;
+
 
 
 
