@@ -107,11 +107,17 @@ function CheckOut() {
   };
 
   const getCurrentLocation = () => {
-    const latitude = userData.location.coordinates[1];
-    const longitude = userData.location.coordinates[0];
-    dispatch(setLocation({ lat: latitude, lon: longitude }));
-    getAddressByLatLng(latitude, longitude);
-  };
+  if (!userData?.location?.coordinates?.length) {
+    toast.error("Current location not available yet");
+    return;
+  }
+
+  const latitude = userData.location.coordinates[1];
+  const longitude = userData.location.coordinates[0];
+
+  dispatch(setLocation({ lat: latitude, lon: longitude }));
+  getAddressByLatLng(latitude, longitude);
+};
 
   const getAddressByLatLng = async (lat, lng) => {
     try {
@@ -179,19 +185,20 @@ setAddressInput(fullAddress);
   setPlacingOrder(true);
   try {
     const result = await axios.post(
-      `${serverUrl}/api/order/place-order`,
-      {
-        paymentMethod,
-        deliveryAddress: {
-          text: addressInput,
-          latitude: location.lat,
-          longitude: location.lon,
-        },
-        totalAmount: grandTotal,
-        cartItems,
-      },
-      { withCredentials: true }
-    );
+  `${serverUrl}/api/order/place`,
+  {
+    paymentMethod,
+    deliveryAddress: {
+      text: addressInput,
+      latitude: location.lat,
+      longitude: location.lon,
+    },
+    totalAmount: grandTotal,
+    cartItems,
+  },
+  { withCredentials: true }
+);
+
 
     if (paymentMethod === "cod") {
       dispatch(addMyOrder(result.data));
@@ -426,6 +433,7 @@ setAddressInput(fullAddress);
 }
 
 export default CheckOut;
+
 
 
 
