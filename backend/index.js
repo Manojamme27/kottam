@@ -15,6 +15,8 @@ import { Server } from "socket.io";
 import path from "path";
 
 const app = express();
+app.set("trust proxy", 1);
+
 const server = http.createServer(app);
 
 const FRONTEND_URL = "https://kottam-frontend.vercel.app";
@@ -95,6 +97,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
