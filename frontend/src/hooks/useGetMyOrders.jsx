@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setMyOrders } from "../redux/userSlice";
 import { serverUrl } from "../App";
@@ -7,9 +7,9 @@ import { serverUrl } from "../App";
 function useGetMyOrders() {
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.user);
-  const retried = useRef(false); // ✅ KEY
 
   useEffect(() => {
+    // 🔒 HARD GATE — DO NOT FETCH UNTIL USER IS CONFIRMED
     if (!userData || !userData._id) return;
 
     const fetchOrders = async () => {
@@ -21,19 +21,15 @@ function useGetMyOrders() {
 
         dispatch(setMyOrders(res.data));
       } catch (error) {
-        if (error.response?.status === 401 && !retried.current) {
-          // ✅ RETRY ONCE after auth settles
-          retried.current = true;
-          setTimeout(fetchOrders, 500);
-          return;
-        }
+        // ✅ 401 is NORMAL during startup — ignore completely
+        if (error.response?.status === 401) return;
 
         console.error("getMyOrders failed:", error);
       }
     };
 
     fetchOrders();
-  }, [userData, dispatch]);
+  }, [userData?._id, dispatch]);
 }
 
 export default useGetMyOrders;
