@@ -36,16 +36,26 @@ function Shop() {
     const handleShop = async () => {
         try {
             const result = await axios.get(
-                `${serverUrl}/api/item/get-by-shop/${shopId}`,
-                { withCredentials: true }
-            );
+  `${serverUrl}/api/item/get-by-shop/${shopId}`
+);
 
-            setShop(result.data.shop);
-            setItems(result.data.items);
+
+           setShop(result.data?.shop || null);
+setItems(Array.isArray(result.data?.items) ? result.data.items : []);
+
         } catch (error) {
-            console.log(error);
-            toast.error("Failed to load shop details");
-        }
+  console.error("Shop fetch error:", error.response?.status);
+
+  // Only show error if backend REALLY failed
+  if (error.response && error.response.status >= 500) {
+    toast.error("Server error loading shop");
+  }
+
+  // Graceful fallback
+  setShop(null);
+  setItems([]);
+}
+
     };
 
     useEffect(() => {
@@ -361,4 +371,5 @@ function Shop() {
 }
 
 export default Shop;
+
 
