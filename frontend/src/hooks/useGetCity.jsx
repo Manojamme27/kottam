@@ -30,8 +30,7 @@ function useGetCity() {
 
         try {
           const result = await axios.get(
-            `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
-            { withCredentials: false } 
+            `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}` 
           );
 
           const data = result.data.results?.[0];
@@ -82,5 +81,6 @@ function useGetCity() {
 }
 
 export default useGetCity;
+
 
 
