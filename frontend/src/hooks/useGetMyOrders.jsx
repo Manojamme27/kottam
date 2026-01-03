@@ -9,28 +9,31 @@ function useGetMyOrders() {
   const { userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    if (!userData?._id) return;
+  if (!userData) return;
+  if (!userData._id) return;
 
-    const fetchOrders = async () => {
-      try {
-        const res = await axios.get(
-          `${serverUrl}/api/order/my-orders`,
-          { withCredentials: true }
-        );
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get(
+        `${serverUrl}/api/order/my-orders`,
+        { withCredentials: true }
+      );
 
-        dispatch(setMyOrders(res.data));
-      } catch (error) {
-        if (error.response?.status === 401) {
-          // ✅ NORMAL → ignore silently
-          return;
-        }
-
-        console.error("getMyOrders failed:", error);
+      dispatch(setMyOrders(res.data));
+    } catch (error) {
+      if (error.response?.status === 401) {
+        // ✅ normal on refresh / incognito
+        return;
       }
-    };
 
-    fetchOrders();
-  }, [userData?._id, dispatch]);
+      console.error("getMyOrders failed:", error);
+    }
+  };
+
+  fetchOrders();
+}, [userData, dispatch]);   // ✅ KEY CHANGE
+
 }
 
 export default useGetMyOrders;
+
