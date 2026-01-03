@@ -2,14 +2,16 @@ import { createSlice } from "@reduxjs/toolkit";
 
 // Load saved user
 const savedUser = JSON.parse(localStorage.getItem("userData"));
-const userId = savedUser?._id || "guest";
-const cartKey = `cartItems_${userId}`;
 const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
 
 
 // Load user's cart
-const savedCart = JSON.parse(localStorage.getItem(cartKey)) || [];
+const savedCart =
+  savedUser?._id
+    ? JSON.parse(localStorage.getItem(`cartItems_${savedUser._id}`)) || []
+    : [];
+
 const savedTotal = savedCart.reduce(
   (sum, i) => sum + i.price * i.quantity,
   0
@@ -44,11 +46,8 @@ const userSlice = createSlice({
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
-      state.userData = action.payload?.user || action.payload;
+     state.userData = action.payload;
 
-if (action.payload?.token) {
-  state.userData.token = action.payload.token;
-}
 
 
       if (action.payload?._id) {
@@ -300,6 +299,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
