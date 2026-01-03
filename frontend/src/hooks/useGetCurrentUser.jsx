@@ -16,14 +16,7 @@ const useGetCurrentUser = () => {
         );
         dispatch(setUserData(res.data));
       } catch (error) {
-        // ✅ 401 IS NORMAL (logged out / incognito)
-        if (error.response?.status === 401) {
-          dispatch(setUserData(null));
-          return;
-        }
-
-        // real errors only
-        console.error("Current user error:", error);
+        // ✅ 401 is NORMAL (guest user)
         dispatch(setUserData(null));
       }
     };
