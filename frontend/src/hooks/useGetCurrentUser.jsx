@@ -8,28 +8,24 @@ const useGetCurrentUser = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(
-          `${serverUrl}/api/user/current`,
-          { withCredentials: true }
-        );
-        dispatch(setUserData(res.data));
-      } catch (error) {
-  if (error?.response?.status === 401) {
-    // ✅ Normal for guest / incognito users
-    dispatch(setUserData(null));
-    return;
-  }
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get(
+        `${serverUrl}/api/user/current`,
+        { withCredentials: true }
+      );
+      dispatch(setUserData(res.data));
+    } catch {
+      // 🔥 IMPORTANT: DO NOTHING
+      // Do NOT force logout
+    }
+  };
 
-  console.error("Unexpected current user error:", error);
-}
+  fetchUser();
+}, []);
 
-    };
-
-    fetchUser();
-  }, [dispatch]);
 };
 
 export default useGetCurrentUser;
+
 
