@@ -34,6 +34,8 @@ import Home from "./pages/Home";
 
 // Redux
 import { setSocket, addMyOrder, updateRealtimeOrderStatus } from "./redux/userSlice";
+axios.defaults.withCredentials = true;
+
 
 // Server URL
 export const serverUrl = import.meta.env.VITE_SERVER_URL;
