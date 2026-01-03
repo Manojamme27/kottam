@@ -8,6 +8,9 @@ const useGetCurrentUser = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
+  const savedUser = localStorage.getItem("userData");
+  if (!savedUser) return; // ✅ CRITICAL FIX
+
   const fetchUser = async () => {
     try {
       const res = await axios.get(
@@ -16,22 +19,19 @@ const useGetCurrentUser = () => {
       );
       dispatch(setUserData(res.data));
     } catch (error) {
-  if (error.response?.status === 401) {
-    // ✅ EXPECTED when user is not logged in
-    return;
-  }
-
-  console.error("getCurrentUser failed:", error);
-}
-
+      // ✅ 401 is NORMAL → do nothing
+      return;
+    }
   };
 
   fetchUser();
-}, []);
+}, [dispatch]);
+
 
 };
 
 export default useGetCurrentUser;
+
 
 
 
