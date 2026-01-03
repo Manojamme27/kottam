@@ -16,9 +16,15 @@ const useGetCurrentUser = () => {
         );
         dispatch(setUserData(res.data));
       } catch (error) {
-        // ✅ 401 is NORMAL (guest user)
-        dispatch(setUserData(null));
-      }
+  if (error?.response?.status === 401) {
+    // ✅ Normal for guest / incognito users
+    dispatch(setUserData(null));
+    return;
+  }
+
+  console.error("Unexpected current user error:", error);
+}
+
     };
 
     fetchUser();
@@ -26,3 +32,4 @@ const useGetCurrentUser = () => {
 };
 
 export default useGetCurrentUser;
+
