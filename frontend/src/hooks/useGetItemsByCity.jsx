@@ -10,9 +10,6 @@ function useGetItemsByCity() {
 
   useEffect(() => {
 
-    // ⛔ STOP if user not logged in yet
-    if (!userData?._id) return;
-
     // ⛔ STOP if city undefined or empty
     if (!currentCity) return;
 
@@ -38,4 +35,5 @@ function useGetItemsByCity() {
 }
 
 export default useGetItemsByCity
+
 
