@@ -17,10 +17,8 @@ import path from "path";
 const app = express();
 const server = http.createServer(app);
 
-const FRONTEND_URL = [
-  "http://localhost:5173",
-  "https://kottam-frontend.vercel.app",
-];
+const FRONTEND_URL = "https://kottam-frontend.vercel.app";
+
 
 
 
@@ -36,9 +34,9 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["set-cookie"],   // ✅ ADD THIS
   })
 );
-
 
 // -------------------------
 // FIX 2: JSON + COOKIES
@@ -58,12 +56,13 @@ app.use(
 // -------------------------
 const io = new Server(server, {
   cors: {
-    origin: [
-      FRONTEND_URL,
-      "https://kottam-frontend.vercel.app",
-    ],
-    credentials: true,
-  },
+  origin: [
+    "https://kottam-frontend.vercel.app",
+    "http://localhost:5173",
+  ],
+  credentials: true,
+},
+
 
   // 🔥 CRITICAL FOR RENDER
   transports: ["polling", "websocket"], // DO NOT remove polling
@@ -96,6 +95,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
