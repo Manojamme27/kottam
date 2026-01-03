@@ -5,10 +5,11 @@ import { sendOtpMail, sendAdminVerificationMail } from "../utils/mail.js";
 // ✅ COMMON COOKIE OPTIONS (CRITICAL FOR PROD + INCOGNITO)
 const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,        // ✅ REQUIRED for Render + Vercel
+    sameSite: "none",    // ✅ REQUIRED for cross-site cookies
     maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
 
 
 // Store temporary admin codes
@@ -111,9 +112,10 @@ export const signOut = async (req, res) => {
     try {
         res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
 });
+
 
         return res.status(200).json({ message: "Log out successfully." });
     } catch (error) {
@@ -260,8 +262,8 @@ export const deleteAccount = async (req, res) => {
         await User.findByIdAndDelete(userId);
         res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
 });
 
 
@@ -270,4 +272,5 @@ export const deleteAccount = async (req, res) => {
         return res.status(500).json({ message: `Delete account error ${error}` });
     }
 };
+
 
