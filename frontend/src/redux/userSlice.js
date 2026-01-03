@@ -46,29 +46,27 @@ const userSlice = createSlice({
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
-     state.userData = action.payload;
+  const payload = action.payload;
 
+  if (payload?.user && payload?.token) {
+    state.userData = payload.user;
+    state.userData.token = payload.token;
 
+    localStorage.setItem("userData", JSON.stringify(state.userData));
+    localStorage.setItem("authToken", payload.token);
+  } else if (payload?._id) {
+    state.userData = payload;
+    localStorage.setItem("userData", JSON.stringify(payload));
+  } else {
+    state.userData = null;
+    state.cartItems = [];
+    state.totalAmount = 0;
+    state.myOrders = [];
+    localStorage.removeItem("userData");
+    localStorage.removeItem("authToken");
+  }
+},
 
-      if (action.payload?._id) {
-        const key = `cartItems_${action.payload._id}`;
-        const userCart = JSON.parse(localStorage.getItem(key)) || [];
-
-        state.cartItems = userCart;
-        state.totalAmount = userCart.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0
-        );
-
-        localStorage.setItem("userData", JSON.stringify(action.payload));
-      } else {
-        state.cartItems = [];
-        state.totalAmount = 0;
-        state.myOrders = []; // ✅ FIX: clear orders on logout
-        localStorage.removeItem("userData");
-      }
-
-    },
 
     setCurrentCity: (state, action) => {
       state.currentCity = action.payload;
@@ -299,6 +297,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
