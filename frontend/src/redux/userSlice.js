@@ -44,7 +44,12 @@ const userSlice = createSlice({
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
-      state.userData = action.payload;
+      state.userData = action.payload?.user || action.payload;
+
+if (action.payload?.token) {
+  state.userData.token = action.payload.token;
+}
+
 
       if (action.payload?._id) {
         const key = `cartItems_${action.payload._id}`;
@@ -295,6 +300,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
