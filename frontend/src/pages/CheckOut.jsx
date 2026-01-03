@@ -170,10 +170,11 @@ function CheckOut() {
     if (!place) return;
 
     dispatch(setLocation({ lat: place.lat, lon: place.lon }));
-  } catch (err) {
-    console.log("Geocoding failed:", err);
+  } catch (error) {
+    console.log("Geocoding failed:", error);
   }
 };
+
 
 
       const { lat, lon } = result.data.features[0].properties;
@@ -474,6 +475,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
