@@ -1,5 +1,4 @@
 import axios from "axios";
-import { useSelector } from "react-redux";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -48,15 +47,6 @@ const playSound = () => {
 
 function App() {
   const { userData } = useSelector(state => state.user);
-
-useEffect(() => {
-  if (userData?.token) {
-    axios.defaults.headers.common[
-      "Authorization"
-    ] = `Bearer ${userData.token}`;
-  }
-}, [userData]);
-
   const { userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
