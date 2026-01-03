@@ -175,15 +175,6 @@ function CheckOut() {
   }
 };
 
-
-
-      const { lat, lon } = result.data.features[0].properties;
-      dispatch(setLocation({ lat, lon }));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const handlePlaceOrder = async () => {
     if (!addressInput || !location?.lat || !location?.lon) {
   toast.error("Please select delivery address");
@@ -475,6 +466,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
