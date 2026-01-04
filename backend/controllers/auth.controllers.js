@@ -6,7 +6,8 @@ import { sendOtpMail, sendAdminVerificationMail } from "../utils/mail.js";
 const cookieOptions = {
     httpOnly: true,
     secure: true,        // ✅ REQUIRED for Render + Vercel
-    sameSite: "none",    // ✅ REQUIRED for cross-site cookies
+    sameSite: "none", // ✅ REQUIRED for cross-site cookies
+    path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -122,6 +123,7 @@ export const signOut = async (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
+    path: "/",  
 });
 
 
@@ -276,6 +278,7 @@ export const deleteAccount = async (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
+    path: "/",  
 });
 
 
@@ -284,6 +287,7 @@ export const deleteAccount = async (req, res) => {
         return res.status(500).json({ message: `Delete account error ${error}` });
     }
 };
+
 
 
 
