@@ -18,9 +18,8 @@ function MyOrders() {
  const { userData, myOrders, socket, authChecked } = useSelector(
   (state) => state.user
 );
-  useEffect(() => {
-  if (!authChecked) return;      // wait for auth check
-  if (!userData?._id) {
+ useEffect(() => {
+  if (authChecked && !userData?._id) {
     navigate("/signin");
   }
 }, [authChecked, userData, navigate]);
@@ -261,6 +260,7 @@ if (!authChecked) {
 }
 
 export default MyOrders;
+
 
 
 
