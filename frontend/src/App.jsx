@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -50,11 +49,9 @@ const playSound = () => {
 
 function App() {
   const dispatch = useDispatch();
-
-  // ✅ SELECT STATE FIRST (MANDATORY)
   const { userData, authChecked } = useSelector(state => state.user);
 
-  // ✅ ALWAYS CALL HOOKS (NO CONDITIONS)
+  // ✅ ALL HOOKS FIRST — NO RETURNS BEFORE THIS
   useGetCurrentUser();
   useGetCity();
   useUpdateLocation();
@@ -62,28 +59,15 @@ function App() {
   useGetItemsByCity();
   useGetMyOrders();
 
-  // ⛔ BLOCK UI UNTIL AUTH IS RESOLVED
-  if (!authChecked) {
-    return <div>Loading...</div>;
-  }
-
-  // ===============================
-  // ⚡ SOCKET SETUP (FULL REALTIME)
-  // ===============================
   useEffect(() => {
     if (!userData?._id) return;
 
     const socket = io(serverUrl, {
       withCredentials: true,
       transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1500,
     });
 
-    socket.on("connect", () => {
-      socket.emit("identity", { userId: userData._id });
-    });
+    socket.emit("identity", { userId: userData._id });
 
     socket.on("newOrder", (orderData) => {
       playSound();
@@ -97,18 +81,15 @@ function App() {
       dispatch(updateRealtimeOrderStatus(data));
     });
 
-    socket.on("newAssignment", (assignment) => {
-      playSound();
-      toast.success(`New Delivery Assignment from ${assignment.shopName}`);
-    });
-
     dispatch(setSocket(socket));
 
-    return () => {
-      socket.removeAllListeners();
-      socket.disconnect();
-    };
+    return () => socket.disconnect();
   }, [userData?._id, dispatch]);
+
+  // ✅ RETURN ONLY AFTER ALL HOOKS
+  if (!authChecked) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -128,11 +109,7 @@ function App() {
         <Route path="/shop/:shopId" element={userData ? <Shop /> : <Navigate to="/signin" />} />
       </Routes>
 
-      <ToastContainer
-        position="top-center"
-        autoClose={2300}
-        theme="colored"
-      />
+      <ToastContainer position="top-center" autoClose={2300} theme="colored" />
     </>
   );
 }
