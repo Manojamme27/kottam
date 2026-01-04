@@ -20,7 +20,7 @@ const savedTotal = savedCart.reduce(
 const userSlice = createSlice({
   name: "user",
   initialState: {
-    userData: savedUser || null,
+    userData: null,
     authChecked: false,
 
     currentCity: null,
@@ -301,6 +301,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
