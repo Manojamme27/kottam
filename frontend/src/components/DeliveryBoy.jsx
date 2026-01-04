@@ -44,7 +44,10 @@ const getCodAmount = (order, shopOrder) => {
 };
 
 function DeliveryBoy() {
-  const { userData, socket } = useSelector((state) => state.user);
+  const { userData, socket, authChecked } = useSelector(
+  (state) => state.user
+);
+
 
   const [currentOrder, setCurrentOrder] = useState(null);
   const [availableAssignments, setAvailableAssignments] = useState([]);
@@ -164,6 +167,9 @@ function DeliveryBoy() {
   };
 
   const getCurrentOrder = async () => {
+    if (!authChecked) return;
+  if (!userData?._id) return;
+  if (userData.role !== "deliveryBoy") return;
     try {
       const result = await axios.get(
         `${serverUrl}/api/order/get-current-order`,
@@ -272,13 +278,16 @@ function DeliveryBoy() {
   }, [socket, userData]);
 
   // ------------------- ⚙️ Initial Load -------------------
-  useEffect(() => {
-    if (userData) {
-      getAssignments();
-      getCurrentOrder();
-      handleTodayDeliveries();
-    }
-  }, [userData]);
+ useEffect(() => {
+  if (!authChecked) return;
+  if (!userData?._id) return;
+  if (userData.role !== "deliveryBoy") return;
+
+  getAssignments();
+  getCurrentOrder();
+  handleTodayDeliveries();
+}, [authChecked, userData?._id]);
+
 
   // ------------------- 🎨 Render -------------------
   const codAmountForCurrent =
@@ -604,6 +613,7 @@ function DeliveryBoy() {
 }
 
 export default DeliveryBoy;
+
 
 
 
