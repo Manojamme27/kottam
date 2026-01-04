@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { setUserData } from "../redux/userSlice";
+import { setUserData, setAuthChecked } from "../redux/userSlice";
 import { serverUrl } from "../App";
 
 const useGetCurrentUser = () => {
@@ -14,11 +14,11 @@ const useGetCurrentUser = () => {
           `${serverUrl}/api/user/current`,
           { withCredentials: true }
         );
-
         dispatch(setUserData(res.data));
-      } catch (error) {
-        // ✅ VERY IMPORTANT: even on 401, auth check is DONE
+      } catch {
         dispatch(setUserData(null));
+      } finally {
+        dispatch(setAuthChecked(true)); // 🔥 auth resolved
       }
     };
 
