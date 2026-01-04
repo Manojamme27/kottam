@@ -6,7 +6,9 @@ import { setMyShopData } from '../redux/ownerSlice';
 
 function useGetMyshop() {
   const dispatch = useDispatch();
-  const { userData } = useSelector(state => state.user);
+ const { userData } = useSelector(state => state.user);
+if (!userData?._id) return;
+);
 
   useEffect(() => {
     // Only fetch if userData exists and role is owner
@@ -26,3 +28,4 @@ function useGetMyshop() {
 }
 
 export default useGetMyshop;
+
