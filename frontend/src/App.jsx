@@ -123,6 +123,12 @@ function App() {
       socket.disconnect();
     };
   }, [userData?._id]);
+  const { userData, authChecked } = useSelector(state => state.user);
+
+if (!authChecked) {
+  return <div>Loading...</div>; // or full-screen spinner
+}
+
 
   return (
     <>
