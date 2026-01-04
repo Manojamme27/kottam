@@ -9,30 +9,30 @@ const useGetMyOrders = () => {
   const { userData, authChecked } = useSelector(state => state.user);
 
   useEffect(() => {
-  if (!authChecked) return;
-  if (!userData?._id) return;
+    // ✅ wait until auth resolved
+    if (!authChecked) return;
 
-  // 🚫 deliveryBoy must NOT call this
-  if (!["user", "owner"].includes(userData.role)) return;
-
-  const fetchOrders = async () => {
-    try {
-      const res = await axios.get(
-        `${serverUrl}/api/order/my-orders`,
-        { withCredentials: true }
-      );
-      dispatch(setMyOrders(res.data));
-    } catch (error) {
-      if (error.response?.status !== 401) {
-        console.error(error);
-      }
+    // ✅ user not logged in → clear orders
+    if (!userData?._id) {
+      dispatch(setMyOrders([]));
+      return;
     }
-  };
 
-  fetchOrders();
-}, [authChecked, userData?._id, userData?.role, dispatch]);
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get(
+          `${serverUrl}/api/order/my-orders`,
+          { withCredentials: true }
+        );
 
+        dispatch(setMyOrders(res.data));
+      } catch (error) {
+        console.error("fetch orders failed:", error);
+      }
+    };
+
+    fetchOrders();
+  }, [authChecked, userData?._id, dispatch]);
 };
 
 export default useGetMyOrders;
-
