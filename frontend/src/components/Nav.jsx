@@ -53,14 +53,16 @@ function Nav() {
       {},
       { withCredentials: true }
     );
-  } catch (err) {
-    // even if backend fails, continue logout
-  } finally {
-    dispatch(logout());          // ✅ IMPORTANT
+
+    dispatch(logout()); // 🔥 MUST use logout reducer
     toast.success("Logged out successfully 👋");
     navigate("/signin");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to logout.");
   }
 };
+
     useEffect(() => {
         function handleOutsideClick(e) {
   // ❌ ignore clicks on search results & item cards
@@ -539,6 +541,7 @@ const handleSearchShops = async () => {
 }
 
 export default Nav;
+
 
 
 
