@@ -21,6 +21,7 @@ const userSlice = createSlice({
   name: "user",
   initialState: {
     userData: savedUser || null,
+    authChecked: false,
 
     currentCity: null,
     currentState: null,
@@ -46,6 +47,8 @@ const userSlice = createSlice({
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
+  state.authChecked = true; // ⭐⭐⭐ THIS IS THE FIX ⭐⭐⭐
+
   const payload = action.payload;
 
   if (payload?.user && payload?.token) {
@@ -296,6 +299,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
