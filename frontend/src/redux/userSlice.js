@@ -4,8 +4,6 @@ import { createSlice } from "@reduxjs/toolkit";
 const savedUser = JSON.parse(localStorage.getItem("userData"));
 const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
-const savedOrders = JSON.parse(localStorage.getItem("myOrders")) || [];
-
 
 
 // Load user's cart
@@ -35,7 +33,8 @@ const userSlice = createSlice({
     cartItems: savedCart,
     totalAmount: savedTotal,
 
-   myOrders: savedOrders,
+   myOrders: [],
+
 
     searchItems: [],               // ✅ SAFE
     searchShops: [],               // ✅ SAFE
@@ -215,7 +214,6 @@ const userSlice = createSlice({
     : [];
 
   // ✅ persist orders
-  localStorage.setItem("myOrders", JSON.stringify(state.myOrders));
 },
 
 
@@ -224,7 +222,6 @@ const userSlice = createSlice({
 
   state.myOrders = [action.payload, ...state.myOrders];
 
-  localStorage.setItem("myOrders", JSON.stringify(state.myOrders));
 },
 
 
@@ -328,6 +325,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
