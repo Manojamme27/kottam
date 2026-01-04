@@ -1,7 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 // Load saved user
-const savedUser = JSON.parse(localStorage.getItem("userData"));
 const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
 
@@ -20,26 +19,26 @@ const savedTotal = savedCart.reduce(
 const userSlice = createSlice({
   name: "user",
   initialState: {
-    userData: null,
-    authChecked: false,
+  userData: null,          // 🔴 IMPORTANT
+  authChecked: false,
 
-    currentCity: null,
-    currentState: null,
-    currentAddress: null,
+  currentCity: null,
+  currentState: null,
+  currentAddress: null,
 
-    shopInMyCity: cachedShops,     // NOW MEANS: ALL SHOPS
-    itemsInMyCity: cachedItems,    // NOW MEANS: ALL ITEMS
+  shopInMyCity: [],
+  itemsInMyCity: [],
 
-    cartItems: savedCart,
-    totalAmount: savedTotal,
+  cartItems: [],
+  totalAmount: 0,
 
-    myOrders: [],
+  myOrders: [],
+  searchItems: [],
+  searchShops: [],
+  socket: null,
+},
 
-    searchItems: [],               // ✅ SAFE
-    searchShops: [],               // ✅ SAFE
-
-    socket: null,
-  },
+ 
 
 
   reducers: {
@@ -301,6 +300,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
