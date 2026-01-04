@@ -1,14 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 // Load saved user
-const savedUser = (() => {
-  try {
-    const data = localStorage.getItem("userData");
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
-  }
-})();
+const savedUser = JSON.parse(localStorage.getItem("userData"));
 const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
 
@@ -27,26 +20,26 @@ const savedTotal = savedCart.reduce(
 const userSlice = createSlice({
   name: "user",
   initialState: {
-  userData: null,          // 🔴 IMPORTANT
-  authChecked: false,
+    userData: savedUser || null,
+    authChecked: false,
 
-  currentCity: null,
-  currentState: null,
-  currentAddress: null,
+    currentCity: null,
+    currentState: null,
+    currentAddress: null,
 
-  shopInMyCity: [],
-  itemsInMyCity: [],
+    shopInMyCity: cachedShops,     // NOW MEANS: ALL SHOPS
+    itemsInMyCity: cachedItems,    // NOW MEANS: ALL ITEMS
 
-  cartItems: [],
-  totalAmount: 0,
+    cartItems: savedCart,
+    totalAmount: savedTotal,
 
-  myOrders: [],
-  searchItems: [],
-  searchShops: [],
-  socket: null,
-},
+    myOrders: [],
 
- 
+    searchItems: [],               // ✅ SAFE
+    searchShops: [],               // ✅ SAFE
+
+    socket: null,
+  },
 
 
   reducers: {
@@ -54,28 +47,28 @@ const userSlice = createSlice({
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
-  const payload = action.payload;
+      const payload = action.payload;
 
-  if (payload?.user && payload?.token) {
-    state.userData = payload.user;
-    state.userData.token = payload.token;
+      if (payload?.user && payload?.token) {
+        state.userData = payload.user;
+        state.userData.token = payload.token;
 
-    localStorage.setItem("userData", JSON.stringify(state.userData));
-    localStorage.setItem("authToken", payload.token);
-  } else if (payload?._id) {
-    state.userData = payload;
-    localStorage.setItem("userData", JSON.stringify(payload));
-  } else {
-    state.userData = null;
-    state.cartItems = [];
-    state.totalAmount = 0;
-    localStorage.removeItem("userData");
-    localStorage.removeItem("authToken");
-  }
-},
-setAuthChecked: (state, action) => {
-  state.authChecked = action.payload;
-},
+        localStorage.setItem("userData", JSON.stringify(state.userData));
+        localStorage.setItem("authToken", payload.token);
+      } else if (payload?._id) {
+        state.userData = payload;
+        localStorage.setItem("userData", JSON.stringify(payload));
+      } else {
+        state.userData = null;
+        state.cartItems = [];
+        state.totalAmount = 0;
+        localStorage.removeItem("userData");
+        localStorage.removeItem("authToken");
+      }
+    },
+    setAuthChecked: (state, action) => {
+      state.authChecked = action.payload;
+    },
 
 
     setCurrentCity: (state, action) => {
@@ -285,7 +278,7 @@ setAuthChecked: (state, action) => {
 });
 
 export const {
-  setUserData, 
+  setUserData,
   setAuthChecked,
   setCurrentAddress,
   setCurrentCity,
@@ -307,11 +300,7 @@ export const {
   setSocket,
 } = userSlice.actions;
 
-export default userSlice.reducer;
-
-
-
-
+export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
 
 
 
