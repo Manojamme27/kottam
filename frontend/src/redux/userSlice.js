@@ -1,6 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 // Load saved user
+const savedUser = (() => {
+  try {
+    const data = localStorage.getItem("userData");
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+})();
 const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
 
@@ -300,6 +308,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
