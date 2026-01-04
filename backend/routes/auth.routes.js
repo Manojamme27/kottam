@@ -19,7 +19,7 @@ const authRouter = express.Router();
 // existing routes
 authRouter.post("/signup", signUp);
 authRouter.post("/signin", signIn);
-authRouter.get("/signout", signOut);
+authRouter.post("/signout", signOut);
 
 // 🔥 ADD THIS ROUTE
 authRouter.get("/me", isAuth, async (req, res) => {
@@ -49,3 +49,4 @@ authRouter.delete("/delete-account", isAuth, deleteAccount);
 authRouter.post("/verify-admin-code", verifyAdminCode);
 
 export default authRouter;
+
