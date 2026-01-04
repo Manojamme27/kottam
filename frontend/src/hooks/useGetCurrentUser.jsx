@@ -11,16 +11,13 @@ const useGetCurrentUser = () => {
     const fetchUser = async () => {
       try {
         const res = await axios.get(
-          `${serverUrl}/api/auth/me`, // 🔥 FIXED ENDPOINT
+          `${serverUrl}/api/auth/me`,
           { withCredentials: true }
         );
-
         dispatch(setUserData(res.data));
       } catch (error) {
-        // 🔥 DO NOT LOG USER OUT ON 400
-        if (error.response?.status === 401) {
-          dispatch(setUserData(null));
-        }
+        // ❌ DO NOT clear user for 401 here on refresh
+        dispatch(setUserData(null));
       } finally {
         dispatch(setAuthChecked(true));
       }
