@@ -22,15 +22,15 @@ const server = http.createServer(app);
 
 const FRONTEND_URL = "https://kottam-frontend.vercel.app";
 
-/* =====================================================
-   FIX 1: BODY + COOKIE PARSER (REQUIRED FOR AUTH)
-===================================================== */
+/* ================================
+   BODY + COOKIES
+================================ */
 app.use(express.json());
 app.use(cookieParser());
 
-/* =====================================================
-   FIX 2: CORS (DO NOT THROW ERRORS)
-===================================================== */
+/* ================================
+   CORS (FIXED)
+================================ */
 const allowedOrigins = [
   "https://kottam-frontend.vercel.app",
   "http://localhost:5173",
@@ -39,14 +39,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (Postman, mobile apps, server-to-server)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      // ❌ DO NOT throw error
       return callback(null, false);
     },
     credentials: true,
@@ -54,53 +52,50 @@ app.use(
   })
 );
 
-// ✅ REQUIRED for browser preflight requests
-app.options("*", cors());
+// 🔥 FIX: use "/*" instead of "*"
+app.options("/*", cors());
 
-/* =====================================================
-   STATIC FILES (UNCHANGED)
-===================================================== */
+/* ================================
+   STATIC FILES
+================================ */
 app.use(
   "/uploads",
   express.static(path.join(process.cwd(), "uploads"))
 );
 
-/* =====================================================
+/* ================================
    SOCKET.IO (UNCHANGED)
-===================================================== */
+================================ */
 const io = new Server(server, {
   cors: {
     origin: FRONTEND_URL,
     credentials: true,
   },
-
-  // 🔥 REQUIRED FOR RENDER
   transports: ["polling", "websocket"],
   allowEIO3: true,
-
   pingTimeout: 60000,
   pingInterval: 25000,
 });
 
 app.set("io", io);
 
-/* =====================================================
-   ROUTES (UNCHANGED)
-===================================================== */
+/* ================================
+   ROUTES
+================================ */
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/order", orderRouter);
 
-/* =====================================================
-   SOCKET HANDLER (UNCHANGED)
-===================================================== */
+/* ================================
+   SOCKET HANDLER
+================================ */
 socketHandler(io);
 
-/* =====================================================
-   START SERVER (UNCHANGED)
-===================================================== */
+/* ================================
+   START SERVER
+================================ */
 const port = process.env.PORT || 8000;
 server.listen(port, () => {
   connectDb();
