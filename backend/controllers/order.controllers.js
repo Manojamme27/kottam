@@ -262,39 +262,46 @@ export const getMyOrders = async (req, res) => {
     }
 
     // ================= OWNER VIEW =================
-    if (user.role === "owner") {
-      const orders = await Order.find({ "shopOrders.owner": req.userId })
-  .sort({ createdAt: -1 })
-  .populate("user", "fullName email mobile") // ✅ THIS is key
-  .populate("shopOrders.shop", "name")
-  .populate("shopOrders.owner", "fullName email mobile")
-  .populate("shopOrders.shopOrderItems.item", "name image price")
-  .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+if (user.role === "owner") {
+  const orders = await Order.find({ "shopOrders.owner": req.userId })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "user",
+      select: "fullName email mobile",
+      model: "User"
+    })
+    .populate("shopOrders.shop", "name")
+    .populate("shopOrders.shopOrderItems.item", "name image price")
+    .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
+  const filtered = [];
 
-      const filtered = [];
+  for (const order of orders) {
+    const validShopOrders = order.shopOrders.filter(
+      so => String(so.owner) === String(req.userId)
+    );
 
-      for (const order of orders) {
-        const validShopOrders = order.shopOrders.filter(
-          (so) =>
-            String(so.owner?._id || so.owner) === String(req.userId)
-        );
+    if (!validShopOrders.length) continue;
 
-        if (validShopOrders.length === 0) continue;
+    filtered.push({
+      _id: order._id,
+      paymentMethod: order.paymentMethod,
+      payment: order.payment,
+      createdAt: order.createdAt,
+      deliveryAddress: order.deliveryAddress,
+      user: {
+        _id: order.user?._id,
+        fullName: order.user?.fullName || "Unknown",
+        email: order.user?.email || "",
+        mobile: order.user?.mobile || ""
+      },
+      shopOrders: validShopOrders,
+    });
+  }
 
-        filtered.push({
-          _id: order._id,
-          paymentMethod: order.paymentMethod,
-          user: order.user,
-          createdAt: order.createdAt,
-          deliveryAddress: order.deliveryAddress,
-          payment: order.payment,
-          shopOrders: validShopOrders,
-        });
-      }
+  return res.status(200).json(filtered);
+}
 
-      return res.status(200).json(filtered);
-    }
 
     return res.status(403).json({ message: "Invalid role" });
 
@@ -712,6 +719,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
