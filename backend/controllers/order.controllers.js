@@ -155,7 +155,7 @@ if (subtotal < 100) {
 
 await newOrder.populate("user", "fullName email mobile");
 await newOrder.populate("shopOrders.shop", "name");
-await newOrder.populate("shopOrders.owner", "name socketId");
+await newOrder.populate("shopOrders.owner", "fullName email mobile socketId");
 await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
 
 const io = req.app.get("io");
@@ -202,7 +202,7 @@ export const verifyPayment = async (req, res) => {
 
         await order.populate("user", "fullName email mobile");
 await order.populate("shopOrders.shop", "name");
-await order.populate("shopOrders.owner", "name socketId");
+await order.populate("shopOrders.owner", "fullName email mobile socketId");
 await order.populate("shopOrders.shopOrderItems.item", "name image price");
 
 
@@ -719,6 +719,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
