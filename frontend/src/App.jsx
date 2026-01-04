@@ -92,11 +92,7 @@ function App() {
     return () => socket.disconnect();
   }, [userData?._id, dispatch]);
 
-  // ✅ RETURN ONLY AFTER ALL HOOKS
-  if (!authChecked) {
-    return <div>Loading...</div>;
-  }
-
+ 
   return (
     <>
       <Routes>
