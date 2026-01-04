@@ -145,34 +145,23 @@ if (subtotal < 100) {
         // -----------------------------
         // COD FLOW
         // -----------------------------
-        const newOrder = await Order.create({
-            user: req.userId,
-            paymentMethod,
-            deliveryAddress,
-            totalAmount,
-            shopOrders,
-        });
+  const newOrder = await Order.create({ ... });
 
-        await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
-        await newOrder.populate("shopOrders.shop", "name");
-        await newOrder.populate("shopOrders.owner", "name socketId");
-        await newOrder.populate("user", "fullName email mobile");
+await newOrder.populate("user", "fullName email mobile");
+await newOrder.populate("shopOrders.shop", "name");
+await newOrder.populate("shopOrders.owner", "name");
+await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
 
+io.to(ownerSocketId).emit("newOrder", {
+  _id: newOrder._id,
+  paymentMethod: newOrder.paymentMethod,
+  user: newOrder.user, // ✅ FULL OBJECT
+  shopOrders: shopOrder,
+  createdAt: newOrder.createdAt,
+  deliveryAddress: newOrder.deliveryAddress,
+  payment: newOrder.payment,
+});
 
-        const io = req.app.get("io");
-        if (io) {
-            newOrder.shopOrders.forEach((shopOrder) => {
-                const ownerSocketId = shopOrder.owner.socketId;
-                if (ownerSocketId) {
-                    io.to(ownerSocketId).emit("newOrder", {
-                        _id: newOrder._id,
-                        paymentMethod: newOrder.paymentMethod,
-                        user: newOrder.user,
-                        shopOrders: shopOrder,
-                        createdAt: newOrder.createdAt,
-                        deliveryAddress: newOrder.deliveryAddress,
-                        payment: newOrder.payment,
-                    });
                 }
             });
         }
@@ -719,6 +708,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
