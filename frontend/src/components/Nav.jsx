@@ -15,6 +15,7 @@ import logo from "../assets/logo2.png";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { markAllRead } from "../redux/ownerSlice";
+import { logout } from "../redux/userSlice";
 
 function Nav() {
     const { userData, currentCity, cartItems } = useSelector((state) => state.user);
@@ -46,15 +47,20 @@ function Nav() {
 
     // ⭐ Logout
     const handleLogOut = async () => {
-        try {
-            await axios.get(`${serverUrl}/api/auth/signout`, { withCredentials: true });
-            dispatch(setUserData(null));
-            toast.success("Logged out successfully 👋");
-            navigate("/signin");
-        } catch {
-            toast.error("Failed to logout.");
-        }
-    };
+  try {
+    await axios.post(
+      `${serverUrl}/api/auth/signout`,
+      {},
+      { withCredentials: true }
+    );
+  } catch (err) {
+    // even if backend fails, continue logout
+  } finally {
+    dispatch(logout());          // ✅ IMPORTANT
+    toast.success("Logged out successfully 👋");
+    navigate("/signin");
+  }
+};
     useEffect(() => {
         function handleOutsideClick(e) {
   // ❌ ignore clicks on search results & item cards
@@ -533,6 +539,7 @@ const handleSearchShops = async () => {
 }
 
 export default Nav;
+
 
 
 
