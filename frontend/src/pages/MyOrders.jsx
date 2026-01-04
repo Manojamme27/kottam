@@ -15,14 +15,26 @@ import { toast } from "react-toastify";
 function MyOrders() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { userData, myOrders, socket } = useSelector((state) => state.user);
-  // ✅ BLOCK UNAUTHENTICATED ACCESS
-useEffect(() => {
-  if (!userData?._id) {
-    navigate("/signin");
-  }
-}, [userData, navigate]);
+ const { userData, myOrders, socket, authChecked } = useSelector(
+  (state) => state.user
+);
 
+// ⏳ WAIT until auth check finishes
+if (!authChecked) {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-gray-500">
+      Loading orders...
+    </div>
+  );
+}
+
+// 🔐 AFTER auth check, redirect if not logged in
+if (!userData?._id) {
+  navigate("/signin");
+  return null;
+}
+
+  // ✅ BLOCK UNAUTHENTICATED ACCESS
   const [cancelPopup, setCancelPopup] = useState({
     show: false,
     orderId: null,
@@ -247,5 +259,6 @@ useEffect(() => {
 }
 
 export default MyOrders;
+
 
 
