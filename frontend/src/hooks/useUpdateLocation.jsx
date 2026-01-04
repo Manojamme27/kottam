@@ -4,29 +4,31 @@ import { useSelector } from "react-redux";
 import { serverUrl } from "../App";
 
 const useUpdateLocation = () => {
-  const { userData } = useSelector(state => state.user);
-if (!userData?._id) return;
+  const { userData, authChecked } = useSelector(state => state.user);
 
   useEffect(() => {
-    // ✅ HARD GUARDS — VERY IMPORTANT
+    // ⛔ wait until auth check completes
+    if (!authChecked) return;
+
+    // ⛔ user not logged in
     if (!userData?._id) return;
+
+    // ⛔ no location available
     if (!userData?.location?.coordinates) return;
 
     const [lng, lat] = userData.location.coordinates;
 
-    // ✅ FIRE AND FORGET — NEVER BREAK UI
-    axios.post (
-      `${serverUrl}/api/user/update-location`,
-      { latitude: lat, longitude: lng },
-      { withCredentials: true }
-    ).catch(() => {
-      // ❌ DO NOTHING — THIS MUST BE SILENT
-    });
-
-  }, [userData?._id]);
+    // ✅ fire-and-forget (never break UI)
+    axios
+      .post(
+        `${serverUrl}/api/user/update-location`,
+        { latitude: lat, longitude: lng },
+        { withCredentials: true }
+      )
+      .catch(() => {
+        // intentionally silent
+      });
+  }, [authChecked, userData?._id, userData?.location?.coordinates]);
 };
 
 export default useUpdateLocation;
-
-
-
