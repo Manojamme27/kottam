@@ -6,7 +6,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-
+ 
 // Hooks
 import useGetCity from "./hooks/useGetCity";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
