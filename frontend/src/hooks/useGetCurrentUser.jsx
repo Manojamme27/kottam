@@ -15,13 +15,10 @@ const useGetCurrentUser = () => {
           { withCredentials: true }
         );
         dispatch(setUserData(res.data));
-      } catch (err) {
-        // ❌ only clear user if truly unauthorized
-        if (err.response?.status === 401) {
-          dispatch(setUserData(null));
-        }
+      } catch {
+        dispatch(setUserData(null));
       } finally {
-        dispatch(setAuthChecked(true));
+        dispatch(setAuthChecked(true)); // ⭐ CRITICAL
       }
     };
 
