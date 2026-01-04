@@ -51,7 +51,7 @@ function App() {
   const dispatch = useDispatch();
   const { userData, authChecked } = useSelector(state => state.user);
 
-  // ✅ ALWAYS called (no conditions)
+  // ✅ ALL hooks – ALWAYS called, NO conditions
   useGetCurrentUser();
   useGetCity();
   useUpdateLocation();
@@ -59,11 +59,10 @@ function App() {
   useGetItemsByCity();
   useGetMyOrders();
 
-  // ⛔ stop rendering until auth known
+  // ✅ UI gate AFTER hooks
   if (!authChecked) {
     return <div>Loading...</div>;
   }
-
 
   useEffect(() => {
     if (!userData?._id) return;
@@ -92,13 +91,13 @@ function App() {
     return () => socket.disconnect();
   }, [userData?._id, dispatch]);
 
- 
   return (
     <>
       <Routes>
-     <Route path="/signup" element={!userData ? <SignUp /> : <Navigate to="/" />} />
+        <Route path="/signup" element={!userData ? <SignUp /> : <Navigate to="/" />} />
         <Route path="/signin" element={!userData ? <SignIn /> : <Navigate to="/" />} />
         <Route path="/forgot-password" element={!userData ? <ForgotPassword /> : <Navigate to="/" />} />
+
         <Route path="/" element={userData ? <Home /> : <Navigate to="/signin" />} />
         <Route path="/create-edit-shop" element={userData ? <CreateEditShop /> : <Navigate to="/signin" />} />
         <Route path="/add-item" element={userData ? <AddItem /> : <Navigate to="/signin" />} />
@@ -109,12 +108,12 @@ function App() {
         <Route path="/my-orders" element={userData ? <MyOrders /> : <Navigate to="/signin" />} />
         <Route path="/track-order/:orderId" element={userData ? <TrackOrderPage /> : <Navigate to="/signin" />} />
         <Route path="/shop/:shopId" element={userData ? <Shop /> : <Navigate to="/signin" />} />
-
       </Routes>
 
       <ToastContainer position="top-center" autoClose={2300} theme="colored" />
     </>
   );
 }
+
 
 export default App;
