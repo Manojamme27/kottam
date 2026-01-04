@@ -94,19 +94,157 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/signup" element={!userData ? <SignUp /> : <Navigate to="/" />} />
-        <Route path="/signin" element={!userData ? <SignIn /> : <Navigate to="/" />} />
-        <Route path="/forgot-password" element={!userData ? <ForgotPassword /> : <Navigate to="/" />} />
-        <Route path="/" element={userData ? <Home /> : <Navigate to="/signin" />} />
-        <Route path="/create-edit-shop" element={userData ? <CreateEditShop /> : <Navigate to="/signin" />} />
-        <Route path="/add-item" element={userData ? <AddItem /> : <Navigate to="/signin" />} />
-        <Route path="/edit-item/:itemId" element={userData ? <EditItem /> : <Navigate to="/signin" />} />
-        <Route path="/cart" element={userData ? <CartPage /> : <Navigate to="/signin" />} />
-        <Route path="/checkout" element={userData ? <CheckOut /> : <Navigate to="/signin" />} />
-        <Route path="/order-placed" element={userData ? <OrderPlaced /> : <Navigate to="/signin" />} />
-        <Route path="/my-orders" element={userData ? <MyOrders /> : <Navigate to="/signin" />} />
-        <Route path="/track-order/:orderId" element={userData ? <TrackOrderPage /> : <Navigate to="/signin" />} />
-        <Route path="/shop/:shopId" element={userData ? <Shop /> : <Navigate to="/signin" />} />
+        <Routes>
+
+  {/* ================= PUBLIC ROUTES ================= */}
+
+  <Route
+    path="/signin"
+    element={
+      !authChecked
+        ? <div />
+        : !userData
+          ? <SignIn />
+          : <Navigate to="/" />
+    }
+  />
+
+  <Route
+    path="/signup"
+    element={
+      !authChecked
+        ? <div />
+        : !userData
+          ? <SignUp />
+          : <Navigate to="/" />
+    }
+  />
+
+  <Route
+    path="/forgot-password"
+    element={
+      !authChecked
+        ? <div />
+        : !userData
+          ? <ForgotPassword />
+          : <Navigate to="/" />
+    }
+  />
+
+  {/* ================= PROTECTED ROUTES ================= */}
+
+  <Route
+    path="/"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <Home />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/create-edit-shop"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <CreateEditShop />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/add-item"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <AddItem />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/edit-item/:itemId"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <EditItem />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/cart"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <CartPage />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/checkout"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <CheckOut />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/order-placed"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <OrderPlaced />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/my-orders"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <MyOrders />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/track-order/:orderId"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <TrackOrderPage />
+          : <Navigate to="/signin" />
+    }
+  />
+
+  <Route
+    path="/shop/:shopId"
+    element={
+      !authChecked
+        ? <div />
+        : userData
+          ? <Shop />
+          : <Navigate to="/signin" />
+    }
+  />
+
+</Routes>
+
       </Routes>
 
       <ToastContainer position="top-center" autoClose={2300} theme="colored" />
