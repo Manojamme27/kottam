@@ -58,13 +58,11 @@ const userSlice = createSlice({
       } else if (payload?._id) {
         state.userData = payload;
         localStorage.setItem("userData", JSON.stringify(payload));
-      } else {
-        state.userData = null;
-        state.cartItems = [];
-        state.totalAmount = 0;
-        localStorage.removeItem("userData");
-        localStorage.removeItem("authToken");
-      }
+      } } else {
+  // ❌ DO NOTHING
+  // logout must be explicit
+}
+
     },
     setAuthChecked: (state, action) => {
       state.authChecked = action.payload;
@@ -271,6 +269,15 @@ const userSlice = createSlice({
       state.searchItems = [];
       state.searchShops = [];
     },
+      logout: (state) => {
+  state.userData = null;
+  state.cartItems = [];
+  state.totalAmount = 0;
+  state.myOrders = [];
+  localStorage.removeItem("userData");
+  localStorage.removeItem("authToken");
+},
+
 
 
 
@@ -298,9 +305,12 @@ export const {
   setTotalAmount,
   updateRealtimeOrderStatus,
   setSocket,
+  logout,
+
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
