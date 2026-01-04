@@ -156,7 +156,8 @@ if (subtotal < 100) {
         await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
         await newOrder.populate("shopOrders.shop", "name");
         await newOrder.populate("shopOrders.owner", "name socketId");
-        await newOrder.populate("user", "name email mobile");
+        await newOrder.populate("user", "fullName email mobile");
+
 
         const io = req.app.get("io");
         if (io) {
@@ -206,7 +207,8 @@ export const verifyPayment = async (req, res) => {
         await order.populate("shopOrders.shopOrderItems.item", "name image price");
         await order.populate("shopOrders.shop", "name");
         await order.populate("shopOrders.owner", "name socketId");
-        await order.populate("user", "name email mobile");
+        await order.populate("user", "fullName email mobile");
+
 
         const io = req.app.get("io");
         if (io) {
@@ -249,10 +251,12 @@ export const getMyOrders = async (req, res) => {
     // ================= USER VIEW =================
     if (user.role === "user") {
       const orders = await Order.find({ user: req.userId })
-        .sort({ createdAt: -1 })
-        .populate("shopOrders.shop", "name")
-        .populate("shopOrders.owner", "name email mobile")
-        .populate("shopOrders.shopOrderItems.item", "name image price");
+  .sort({ createdAt: -1 })
+  .populate("user", "fullName email mobile")
+  .populate("shopOrders.shop", "name")
+  .populate("shopOrders.owner", "fullName email mobile")
+  .populate("shopOrders.shopOrderItems.item", "name image price");
+
 
       return res.status(200).json(orders);
     }
@@ -260,12 +264,13 @@ export const getMyOrders = async (req, res) => {
     // ================= OWNER VIEW =================
     if (user.role === "owner") {
       const orders = await Order.find({ "shopOrders.owner": req.userId })
-        .sort({ createdAt: -1 })
-        .populate("shopOrders.shop", "name")
-        .populate("shopOrders.owner", "name email mobile")
-        .populate("user", "fullName email mobile")
-        .populate("shopOrders.shopOrderItems.item", "name image price")
-        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+  .sort({ createdAt: -1 })
+  .populate("user", "fullName email mobile") // ✅ THIS is key
+  .populate("shopOrders.shop", "name")
+  .populate("shopOrders.owner", "fullName email mobile")
+  .populate("shopOrders.shopOrderItems.item", "name image price")
+  .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+
 
       const filtered = [];
 
@@ -707,6 +712,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
