@@ -6,15 +6,13 @@ import { serverUrl } from "../App";
 
 function useGetMyOrders() {
   const dispatch = useDispatch();
-  const { userData } = useSelector(state => state.user);
-if (!userData?._id) return;
-
+  const { userData, authChecked } = useSelector(state => state.user);
 
   useEffect(() => {
-    // ⛔ WAIT until auth is confirmed
+    // ⛔ wait until auth check is finished
     if (!authChecked) return;
 
-    // ⛔ Not logged in
+    // ⛔ user not logged in
     if (!userData?._id) {
       dispatch(setMyOrders([]));
       return;
@@ -26,14 +24,12 @@ if (!userData?._id) return;
           `${serverUrl}/api/order/my-orders`,
           { withCredentials: true }
         );
-
         dispatch(setMyOrders(res.data));
       } catch (error) {
         if (error.response?.status === 401) {
           dispatch(setMyOrders([]));
           return;
         }
-
         console.error("getMyOrders failed:", error);
       }
     };
@@ -43,4 +39,3 @@ if (!userData?._id) return;
 }
 
 export default useGetMyOrders;
-
