@@ -73,7 +73,11 @@ const userSlice = createSlice({
   state.cartItems = [];
   state.totalAmount = 0;
   state.myOrders = [];
+  state.socket = null;
+
   localStorage.removeItem("userData");
+  localStorage.removeItem("myOrders");
+  localStorage.removeItem("authToken");
 },
 
     setAuthChecked: (state, action) => {
@@ -324,6 +328,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
