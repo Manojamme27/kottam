@@ -22,14 +22,14 @@ const server = http.createServer(app);
 
 const FRONTEND_URL = "https://kottam-frontend.vercel.app";
 
-/* ================================
-   BODY + COOKIES
+/* ===============================
+   BODY + COOKIE PARSER
 ================================ */
 app.use(express.json());
 app.use(cookieParser());
 
-/* ================================
-   CORS (FIXED)
+/* ===============================
+   CORS (NO WILDCARDS)
 ================================ */
 const allowedOrigins = [
   "https://kottam-frontend.vercel.app",
@@ -38,13 +38,15 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
+      // allow Postman, server-to-server, mobile apps
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
+      // silently reject other origins
       return callback(null, false);
     },
     credentials: true,
@@ -52,10 +54,7 @@ app.use(
   })
 );
 
-// 🔥 FIX: use "/*" instead of "*"
-app.options("/*", cors());
-
-/* ================================
+/* ===============================
    STATIC FILES
 ================================ */
 app.use(
@@ -63,7 +62,7 @@ app.use(
   express.static(path.join(process.cwd(), "uploads"))
 );
 
-/* ================================
+/* ===============================
    SOCKET.IO (UNCHANGED)
 ================================ */
 const io = new Server(server, {
@@ -79,7 +78,7 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-/* ================================
+/* ===============================
    ROUTES
 ================================ */
 app.use("/api/auth", authRouter);
@@ -88,12 +87,12 @@ app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/order", orderRouter);
 
-/* ================================
+/* ===============================
    SOCKET HANDLER
 ================================ */
 socketHandler(io);
 
-/* ================================
+/* ===============================
    START SERVER
 ================================ */
 const port = process.env.PORT || 8000;
