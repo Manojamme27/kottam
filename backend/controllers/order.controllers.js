@@ -145,33 +145,40 @@ if (subtotal < 100) {
         // -----------------------------
         // COD FLOW
         // -----------------------------
-  const newOrder = await Order.create({ ... });
+  const newOrder = await Order.create({
+  user: req.userId,
+  paymentMethod,
+  deliveryAddress,
+  totalAmount,
+  shopOrders,
+});
 
 await newOrder.populate("user", "fullName email mobile");
 await newOrder.populate("shopOrders.shop", "name");
-await newOrder.populate("shopOrders.owner", "name");
+await newOrder.populate("shopOrders.owner", "name socketId");
 await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
 
-io.to(ownerSocketId).emit("newOrder", {
-  _id: newOrder._id,
-  paymentMethod: newOrder.paymentMethod,
-  user: newOrder.user, // ✅ FULL OBJECT
-  shopOrders: shopOrder,
-  createdAt: newOrder.createdAt,
-  deliveryAddress: newOrder.deliveryAddress,
-  payment: newOrder.payment,
-});
+const io = req.app.get("io");
 
-                }
-            });
-        }
+if (io) {
+  newOrder.shopOrders.forEach((shopOrder) => {
+    const ownerSocketId = shopOrder.owner.socketId;
 
-        return res.status(201).json(newOrder);
-    } catch (error) {
-        console.error("🔥 PLACE ORDER ERROR:", error);
-        return res.status(500).json({ message: `place order error ${error}` });
+    if (ownerSocketId) {
+      io.to(ownerSocketId).emit("newOrder", {
+        _id: newOrder._id,
+        paymentMethod: newOrder.paymentMethod,
+        user: newOrder.user,          // ✅ FULL USER
+        shopOrders: shopOrder,
+        createdAt: newOrder.createdAt,
+        deliveryAddress: newOrder.deliveryAddress,
+        payment: newOrder.payment,
+      });
     }
-};
+  });
+}
+
+return res.status(201).json(newOrder);
 
 
 // ============================================================
@@ -193,10 +200,10 @@ export const verifyPayment = async (req, res) => {
         order.razorpayPaymentId = razorpay_payment_id;
         await order.save();
 
-        await order.populate("shopOrders.shopOrderItems.item", "name image price");
-        await order.populate("shopOrders.shop", "name");
-        await order.populate("shopOrders.owner", "name socketId");
         await order.populate("user", "fullName email mobile");
+await order.populate("shopOrders.shop", "name");
+await order.populate("shopOrders.owner", "name socketId");
+await order.populate("shopOrders.shopOrderItems.item", "name image price");
 
 
         const io = req.app.get("io");
@@ -255,19 +262,22 @@ if (user.role === "owner") {
   const orders = await Order.find({ "shopOrders.owner": req.userId })
     .sort({ createdAt: -1 })
     .populate("shopOrders.shop", "name")
-    .populate("shopOrders.owner", "name email mobile")
-    .populate({
-      path: "user",
-      select: "fullName email mobile",
-      model: "User",
-    })
+    .populate("shopOrders.owner", "fullName email mobile socketId")
+    .populate("user", "fullName email mobile")
     .populate("shopOrders.shopOrderItems.item", "name image price")
     .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
   const filtered = [];
 
   for (const order of orders) {
-    if (!order.user || typeof order.user !== "object") continue;
+    // ✅ NEVER DROP ORDER
+    if (!order.user) {
+      order.user = {
+        fullName: "Unknown User",
+        email: "",
+        mobile: "",
+      };
+    }
 
     const validShopOrders = order.shopOrders.filter(
       so => String(so.owner?._id || so.owner) === String(req.userId)
@@ -278,7 +288,7 @@ if (user.role === "owner") {
     filtered.push({
       _id: order._id,
       paymentMethod: order.paymentMethod,
-      user: order.user, // ✅ ALWAYS populated now
+      user: order.user,
       createdAt: order.createdAt,
       deliveryAddress: order.deliveryAddress,
       payment: order.payment,
@@ -288,6 +298,7 @@ if (user.role === "owner") {
 
   return res.status(200).json(filtered);
 }
+
 
 
 
@@ -708,6 +719,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
