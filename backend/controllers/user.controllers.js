@@ -1,23 +1,28 @@
 import User from "../models/user.model.js";
 
 export const getCurrentUser = async (req, res) => {
-    try {
-        const userId = req.userId;
-        if (!userId) {
-            return res.status(400).json({ message: "userId is not found" });
-        }
+  try {
+    // 🔥 THIS IS THE ONLY SOURCE OF TRUTH
+    const userId = req.userId;
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(400).json({ message: "user is not found" });
-        }
-
-        return res.status(200).json(user);
-    } catch (error) {
-        return res.status(500).json({ message: `get current user error ${error}` });
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-};
 
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // ✅ ALWAYS return 200 if token is valid
+    return res.status(200).json(user);
+
+  } catch (error) {
+    console.error("getCurrentUser error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 // ⭐ FINAL PATCH — FULLY COMPATIBLE WITH YOUR FRONTEND
 export const updateUserLocation = async (req, res) => {
     try {
@@ -46,4 +51,5 @@ export const updateUserLocation = async (req, res) => {
         return res.status(500).json({ message: `update location user error ${error}` });
     }
 };
+
 
