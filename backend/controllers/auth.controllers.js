@@ -2,16 +2,6 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import genToken from "../utils/token.js";
 import { sendOtpMail, sendAdminVerificationMail } from "../utils/mail.js";
-// ✅ COMMON COOKIE OPTIONS (CRITICAL FOR PROD + INCOGNITO)
-const cookieOptions = {
-    httpOnly: true,
-    secure: true,        // ✅ REQUIRED for Render + Vercel
-    sameSite: "none", // ✅ REQUIRED for cross-site cookies
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-};
-
-
 
 // Store temporary admin codes
 let pendingAdminCodes = {};
@@ -54,7 +44,6 @@ export const signUp = async (req, res) => {
                 }
                 delete pendingAdminCodes[email];
             }
-            
         }
 
         // Create user
@@ -69,13 +58,14 @@ export const signUp = async (req, res) => {
         });
 
         const token = await genToken(user._id);
-        res.cookie("token", token, cookieOptions);
+        res.cookie("token", token, {
+            secure: true,
+            sameSite: "none",
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
-        return res.status(201).json({
-  user,
-  token,
-});
-
+        return res.status(201).json(user);
 
     } catch (error) {
         console.error("❌ signUp error:", error);
@@ -101,13 +91,14 @@ export const signIn = async (req, res) => {
         }
 
         const token = await genToken(user._id);
-        res.cookie("token", token, cookieOptions);
+        res.cookie("token", token, {
+            secure: true,
+            sameSite: "none",
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
-        return res.status(200).json({
-  user,
-  token,
-});
-
+        return res.status(200).json(user);
     } catch (error) {
         console.error("❌ signIn error:", error);
         return res.status(500).json({ message: `sign in error: ${error.message}` });
@@ -119,14 +110,7 @@ export const signIn = async (req, res) => {
 // =========================
 export const signOut = async (req, res) => {
     try {
-        res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",  
-});
-
-
+        res.clearCookie("token");
         return res.status(200).json({ message: "Log out successfully." });
     } catch (error) {
         return res.status(500).json({ message: `sign out error: ${error}` });
@@ -224,14 +208,14 @@ export const googleAuth = async (req, res) => {
 
         const token = await genToken(user._id);
 
-        res.cookie("token", token, cookieOptions);
+        res.cookie("token", token, {
+            secure: true,
+            sameSite: "none",
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
-
-        return res.status(200).json({
-  user,
-  token,
-});
-
+        return res.status(200).json(user);
     } catch (error) {
         return res.status(500).json({ message: `googleAuth error ${error}` });
     }
@@ -274,20 +258,10 @@ export const deleteAccount = async (req, res) => {
         }
 
         await User.findByIdAndDelete(userId);
-        res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",  
-});
-
+        res.clearCookie("token");
 
         return res.status(200).json({ message: "Account deleted successfully" });
     } catch (error) {
         return res.status(500).json({ message: `Delete account error ${error}` });
     }
 };
-
-
-
-
