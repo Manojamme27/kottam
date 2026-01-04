@@ -68,7 +68,7 @@ const userSlice = createSlice({
 },
 setAuthChecked: (state, action) => {
   state.authChecked = action.payload;
-}
+},
 
 
     setCurrentCity: (state, action) => {
@@ -301,6 +301,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
