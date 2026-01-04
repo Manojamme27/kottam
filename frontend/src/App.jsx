@@ -51,24 +51,19 @@ function App() {
   const dispatch = useDispatch();
   const { userData, authChecked } = useSelector(state => state.user);
 
-  // 🔐 ALWAYS FIRST
+  // ✅ ALWAYS called (no conditions)
   useGetCurrentUser();
+  useGetCity();
+  useUpdateLocation();
+  useGetMyshop();
+  useGetItemsByCity();
+  useGetMyOrders();
 
-  // ⛔ STOP rendering until auth finishes
+  // ⛔ stop rendering until auth known
   if (!authChecked) {
     return <div>Loading...</div>;
   }
 
-  // 🌍 Public (safe)
-  useGetCity();
-
-  // 🔐 Auth-dependent hooks
-  if (userData?._id) {
-    useUpdateLocation();
-    useGetMyshop();
-    useGetItemsByCity();
-    useGetMyOrders();
-  }
 
   useEffect(() => {
     if (!userData?._id) return;
