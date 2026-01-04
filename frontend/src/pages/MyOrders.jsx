@@ -18,6 +18,13 @@ function MyOrders() {
  const { userData, myOrders, socket, authChecked } = useSelector(
   (state) => state.user
 );
+  useEffect(() => {
+  if (!authChecked) return;      // wait for auth check
+  if (!userData?._id) {
+    navigate("/signin");
+  }
+}, [authChecked, userData, navigate]);
+
 
 // ⏳ WAIT until auth check finishes
 if (!authChecked) {
@@ -28,11 +35,6 @@ if (!authChecked) {
   );
 }
 
-// 🔐 AFTER auth check, redirect if not logged in
-if (!userData?._id) {
-  navigate("/signin");
-  return null;
-}
 
   // ✅ BLOCK UNAUTHENTICATED ACCESS
   const [cancelPopup, setCancelPopup] = useState({
@@ -259,6 +261,7 @@ if (!userData?._id) {
 }
 
 export default MyOrders;
+
 
 
 
