@@ -58,7 +58,7 @@ const userSlice = createSlice({
     state.userData = payload;
     localStorage.setItem("userData", JSON.stringify(payload));
 
-    // ⭐ NEW FIX
+    // ✅ clear orders ONLY if different user logs in
     if (prevUserId && prevUserId !== payload._id) {
       state.myOrders = [];
       localStorage.removeItem("myOrders");
@@ -69,17 +69,15 @@ const userSlice = createSlice({
 },
 
 
-    logout: (state) => {
+   logout: (state) => {
   state.userData = null;
   state.cartItems = [];
   state.totalAmount = 0;
-  state.myOrders = [];
-  state.socket = null;
 
-  localStorage.removeItem("userData");
-  localStorage.removeItem("myOrders");
-  localStorage.removeItem("authToken");
+  // ❌ DO NOT clear myOrders
+  // orders must stay visible after logout
 },
+
 
     setAuthChecked: (state, action) => {
       state.authChecked = action.payload;
@@ -208,16 +206,14 @@ const userSlice = createSlice({
     // ======================================================
     // ORDERS SYSTEM (YOUR LOGIC + PATCHED)
     // ======================================================
-    setMyOrders: (state, action) => {
-  if (!state.userData?._id) return;
-
+   setMyOrders: (state, action) => {
   state.myOrders = Array.isArray(action.payload)
     ? action.payload
     : [];
 
- localStorage.setItem("myOrders", JSON.stringify(state.myOrders));
- // ✅ persist orders
+  localStorage.setItem("myOrders", JSON.stringify(state.myOrders));
 },
+
 
 
     addMyOrder: (state, action) => {
@@ -330,6 +326,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
