@@ -59,10 +59,6 @@ function App() {
   useGetItemsByCity();
   useGetMyOrders();
 
-  // ✅ UI gate AFTER hooks
-  if (!authChecked) {
-    return <div>Loading...</div>;
-  }
 
   useEffect(() => {
     if (!userData?._id) return;
@@ -90,6 +86,9 @@ function App() {
 
     return () => socket.disconnect();
   }, [userData?._id, dispatch]);
+ if (!authChecked) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
