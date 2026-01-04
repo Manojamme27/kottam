@@ -8,34 +8,22 @@ const useGetCurrentUser = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-  const savedUser = localStorage.getItem("userData");
-  if (!savedUser) return; // ✅ CRITICAL FIX
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(
+          `${serverUrl}/api/user/current`,
+          { withCredentials: true }
+        );
 
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get(
-        `${serverUrl}/api/user/current`,
-        { withCredentials: true }
-      );
-      dispatch(setUserData(res.data));
-dispatch({ type: "user/authCheckedDone" });
+        dispatch(setUserData(res.data));
+      } catch (error) {
+        // ✅ VERY IMPORTANT: even on 401, auth check is DONE
+        dispatch(setUserData(null));
+      }
+    };
 
-    } catch (error) {
-      
-      // ✅ 401 is NORMAL → do nothing
-      return;
-    }
-  };
-
-  fetchUser();
-}, [dispatch]);
-
-
+    fetchUser();
+  }, [dispatch]);
 };
 
 export default useGetCurrentUser;
-
-
-
-
-
