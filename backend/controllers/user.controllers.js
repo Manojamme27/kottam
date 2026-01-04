@@ -51,5 +51,19 @@ export const updateUserLocation = async (req, res) => {
         return res.status(500).json({ message: `update location user error ${error}` });
     }
 };
+export const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+    });
+
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    return res.status(500).json({ message: "Logout failed" });
+  }
+};
+
 
 
