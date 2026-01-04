@@ -4,7 +4,8 @@ import { useSelector } from "react-redux";
 import { serverUrl } from "../App";
 
 const useUpdateLocation = () => {
-  const { userData } = useSelector((state) => state.user);
+  const { userData } = useSelector(state => state.user);
+if (!userData?._id) return;
 
   useEffect(() => {
     // ✅ HARD GUARDS — VERY IMPORTANT
@@ -26,5 +27,6 @@ const useUpdateLocation = () => {
 };
 
 export default useUpdateLocation;
+
 
 
