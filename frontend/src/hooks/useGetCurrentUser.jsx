@@ -14,11 +14,16 @@ const useGetCurrentUser = () => {
           `${serverUrl}/api/user/current-user`,
           { withCredentials: true }
         );
+
+        // ✅ ONLY set user when SUCCESS
         dispatch(setUserData(res.data));
-      } catch {
-        dispatch(setUserData(null));
+      } catch (error) {
+        // ❌ DO NOTHING HERE
+        // ❌ NEVER clear user on refresh
+        console.warn("Auth check failed, keeping existing user");
       } finally {
-        dispatch(setAuthChecked(true)); // ⭐ CRITICAL
+        // ✅ auth check finished (success or fail)
+        dispatch(setAuthChecked(true));
       }
     };
 
