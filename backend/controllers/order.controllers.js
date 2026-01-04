@@ -267,28 +267,39 @@ if (user.role === "owner") {
     .sort({ createdAt: -1 })
     .populate("shopOrders.shop", "name")
     .populate("shopOrders.owner", "name email mobile")
-    .populate("user", "fullName email mobile") // ✅ REQUIRED
+    .populate({
+      path: "user",
+      select: "fullName email mobile",
+      model: "User",
+    })
     .populate("shopOrders.shopOrderItems.item", "name image price")
     .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-  const filtered = orders.map(order => {
+  const filtered = [];
+
+  for (const order of orders) {
+    if (!order.user || typeof order.user !== "object") continue;
+
     const validShopOrders = order.shopOrders.filter(
-      so => String(so.owner?._id) === String(req.userId)
+      so => String(so.owner?._id || so.owner) === String(req.userId)
     );
 
-    return {
+    if (!validShopOrders.length) continue;
+
+    filtered.push({
       _id: order._id,
       paymentMethod: order.paymentMethod,
-      user: order.user, // ✅ NOW PROPERLY POPULATED
+      user: order.user, // ✅ ALWAYS populated now
       createdAt: order.createdAt,
       deliveryAddress: order.deliveryAddress,
       payment: order.payment,
       shopOrders: validShopOrders,
-    };
-  });
+    });
+  }
 
   return res.status(200).json(filtered);
 }
+
 
 
 
@@ -708,6 +719,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
