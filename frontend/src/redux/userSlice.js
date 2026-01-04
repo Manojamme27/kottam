@@ -93,6 +93,9 @@ const userSlice = createSlice({
     setSocket: (state, action) => {
       state.socket = action.payload;
     },
+authCheckedDone: (state) => {
+  state.authChecked = true;
+},
 
     // ======================================================
     // CART SYSTEM (UNCHANGED)
@@ -278,6 +281,7 @@ const userSlice = createSlice({
 
 export const {
   setUserData,
+  authCheckedDone, 
   setCurrentAddress,
   setCurrentCity,
   setCurrentState,
@@ -299,6 +303,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;
+
 
 
 
