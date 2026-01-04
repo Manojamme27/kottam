@@ -49,16 +49,28 @@ const playSound = () => {
 
 function App() {
  
-  const { userData } = useSelector(state => state.user);
   const dispatch = useDispatch();
 
   // ✅ Hooks MUST be here (top-level)
-  useGetCurrentUser();
+  // ✅ ALWAYS run auth check hook
+useGetCurrentUser();
+
+// ⛔ STOP EVERYTHING until auth is resolved
+if (!authChecked) {
+  return <div>Loading...</div>;
+}
+
+  // Public hooks
+useGetCity();
+
+// User-dependent hooks
+if (userData?._id) {
   useUpdateLocation();
-  useGetCity();
   useGetMyshop();
   useGetItemsByCity();
   useGetMyOrders();
+}
+
 
   // ===============================
   // ⚡ SOCKET SETUP (FULL REALTIME)
@@ -124,10 +136,6 @@ function App() {
     };
   }, [userData?._id]);
   const { userData, authChecked } = useSelector(state => state.user);
-
-if (!authChecked) {
-  return <div>Loading...</div>; // or full-screen spinner
-}
 
 
   return (
