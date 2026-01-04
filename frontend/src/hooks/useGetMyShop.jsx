@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
 import { serverUrl } from "../App";
 import { setMyShopData } from "../redux/ownerSlice";
 
@@ -9,6 +9,7 @@ const useGetMyshop = () => {
   const { userData, authChecked } = useSelector(state => state.user);
 
   useEffect(() => {
+    // 🛑 HARD GUARDS
     if (!authChecked) return;
     if (!userData?._id) return;
     if (userData.role !== "owner") return;
@@ -21,8 +22,9 @@ const useGetMyshop = () => {
         );
         dispatch(setMyShopData(res.data));
       } catch (err) {
+        // ❌ 401 is NORMAL → ignore
         if (err.response?.status !== 401) {
-          console.error(err);
+          console.error("get-my shop error:", err);
         }
       }
     };
