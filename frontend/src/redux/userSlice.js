@@ -4,6 +4,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const savedUser = JSON.parse(localStorage.getItem("userData"));
 const cachedShops = JSON.parse(localStorage.getItem("shops_cache")) || [];
 const cachedItems = JSON.parse(localStorage.getItem("items_cache")) || [];
+const savedOrders = JSON.parse(localStorage.getItem("myOrders")) || [];
+
 
 
 // Load user's cart
@@ -33,7 +35,7 @@ const userSlice = createSlice({
     cartItems: savedCart,
     totalAmount: savedTotal,
 
-    myOrders: [],
+   myOrders: savedOrders,
 
     searchItems: [],               // ✅ SAFE
     searchShops: [],               // ✅ SAFE
@@ -46,32 +48,32 @@ const userSlice = createSlice({
     // ======================================================
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
-    setUserData: (state, action) => {
+   setUserData: (state, action) => {
   const payload = action.payload;
 
-  if (payload?.user && payload?.token) {
-    state.userData = payload.user;
-    state.userData.token = payload.token;
+  if (payload && payload._id) {
+    const prevUserId = state.userData?._id;
 
-    localStorage.setItem("userData", JSON.stringify(state.userData));
-    localStorage.setItem("authToken", payload.token);
-
-  } else if (payload?._id) {
     state.userData = payload;
     localStorage.setItem("userData", JSON.stringify(payload));
 
-  } else {
-    // ❌ DO NOTHING
-    // logout must be explicit
+    // ⭐ NEW FIX
+    if (prevUserId && prevUserId !== payload._id) {
+      state.myOrders = [];
+      localStorage.removeItem("myOrders");
+    }
+
+    return;
   }
 },
+
+
     logout: (state) => {
   state.userData = null;
   state.cartItems = [];
   state.totalAmount = 0;
   state.myOrders = [];
   localStorage.removeItem("userData");
-  localStorage.removeItem("authToken");
 },
 
     setAuthChecked: (state, action) => {
@@ -202,17 +204,25 @@ const userSlice = createSlice({
     // ORDERS SYSTEM (YOUR LOGIC + PATCHED)
     // ======================================================
     setMyOrders: (state, action) => {
-      if (!state.userData?._id) return; // ✅ PREVENT token error
-      state.myOrders = Array.isArray(action.payload)
-        ? action.payload
-        : [];
-    },
+  if (!state.userData?._id) return;
+
+  state.myOrders = Array.isArray(action.payload)
+    ? action.payload
+    : [];
+
+  // ✅ persist orders
+  localStorage.setItem("myOrders", JSON.stringify(state.myOrders));
+},
 
 
     addMyOrder: (state, action) => {
-      if (!state.userData?._id) return; // ✅ PREVENT token error
-      state.myOrders = [action.payload, ...state.myOrders];
-    },
+  if (!state.userData?._id) return;
+
+  state.myOrders = [action.payload, ...state.myOrders];
+
+  localStorage.setItem("myOrders", JSON.stringify(state.myOrders));
+},
+
 
     // ⭐ PATCHED — ALWAYS SAFE FOR BOTH USER & OWNER
     updateOrderStatus: (state, action) => {
@@ -314,6 +324,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
