@@ -18,7 +18,10 @@ const useGetCurrentUser = () => {
         { withCredentials: true }
       );
       dispatch(setUserData(res.data));
+dispatch({ type: "user/authCheckedDone" });
+
     } catch (error) {
+      
       // ✅ 401 is NORMAL → do nothing
       return;
     }
@@ -31,6 +34,7 @@ const useGetCurrentUser = () => {
 };
 
 export default useGetCurrentUser;
+
 
 
 
