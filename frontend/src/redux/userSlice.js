@@ -47,23 +47,33 @@ const userSlice = createSlice({
     // USER + LOCATION REDUCERS (KEEPING ORIGINAL)
     // ======================================================
     setUserData: (state, action) => {
-      const payload = action.payload;
+  const payload = action.payload;
 
-      if (payload?.user && payload?.token) {
-        state.userData = payload.user;
-        state.userData.token = payload.token;
+  if (payload?.user && payload?.token) {
+    state.userData = payload.user;
+    state.userData.token = payload.token;
 
-        localStorage.setItem("userData", JSON.stringify(state.userData));
-        localStorage.setItem("authToken", payload.token);
-      } else if (payload?._id) {
-        state.userData = payload;
-        localStorage.setItem("userData", JSON.stringify(payload));
-      } } else {
-  // ❌ DO NOTHING
-  // logout must be explicit
-}
+    localStorage.setItem("userData", JSON.stringify(state.userData));
+    localStorage.setItem("authToken", payload.token);
 
-    },
+  } else if (payload?._id) {
+    state.userData = payload;
+    localStorage.setItem("userData", JSON.stringify(payload));
+
+  } else {
+    // ❌ DO NOTHING
+    // logout must be explicit
+  }
+},
+    logout: (state) => {
+  state.userData = null;
+  state.cartItems = [];
+  state.totalAmount = 0;
+  state.myOrders = [];
+  localStorage.removeItem("userData");
+  localStorage.removeItem("authToken");
+},
+
     setAuthChecked: (state, action) => {
       state.authChecked = action.payload;
     },
@@ -269,14 +279,7 @@ const userSlice = createSlice({
       state.searchItems = [];
       state.searchShops = [];
     },
-      logout: (state) => {
-  state.userData = null;
-  state.cartItems = [];
-  state.totalAmount = 0;
-  state.myOrders = [];
-  localStorage.removeItem("userData");
-  localStorage.removeItem("authToken");
-},
+      
 
 
 
@@ -287,6 +290,7 @@ const userSlice = createSlice({
 export const {
   setUserData,
   setAuthChecked,
+   logout,
   setCurrentAddress,
   setCurrentCity,
   setCurrentState,
@@ -305,11 +309,12 @@ export const {
   setTotalAmount,
   updateRealtimeOrderStatus,
   setSocket,
-  logout,
+ 
 
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
