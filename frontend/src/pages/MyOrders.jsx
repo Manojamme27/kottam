@@ -29,10 +29,12 @@ function MyOrders() {
   }
 
   // 🔐 AFTER auth check, redirect if not logged in
-  if (!userData?._id) {
+ useEffect(() => {
+  if (authChecked && !userData?._id) {
     navigate("/signin");
-    return null;
   }
+}, [authChecked, userData, navigate]);
+
 
   // ✅ BLOCK UNAUTHENTICATED ACCESS
   const [cancelPopup, setCancelPopup] = useState({
@@ -259,5 +261,6 @@ function MyOrders() {
 }
 
 export default MyOrders;  // now tell methe fixes  
+
 
 
