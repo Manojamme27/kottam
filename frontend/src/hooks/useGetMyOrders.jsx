@@ -6,11 +6,17 @@ import { serverUrl } from "../App";
 
 function useGetMyOrders() {
   const dispatch = useDispatch();
-  const { userData } = useSelector((state) => state.user);
+  const { userData, authChecked } = useSelector((state) => state.user);
 
   useEffect(() => {
-    // 🔒 HARD GATE — DO NOT FETCH UNTIL USER IS CONFIRMED
-    if (!userData || !userData._id) return;
+    // ⛔ WAIT until auth is confirmed
+    if (!authChecked) return;
+
+    // ⛔ Not logged in
+    if (!userData?._id) {
+      dispatch(setMyOrders([]));
+      return;
+    }
 
     const fetchOrders = async () => {
       try {
@@ -21,15 +27,17 @@ function useGetMyOrders() {
 
         dispatch(setMyOrders(res.data));
       } catch (error) {
-        // ✅ 401 is NORMAL during startup — ignore completely
-        if (error.response?.status === 401) return;
+        if (error.response?.status === 401) {
+          dispatch(setMyOrders([]));
+          return;
+        }
 
         console.error("getMyOrders failed:", error);
       }
     };
 
     fetchOrders();
-  }, [userData?._id, dispatch]);
+  }, [authChecked, userData?._id, dispatch]);
 }
 
 export default useGetMyOrders;
