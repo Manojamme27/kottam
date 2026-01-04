@@ -265,42 +265,31 @@ export const getMyOrders = async (req, res) => {
 if (user.role === "owner") {
   const orders = await Order.find({ "shopOrders.owner": req.userId })
     .sort({ createdAt: -1 })
-    .populate({
-      path: "user",
-      select: "fullName email mobile",
-      model: "User"
-    })
     .populate("shopOrders.shop", "name")
+    .populate("shopOrders.owner", "name email mobile")
+    .populate("user", "fullName email mobile") // ✅ REQUIRED
     .populate("shopOrders.shopOrderItems.item", "name image price")
     .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-  const filtered = [];
-
-  for (const order of orders) {
+  const filtered = orders.map(order => {
     const validShopOrders = order.shopOrders.filter(
-      so => String(so.owner) === String(req.userId)
+      so => String(so.owner?._id) === String(req.userId)
     );
 
-    if (!validShopOrders.length) continue;
-
-    filtered.push({
+    return {
       _id: order._id,
       paymentMethod: order.paymentMethod,
-      payment: order.payment,
+      user: order.user, // ✅ NOW PROPERLY POPULATED
       createdAt: order.createdAt,
       deliveryAddress: order.deliveryAddress,
-      user: {
-        _id: order.user?._id,
-        fullName: order.user?.fullName || "Unknown",
-        email: order.user?.email || "",
-        mobile: order.user?.mobile || ""
-      },
+      payment: order.payment,
       shopOrders: validShopOrders,
-    });
-  }
+    };
+  });
 
   return res.status(200).json(filtered);
 }
+
 
 
     return res.status(403).json({ message: "Invalid role" });
@@ -719,6 +708,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
