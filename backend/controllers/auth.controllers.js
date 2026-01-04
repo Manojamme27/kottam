@@ -61,8 +61,7 @@ export const signUp = async (req, res) => {
         res.cookie("token", token, {
   httpOnly: true,
   secure: true,
-  sameSite: "none",
-  domain: ".onrender.com",   // 🔥 REQUIRED
+  sameSite: "none",   
   path: "/",                 // 🔥 REQUIRED
   maxAge: 7 * 24 * 60 * 60 * 1000,
 });
@@ -98,7 +97,6 @@ export const signIn = async (req, res) => {
   httpOnly: true,
   secure: true,
   sameSite: "none",
-  domain: ".onrender.com",   // 🔥 REQUIRED
   path: "/",                 // 🔥 REQUIRED
   maxAge: 7 * 24 * 60 * 60 * 1000,
 });
@@ -120,7 +118,6 @@ export const signOut = async (req, res) => {
   httpOnly: true,
   secure: true,
   sameSite: "none",
-  domain: ".onrender.com",
   path: "/",
 });
 
@@ -225,7 +222,6 @@ export const googleAuth = async (req, res) => {
   httpOnly: true,
   secure: true,
   sameSite: "none",
-  domain: ".onrender.com",   // 🔥 REQUIRED
   path: "/",                 // 🔥 REQUIRED
   maxAge: 7 * 24 * 60 * 60 * 1000,
 });
@@ -280,5 +276,6 @@ export const deleteAccount = async (req, res) => {
         return res.status(500).json({ message: `Delete account error ${error}` });
     }
 };
+
 
 
