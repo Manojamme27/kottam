@@ -6,7 +6,9 @@ import { serverUrl } from "../App";
 
 function useGetMyOrders() {
   const dispatch = useDispatch();
-  const { userData, authChecked } = useSelector((state) => state.user);
+  const { userData } = useSelector(state => state.user);
+if (!userData?._id) return;
+
 
   useEffect(() => {
     // ⛔ WAIT until auth is confirmed
@@ -41,3 +43,4 @@ function useGetMyOrders() {
 }
 
 export default useGetMyOrders;
+
