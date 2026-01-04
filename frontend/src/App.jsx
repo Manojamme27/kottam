@@ -1,3 +1,4 @@
+import ProtectedRoute from "./ProtectedRoute";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -94,20 +95,102 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/signup" element={!userData ? <SignUp /> : <Navigate to="/" />} />
-        <Route path="/signin" element={!userData ? <SignIn /> : <Navigate to="/" />} />
-        <Route path="/forgot-password" element={!userData ? <ForgotPassword /> : <Navigate to="/" />} />
-        <Route path="/" element={userData ? <Home /> : <Navigate to="/signin" />} />
-        <Route path="/create-edit-shop" element={userData ? <CreateEditShop /> : <Navigate to="/signin" />} />
-        <Route path="/add-item" element={userData ? <AddItem /> : <Navigate to="/signin" />} />
-        <Route path="/edit-item/:itemId" element={userData ? <EditItem /> : <Navigate to="/signin" />} />
-        <Route path="/cart" element={userData ? <CartPage /> : <Navigate to="/signin" />} />
-        <Route path="/checkout" element={userData ? <CheckOut /> : <Navigate to="/signin" />} />
-        <Route path="/order-placed" element={userData ? <OrderPlaced /> : <Navigate to="/signin" />} />
-        <Route path="/my-orders" element={userData ? <MyOrders /> : <Navigate to="/signin" />} />
-        <Route path="/track-order/:orderId" element={userData ? <TrackOrderPage /> : <Navigate to="/signin" />} />
-        <Route path="/shop/:shopId" element={userData ? <Shop /> : <Navigate to="/signin" />} />
-      </Routes>
+  {/* Public routes */}
+  <Route path="/signup" element={<SignUp />} />
+  <Route path="/signin" element={<SignIn />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+
+  {/* Protected routes */}
+  <Route
+    path="/"
+    element={
+      <ProtectedRoute>
+        <Home />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/create-edit-shop"
+    element={
+      <ProtectedRoute>
+        <CreateEditShop />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/add-item"
+    element={
+      <ProtectedRoute>
+        <AddItem />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/edit-item/:itemId"
+    element={
+      <ProtectedRoute>
+        <EditItem />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/cart"
+    element={
+      <ProtectedRoute>
+        <CartPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/checkout"
+    element={
+      <ProtectedRoute>
+        <CheckOut />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/order-placed"
+    element={
+      <ProtectedRoute>
+        <OrderPlaced />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/my-orders"
+    element={
+      <ProtectedRoute>
+        <MyOrders />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/track-order/:orderId"
+    element={
+      <ProtectedRoute>
+        <TrackOrderPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/shop/:shopId"
+    element={
+      <ProtectedRoute>
+        <Shop />
+      </ProtectedRoute>
+    }
+  />
+</Routes>
 
       <ToastContainer position="top-center" autoClose={2300} theme="colored" />
     </>
