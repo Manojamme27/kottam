@@ -569,8 +569,9 @@ export const getCurrentOrder = async (req, res) => {
                 populate: [{ path: "user", select: "fullName email location mobile" }]
             });
 
+        // ✅ FIX IS HERE
         if (!assignment) {
-            return res.status(400).json({ message: "assignment not found" });
+            return res.status(200).json(null);
         }
 
         const shopOrder = assignment.order.shopOrders.find(
@@ -578,15 +579,21 @@ export const getCurrentOrder = async (req, res) => {
         );
 
         let deliveryBoyLocation = { lat: null, lon: null };
-        if (assignment.assignedTo.location.coordinates.length === 2) {
-            deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
-            deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
+        if (
+            assignment.assignedTo?.location?.coordinates?.length === 2
+        ) {
+            deliveryBoyLocation.lat =
+                assignment.assignedTo.location.coordinates[1];
+            deliveryBoyLocation.lon =
+                assignment.assignedTo.location.coordinates[0];
         }
 
         let customerLocation = { lat: null, lon: null };
         if (assignment.order.deliveryAddress) {
-            customerLocation.lat = assignment.order.deliveryAddress.latitude;
-            customerLocation.lon = assignment.order.deliveryAddress.longitude;
+            customerLocation.lat =
+                assignment.order.deliveryAddress.latitude;
+            customerLocation.lon =
+                assignment.order.deliveryAddress.longitude;
         }
 
         return res.status(200).json({
@@ -598,9 +605,11 @@ export const getCurrentOrder = async (req, res) => {
             customerLocation
         });
     } catch (error) {
-        return res.status(500).json({ message: `get current order error ${error}` });
+        console.error("getCurrentOrder error:", error);
+        return res.status(500).json({ message: "Server error" });
     }
 };
+
 
 // ============================================================
 //  TODAY’S DELIVERY STATS
@@ -698,6 +707,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
