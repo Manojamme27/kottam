@@ -14,7 +14,6 @@ import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import useGetItemsByCity from "./hooks/useGetItemsByCity";
 import useGetMyOrders from "./hooks/useGetMyOrders";
 import useGetMyshop from "./hooks/useGetMyShop";
-import useGetShopByCity from "./hooks/useGetShopByCity";
 import useUpdateLocation from "./hooks/useUpdateLocation";
 
 // Pages
@@ -33,9 +32,11 @@ import CreateEditShop from "./pages/CreateEditShop";
 import Home from "./pages/Home";
 
 // Redux
-import { setSocket, addMyOrder, updateRealtimeOrderStatus } from "./redux/userSlice";
-
-
+import {
+  setSocket,
+  addMyOrder,
+  updateRealtimeOrderStatus,
+} from "./redux/userSlice";
 
 // Server URL
 export const serverUrl = import.meta.env.VITE_SERVER_URL;
@@ -48,29 +49,23 @@ const playSound = () => {
 };
 
 function App() {
- 
   const dispatch = useDispatch();
 
-  // ✅ Hooks MUST be here (top-level)
-  // ✅ ALWAYS run auth check hook
-useGetCurrentUser();
+  // ✅ SELECT STATE FIRST (MANDATORY)
+  const { userData, authChecked } = useSelector(state => state.user);
 
-// ⛔ STOP EVERYTHING until auth is resolved
-if (!authChecked) {
-  return <div>Loading...</div>;
-}
-
-  // Public hooks
-useGetCity();
-
-// User-dependent hooks
-if (userData?._id) {
+  // ✅ ALWAYS CALL HOOKS (NO CONDITIONS)
+  useGetCurrentUser();
+  useGetCity();
   useUpdateLocation();
   useGetMyshop();
   useGetItemsByCity();
   useGetMyOrders();
-}
 
+  // ⛔ BLOCK UI UNTIL AUTH IS RESOLVED
+  if (!authChecked) {
+    return <div>Loading...</div>;
+  }
 
   // ===============================
   // ⚡ SOCKET SETUP (FULL REALTIME)
@@ -78,8 +73,7 @@ if (userData?._id) {
   useEffect(() => {
     if (!userData?._id) return;
 
-    // Ensure only 1 socket instance
-    let socket = io(serverUrl, {
+    const socket = io(serverUrl, {
       withCredentials: true,
       transports: ["websocket"],
       reconnection: true,
@@ -88,41 +82,21 @@ if (userData?._id) {
     });
 
     socket.on("connect", () => {
-      console.log("🔌 SOCKET CONNECTED:", socket.id);
-
-      // Identify user to server
       socket.emit("identity", { userId: userData._id });
     });
 
-    socket.on("disconnect", () => {
-      console.log("❌ SOCKET DISCONNECTED");
-    });
-
-    // Re-identify after reconnect
-    socket.on("reconnect", () => {
-      console.log("🔄 SOCKET RECONNECTED:", socket.id);
-      socket.emit("identity", { userId: userData._id });
-    });
-
-    // ================================
-    // 🔥 REALTIME EVENTS FOR ALL ROLES
-    // ================================
-
-    // OWNER → New Order Received
     socket.on("newOrder", (orderData) => {
       playSound();
       toast.success("New Order Received");
       dispatch(addMyOrder(orderData));
     });
 
-    // USER → Status Update
     socket.on("update-status", (data) => {
       playSound();
       toast.info(`Order status updated: ${data.status}`);
       dispatch(updateRealtimeOrderStatus(data));
     });
 
-    // DELIVERY BOY → New Assignment
     socket.on("newAssignment", (assignment) => {
       playSound();
       toast.success(`New Delivery Assignment from ${assignment.shopName}`);
@@ -134,13 +108,10 @@ if (userData?._id) {
       socket.removeAllListeners();
       socket.disconnect();
     };
-  }, [userData?._id]);
-  const { userData, authChecked } = useSelector(state => state.user);
-
+  }, [userData?._id, dispatch]);
 
   return (
     <>
-      {/* Routes */}
       <Routes>
         <Route path="/signup" element={!userData ? <SignUp /> : <Navigate to="/" />} />
         <Route path="/signin" element={!userData ? <SignIn /> : <Navigate to="/" />} />
@@ -157,18 +128,10 @@ if (userData?._id) {
         <Route path="/shop/:shopId" element={userData ? <Shop /> : <Navigate to="/signin" />} />
       </Routes>
 
-      {/* Toast Notifications */}
       <ToastContainer
         position="top-center"
         autoClose={2300}
         theme="colored"
-        toastStyle={{
-          backgroundColor: "#fff9f6",
-          color: "#333",
-          borderRadius: "10px",
-          fontFamily: "Inter, sans-serif",
-          boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-        }}
       />
     </>
   );
