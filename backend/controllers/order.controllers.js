@@ -179,6 +179,7 @@ if (io) {
 }
 
 return res.status(201).json(newOrder);
+    };
 
 
 // ============================================================
@@ -719,6 +720,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
