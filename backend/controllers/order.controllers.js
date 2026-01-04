@@ -179,7 +179,14 @@ if (io) {
 }
 
 return res.status(201).json(newOrder);
-    };
+          } catch (error) {
+    console.error("🔥 PLACE ORDER ERROR:", error);
+    return res.status(500).json({
+      message: "place order failed",
+    });
+  }
+};
+
 
 
 // ============================================================
@@ -720,6 +727,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
