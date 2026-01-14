@@ -23,20 +23,17 @@ function OwnerOrderCard({ data }) {
     const user = data?.user || {};
 
     // 🔥 ALWAYS NORMALIZE shopOrders
-    const normalizedShopOrders = Array.isArray(data?.shopOrders)
-        ? data.shopOrders
-        : [data.shopOrders];
+   const shopOrders = Array.isArray(data?.shopOrders)
+  ? data.shopOrders
+  : [];
 
-   const shopOrder = normalizedShopOrders.find(Boolean);
-
-
-   if (!shopOrder) {
-  return (
-    <div className="rounded-xl p-4 bg-yellow-50 text-sm text-gray-600">
-      Loading order details...
-    </div>
-  );
+if (shopOrders.length === 0) {
+  return null; // ⛔ do NOT block render
 }
+
+// 🔥 OWNER ALWAYS HAS EXACTLY ONE SHOP ORDER
+const shopOrder = shopOrders[0];
+
 
 
     const assignedBoy = shopOrder?.assignedDeliveryBoy || null;
@@ -308,4 +305,5 @@ const handleUpdateStatus = async (orderId, shopId, status) => {
 }
 
 export default OwnerOrderCard;
+
 
