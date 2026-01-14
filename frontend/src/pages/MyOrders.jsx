@@ -21,15 +21,6 @@ function MyOrders() {
   socket,
   authChecked,
 } = useSelector((state) => state.user);
-
-  if (!authChecked) {
-  return (
-    <div className="min-h-screen flex items-center justify-center text-gray-500">
-      Loading orders...
-    </div>
-  );
-}
-
   
 
   // 🔐 AFTER auth check, redirect if not logged in
@@ -135,21 +126,21 @@ function MyOrders() {
       socket.off("newOrder", handleNewOrder);
       socket.off("update-status", handleStatusUpdate);
     };
-  }, [socket, userData?._id]);
+  }, [socket, userData?._id, myOrders]);
 
-  const visibleOrders =
-  userData?.role === "owner"
-    ? myOrders.filter(
-        order =>
-          Array.isArray(order.shopOrders) &&
-          order.shopOrders.some(Boolean)
-      )
-    : myOrders;
+  const visibleOrders = myOrders;
 
 
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
+
+        {!authChecked && (
+  <div className="min-h-screen flex items-center justify-center text-gray-500">
+    Loading orders...
+  </div>
+)}
+
 
         
         {/* HEADER */}
@@ -277,6 +268,7 @@ function MyOrders() {
 }
 
 export default MyOrders;  // now tell methe fixes  
+
 
 
 
