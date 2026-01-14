@@ -57,11 +57,11 @@ function App() {
   useUpdateLocation();
   useGetMyshop();
   useGetItemsByCity();
-  useGetMyOrders();
 
 
   useEffect(() => {
-    if (!userData?._id) return;
+    if (!userData?._id || !authChecked) return;
+
 
     const socket = io(serverUrl, {
       withCredentials: true,
