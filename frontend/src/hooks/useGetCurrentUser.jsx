@@ -15,15 +15,12 @@ const useGetCurrentUser = () => {
           { withCredentials: true }
         );
 
-        // ✅ ONLY set user when SUCCESS
         dispatch(setUserData(res.data));
-      } catch (error) {
-        // ❌ DO NOTHING HERE
-        // ❌ NEVER clear user on refresh
-        console.warn("Auth check failed, keeping existing user");
+      } catch {
+        // ✅ DO NOTHING
+        // keep localStorage user
       } finally {
-        // ✅ auth check finished (success or fail)
-        dispatch(setAuthChecked(true));
+        dispatch(setAuthChecked(true)); // logical flag only
       }
     };
 
