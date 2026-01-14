@@ -27,9 +27,17 @@ function OwnerOrderCard({ data }) {
         ? data.shopOrders
         : [data.shopOrders];
 
-    const shopOrder = normalizedShopOrders[0];
+   const shopOrder = normalizedShopOrders.find(Boolean);
 
-    if (!shopOrder) return <></>; // Prevent blank screen forever
+
+   if (!shopOrder) {
+  return (
+    <div className="rounded-xl p-4 bg-yellow-50 text-sm text-gray-600">
+      Loading order details...
+    </div>
+  );
+}
+
 
     const assignedBoy = shopOrder?.assignedDeliveryBoy || null;
 
@@ -44,26 +52,33 @@ function OwnerOrderCard({ data }) {
     // ================================
     // UPDATE STATUS (OWNER)
     // ================================
-    const handleUpdateStatus = async (orderId, shopId, status) => {
-        try {
-            const result = await axios.post(
-                `${serverUrl}/api/order/update-status/${orderId}/${shopId}`,
-                { status },
-                { withCredentials: true }
-            );
+const handleUpdateStatus = async (orderId, shopId, status) => {
+  try {
+    const result = await axios.post(
+      `${serverUrl}/api/order/update-status/${orderId}/${shopId}`,
+      { status },
+      { withCredentials: true }
+    );
 
-            // Sync redux
-            dispatch(updateOrderStatus({ orderId, shopId, status }));
+    // ✅ Sync redux using backend-confirmed status
+    dispatch(
+      updateOrderStatus({
+        orderId,
+        shopId,
+        status: result.data.shopOrder?.status || status,
+      })
+    );
 
-            // Sync available delivery boys (if out of delivery)
-            if (result.data.availableBoys) {
-                setAvailableBoys(result.data.availableBoys);
-            }
+    // ✅ Sync available delivery boys
+    if (result.data.availableBoys) {
+      setAvailableBoys(result.data.availableBoys);
+    }
 
-        } catch (error) {
-            console.log(error);
-        }
-    };
+  } catch (error) {
+    console.error("Update status failed:", error);
+  }
+};
+
 
     // ================================
     // PRINT RECEIPT
@@ -106,17 +121,18 @@ function OwnerOrderCard({ data }) {
                     <tr><th>Item</th><th>Qty</th><th>₹Price</th><th>Total</th></tr>
                 </thead>
                 <tbody>
-                    ${shopOrder.shopOrderItems
-                        .map(
-                            (item) => `
-                            <tr>
-                                <td>${item.item?.name || "-"}</td>
-                                <td>${item.quantity}</td>
-                                <td>₹${item.price}</td>
-                                <td>₹${item.price * item.quantity}</td>
-                            </tr>`
-                        )
-                        .join("")}
+                    ${Array.isArray(shopOrder.shopOrderItems)
+  ? shopOrder.shopOrderItems.map(
+      (item) => `
+        <tr>
+          <td>${item.item?.name || "-"}</td>
+          <td>${item.quantity}</td>
+          <td>₹${item.price}</td>
+          <td>₹${item.price * item.quantity}</td>
+        </tr>`
+    ).join("")
+  : ""}
+
                 </tbody>
             </table>
 
@@ -193,7 +209,9 @@ function OwnerOrderCard({ data }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {shopOrder?.shopOrderItems?.map((item, i) => (
+                        {Array.isArray(shopOrder?.shopOrderItems) &&
+  shopOrder.shopOrderItems.map((item, i) => (
+
                             <tr key={i} className="border-b last:border-0">
                                 <td className="py-2">{item.item?.name || "Unknown"}</td>
                                 <td className="py-2 text-center">{item.quantity}</td>
@@ -238,13 +256,11 @@ function OwnerOrderCard({ data }) {
                     {!isFinalStatus && (
                         <select
                             className="border-2 border-[#ff4d2d] rounded px-3 py-1"
-                            onChange={(e) =>
-                                handleUpdateStatus(
-                                    data._id,
-                                    shopOrder?.shop?._id,
-                                    e.target.value
-                                )
-                            }
+                            onChange={(e) => {
+  if (!shopOrder?.shop?._id) return;
+  handleUpdateStatus(data._id, shopOrder.shop._id, e.target.value);
+}}
+
                         >
                             <option value="">Change Status</option>
                             <option value="pending">Pending</option>
@@ -292,3 +308,4 @@ function OwnerOrderCard({ data }) {
 }
 
 export default OwnerOrderCard;
+
