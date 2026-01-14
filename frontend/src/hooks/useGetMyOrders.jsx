@@ -6,33 +6,31 @@ import { serverUrl } from "../App";
 
 const useGetMyOrders = () => {
   const dispatch = useDispatch();
-  const { authChecked } = useSelector(state => state.user);
+  const { authChecked, userData } = useSelector(state => state.user);
 
   useEffect(() => {
-  if (!authChecked) return;
-  if (!userData?._id) return;
+    if (!authChecked) return;
+    if (!userData?._id) return;
 
-  const fetchOrders = async () => {
-    try {
-      const res = await axios.get(
-        `${serverUrl}/api/order/my-orders`,
-        { withCredentials: true }
-      );
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get(
+          `${serverUrl}/api/order/my-orders`,
+          { withCredentials: true }
+        );
 
-      dispatch(setMyOrders(res.data));
-    } catch (error) {
-      if (error.response?.status === 401) {
-        // ✅ keep cached orders
-        return;
+        dispatch(setMyOrders(res.data));
+      } catch (error) {
+        if (error.response?.status === 401) {
+          // keep cached orders
+          return;
+        }
+        console.error(error);
       }
-      console.error(error);
-    }
-  };
+    };
 
-  fetchOrders();
-}, [authChecked, userData?._id]);
-
+    fetchOrders();
+  }, [authChecked, userData?._id, dispatch]);
 };
 
 export default useGetMyOrders;
-
