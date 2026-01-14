@@ -15,18 +15,15 @@ import { toast } from "react-toastify";
 function MyOrders() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { userData, myOrders, socket, authChecked } = useSelector(
-    (state) => state.user
-  );
+  const {
+  userData,
+  myOrders = [],
+  socket,
+  authChecked,
+} = useSelector((state) => state.user);
 
-  // ⏳ WAIT until auth check finishes
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Loading orders...
-      </div>
-    );
-  }
+
+
 
   // 🔐 AFTER auth check, redirect if not logged in
  useEffect(() => {
@@ -131,11 +128,17 @@ function MyOrders() {
       socket.off("newOrder", handleNewOrder);
       socket.off("update-status", handleStatusUpdate);
     };
-  }, [socket, userData, dispatch]);
+  }, [socket, userData?._id, dispatch]);
 
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
+
+         {!authChecked && (
+        <div className="min-h-screen flex items-center justify-center text-gray-500">
+          Loading orders...
+        </div>
+      )}
 
         {/* HEADER */}
         <div className="flex items-center gap-5 mb-6">
@@ -261,6 +264,7 @@ function MyOrders() {
 }
 
 export default MyOrders;  // now tell methe fixes  
+
 
 
 
