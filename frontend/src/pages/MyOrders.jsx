@@ -15,108 +15,27 @@ import { toast } from "react-toastify";
 function MyOrders() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const {
-  userData,
-  myOrders = [],
-  socket,
-  authChecked,
-} = useSelector((state) => state.user);
-  
 
-  // 🔐 AFTER auth check, redirect if not logged in
- useEffect(() => {
-  if (authChecked && !userData?._id) {
-    navigate("/signin");
-  }
-}, [authChecked, userData, navigate]);
+  const { userData, myOrders = [], socket, authChecked } =
+    useSelector(state => state.user);
 
-
-  // ✅ BLOCK UNAUTHENTICATED ACCESS
-  const [cancelPopup, setCancelPopup] = useState({
-    show: false,
-    orderId: null,
-  });
-
-  // ============================================
-  // NORMALIZE SHOP ORDER FORMAT
-  // ============================================
-  const normalizeShopOrders = (shopOrders) => {
-    if (!shopOrders) return [];
-    return Array.isArray(shopOrders) ? shopOrders : [shopOrders];
-  };
-
-  // ============================================
-  // CANCEL ORDER
-  // ============================================
-  const handleCancelOrder = async () => {
-    if (!userData?._id) return; // ✅ FIX
-
-    try {
-      const res = await axios.put(
-        `${serverUrl}/api/order/cancel/${cancelPopup.orderId}`,
-        {},
-        { withCredentials: true }
-      );
-
-      if (res.status === 200) {
-        toast.success("Order cancelled successfully!", {
-          position: "top-center",
-        });
-
-        setCancelPopup({ show: false, orderId: null });
-
-        dispatch(
-          setMyOrders(
-            myOrders.map((o) => {
-              if (o._id !== cancelPopup.orderId) return o;
-
-              const normalized = Array.isArray(o.shopOrders)
-                ? o.shopOrders
-                : [o.shopOrders];
-
-              return {
-                ...o,
-                shopOrders: normalized.map((so) => ({
-                  ...so,
-                  status: "cancelled",
-                })),
-              };
-            })
-          )
-        );
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to cancel order ❌");
-    }
-  };
-
-  // ============================================
-  // SOCKET: NEW ORDER + STATUS UPDATE
-  // ============================================
+  // redirect after auth check
   useEffect(() => {
-    if (!socket || !userData?._id) return; // ✅ FIX
+    if (authChecked && !userData?._id) {
+      navigate("/signin");
+    }
+  }, [authChecked, userData, navigate]);
 
+  // socket listeners
+  useEffect(() => {
+    if (!socket || !userData?._id) return;
 
     const handleNewOrder = (order) => {
-      if (!userData?._id) return;
-      if (userData.role === "owner") {
-        dispatch(
-          setMyOrders([
-            {
-              ...order,
-              shopOrders: normalizeShopOrders(order.shopOrders),
-            },
-            ...myOrders,
-          ])
-        );
-      }
+      dispatch(setMyOrders(prev => [order, ...prev]));
     };
 
-    const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
-      if (!userData?._id) return;
-      if (String(userId) === String(userData._id)) {
-        dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
-      }
+    const handleStatusUpdate = (data) => {
+      dispatch(updateRealtimeOrderStatus(data));
     };
 
     socket.on("newOrder", handleNewOrder);
@@ -126,21 +45,18 @@ function MyOrders() {
       socket.off("newOrder", handleNewOrder);
       socket.off("update-status", handleStatusUpdate);
     };
-  }, [socket, userData?._id, myOrders.length]);
-
-  const visibleOrders = myOrders;
-
-
+  }, [socket, userData?._id, dispatch]);
 
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
 
-        {!authChecked && (
-  <div className="min-h-screen flex items-center justify-center text-gray-500">
-    Loading orders...
-  </div>
-)}
+        {!authChecked ? (
+          <div className="min-h-screen flex items-center justify-center text-gray-500">
+            Loading orders...
+          </div>
+        ) : (
+          <>
 
 
         
@@ -269,6 +185,7 @@ function MyOrders() {
 }
 
 export default MyOrders; // give me whole code with changing the fixes and dont touch anything else  
+
 
 
 
