@@ -135,7 +135,7 @@ function MyOrders() {
       socket.off("newOrder", handleNewOrder);
       socket.off("update-status", handleStatusUpdate);
     };
-  }, [socket, userData?._id, dispatch]);
+  }, [socket, userData?._id]);
 
   const visibleOrders =
   userData?.role === "owner"
@@ -277,6 +277,7 @@ function MyOrders() {
 }
 
 export default MyOrders;  // now tell methe fixes  
+
 
 
 
