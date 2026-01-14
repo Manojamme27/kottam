@@ -86,9 +86,7 @@ function App() {
 
     return () => socket.disconnect();
   }, [userData?._id, dispatch]);
- if (!authChecked) {
-    return <div>Loading...</div>;
-  }
+ 
 
   return (
     <>
