@@ -6,11 +6,14 @@ import { serverUrl } from "../App";
 
 const useGetMyOrders = () => {
   const dispatch = useDispatch();
-  const { authChecked, userData } = useSelector(state => state.user);
+  const { authChecked, userData, myOrders } = useSelector(
+    state => state.user
+  );
 
   useEffect(() => {
     if (!authChecked) return;
     if (!userData?._id) return;
+    if (myOrders?.length) return; // ✅ PREVENT DOUBLE FETCH
 
     const fetchOrders = async () => {
       try {
@@ -21,11 +24,8 @@ const useGetMyOrders = () => {
 
         dispatch(setMyOrders(res.data));
       } catch (error) {
-        if (error.response?.status === 401) {
-          // keep cached orders
-          return;
-        }
-        console.error(error);
+        // ✅ NEVER CRASH UI
+        console.warn("Orders fetch skipped");
       }
     };
 
