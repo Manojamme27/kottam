@@ -128,10 +128,7 @@ function MyOrders() {
     };
   }, [socket, userData?._id, myOrders.length]);
 
-  const visibleOrders =
-  userData?.role === "owner"
-    ? myOrders.filter(order => Array.isArray(order.shopOrders))
-    : myOrders;
+  const visibleOrders = myOrders;
 
 
 
@@ -272,6 +269,7 @@ function MyOrders() {
 }
 
 export default MyOrders;  // now tell methe fixes  
+
 
 
 
