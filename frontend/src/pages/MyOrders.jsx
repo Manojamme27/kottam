@@ -22,8 +22,15 @@ function MyOrders() {
   authChecked,
 } = useSelector((state) => state.user);
 
+  if (!authChecked) {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-gray-500">
+      Loading orders...
+    </div>
+  );
+}
 
-
+  
 
   // 🔐 AFTER auth check, redirect if not logged in
  useEffect(() => {
@@ -130,16 +137,21 @@ function MyOrders() {
     };
   }, [socket, userData?._id, dispatch]);
 
+  const visibleOrders =
+  userData?.role === "owner"
+    ? myOrders.filter(
+        order =>
+          Array.isArray(order.shopOrders) &&
+          order.shopOrders.some(Boolean)
+      )
+    : myOrders;
+
+
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
 
-         {!authChecked && (
-        <div className="min-h-screen flex items-center justify-center text-gray-500">
-          Loading orders...
-        </div>
-      )}
-
+        
         {/* HEADER */}
         <div className="flex items-center gap-5 mb-6">
           <div className="cursor-pointer" onClick={() => navigate("/")}>
@@ -151,7 +163,7 @@ function MyOrders() {
         {/* ======================================================
            PREMIUM EMPTY STATE (ONLY CHANGE DONE HERE)
         ======================================================= */}
-        {myOrders?.length === 0 ? (
+        {visibleOrders.length === 0 ? (
           <div className="flex justify-center mt-10 px-4 animate-fadeIn">
             <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-green-100 animate-slideUp">
 
@@ -193,7 +205,8 @@ function MyOrders() {
              NORMAL ORDERS LIST (UNCHANGED)
           ====================================================== */
           <div className="space-y-6">
-            {myOrders?.map((order) => {
+            {visibleOrders.map((order) => {
+
               const normalized = normalizeShopOrders(order.shopOrders);
 
               return userData.role === "user" ? (
@@ -264,6 +277,7 @@ function MyOrders() {
 }
 
 export default MyOrders;  // now tell methe fixes  
+
 
 
 
