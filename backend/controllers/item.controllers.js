@@ -147,27 +147,42 @@ export const getItemById = async (req, res) => {
     }
 };
 
+// delete item
 
-// ✅ Delete item
 export const deleteItem = async (req, res) => {
-    try {
-        const itemId = req.params.itemId;
-        const item = await Item.findByIdAndDelete(itemId);
-        if (!item) {
-            return res.status(400).json({ message: "item not found" });
-        }
-        const shop = await Shop.findOne({ owner: req.userId });
-        shop.items = shop.items.filter((i) => i.toString() !== item._id.toString());
-        await shop.save();
-        await shop.populate({
-            path: "items",
-            options: { sort: { updatedAt: -1 } },
-        });
-        return res.status(200).json(shop);
-    } catch (error) {
-        return res.status(500).json({ message: `delete item error ${error}` });
+  try {
+    const { itemId } = req.params;
+
+    // 1️⃣ Find shop of logged-in owner
+    const shop = await Shop.findOne({ owner: req.userId });
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
     }
+
+    // 2️⃣ Delete item (must belong to this shop)
+    const item = await Item.findOneAndDelete({
+      _id: itemId,
+      shop: shop._id,
+    });
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // 3️⃣ Remove item reference WITHOUT save()
+    await Shop.updateOne(
+      { _id: shop._id },
+      { $pull: { items: item._id } }
+    );
+
+    return res.status(200).json({ message: "Item deleted successfully" });
+
+  } catch (error) {
+    console.error("Delete item error:", error);
+    return res.status(500).json({ message: "Delete item failed" });
+  }
 };
+
 
 
 // ✅ Get items by city (only OPEN shops)
@@ -279,6 +294,7 @@ export const rating = async (req, res) => {
         return res.status(500).json({ message: `rating error ${error}` });
     }
 };
+
 
 
 
