@@ -26,119 +26,99 @@ const uploadBufferToCloudinary = (fileBuffer, fileName) => {
 
 // CREATE OR EDIT SHOP
 export const createEditShop = async (req, res) => {
+  try {
+    const {
+      name,
+      city,
+      state,
+      address,
+      existingImages,
+      latitude,
+      longitude,
+    } = req.body;
+
+    // Parse old images safely
+    let oldImages = [];
     try {
-        const {
-  name,
-  city,
-  state,
-  address,
-  existingImages,
-  latitude,
-  longitude
-} = req.body;
-
-
-        // Parse old images
-        let oldImages = [];
-        try {
-            oldImages = existingImages ? JSON.parse(existingImages) : [];
-        } catch (e) {
-            oldImages = [];
-        }
-
-        const newImages = [];
-
-        // Upload new buffers to Cloudinary
-        if (req.files && req.files.length > 0) {
-            for (let file of req.files) {
-                const imageUrl = await uploadBufferToCloudinary(
-                    file.buffer,
-                    Date.now() + "-" + file.originalname
-                );
-                if (imageUrl) newImages.push(imageUrl);
-            }
-        }
-
-        // Merge final images
-        const finalImages = [...oldImages, ...newImages];
-
-        // Find existing shop
-        let shop = await Shop.findOne({ owner: req.userId });
-        // ✅ LOCATION RULE
-// New shop → latitude & longitude REQUIRED
-let shop = await Shop.findOne({ owner: req.userId });
-
-// ✅ REQUIRE LOCATION ONLY FOR NEW SHOP
-if (!shop) {
-  if (latitude === undefined || longitude === undefined) {
-    return res.status(400).json({
-      message: "Shop location (latitude & longitude) is required",
-    });
-  }
-}
-
-
-        if (!shop) {
-            shop = await Shop.create({
-    name,
-    city,
-    state,
-    address,
-    images: finalImages,
-    image: finalImages[0] || "",
-    owner: req.userId,
-
-    // ✅ GEO LOCATION
-    location: {
-        type: "Point",
-        coordinates: [Number(longitude), Number(latitude)],
-    },
-});
-
-        } else {
-shop.name = name;
-shop.city = city;
-shop.state = state;
-shop.address = address;
-shop.images = finalImages;
-shop.image = finalImages[0] || shop.image;
-
-// ✅ UPDATE LOCATION
-// ✅ UPDATE LOCATION ONLY IF BOTH VALUES EXIST & VALID
-if (
-  latitude !== undefined &&
-  longitude !== undefined &&
-  latitude !== "" &&
-  longitude !== "" &&
-  !isNaN(latitude) &&
-  !isNaN(longitude)
-) {
-  if (latitude !== undefined && longitude !== undefined) {
-  const lat = Number(latitude);
-  const lon = Number(longitude);
-
-  if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
-    shop.location = {
-      type: "Point",
-      coordinates: [lon, lat],
-    };
-  }
-}
-
-
-
-await shop.save();
-
-        }
-
-        shop = await Shop.findById(shop._id).populate("owner");
-        return res.status(200).json(shop);
-
-    } catch (error) {
-        console.error("Shop Create/Edit Error:", error);
-        return res.status(500).json({ message: error.message });
+      oldImages = existingImages ? JSON.parse(existingImages) : [];
+    } catch {
+      oldImages = [];
     }
+
+    // Upload new images
+    const newImages = [];
+    if (req.files && req.files.length > 0) {
+      for (let file of req.files) {
+        const imageUrl = await uploadBufferToCloudinary(
+          file.buffer,
+          Date.now() + "-" + file.originalname
+        );
+        if (imageUrl) newImages.push(imageUrl);
+      }
+    }
+
+    const finalImages = [...oldImages, ...newImages];
+
+    // 🔥 DECLARE shop ONLY ONCE
+    let shop = await Shop.findOne({ owner: req.userId });
+
+    // ✅ REQUIRE LOCATION ONLY WHEN CREATING SHOP
+    if (!shop) {
+      if (latitude === undefined || longitude === undefined) {
+        return res.status(400).json({
+          message: "Shop location (latitude & longitude) is required",
+        });
+      }
+    }
+
+    if (!shop) {
+      // CREATE
+      shop = await Shop.create({
+        name,
+        city,
+        state,
+        address,
+        images: finalImages,
+        image: finalImages[0] || "",
+        owner: req.userId,
+        location: {
+          type: "Point",
+          coordinates: [Number(longitude), Number(latitude)],
+        },
+      });
+    } else {
+      // EDIT
+      shop.name = name;
+      shop.city = city;
+      shop.state = state;
+      shop.address = address;
+      shop.images = finalImages;
+      shop.image = finalImages[0] || shop.image;
+
+      // ✅ UPDATE LOCATION ONLY IF VALID
+      if (latitude !== undefined && longitude !== undefined) {
+        const lat = Number(latitude);
+        const lon = Number(longitude);
+
+        if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+          shop.location = {
+            type: "Point",
+            coordinates: [lon, lat],
+          };
+        }
+      }
+
+      await shop.save();
+    }
+
+    shop = await shop.populate("owner items");
+    return res.status(200).json(shop);
+  } catch (error) {
+    console.error("Shop Create/Edit Error:", error);
+    return res.status(500).json({ message: error.message });
+  }
 };
+
 
 export const getMyShop = async (req, res) => {
     try {
@@ -261,6 +241,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
