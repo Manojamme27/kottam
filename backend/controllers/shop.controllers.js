@@ -131,27 +131,30 @@ export const toggleShopStatus = async (req, res) => {
 
     const shop = await Shop.findOne({ owner: ownerId });
 
+    // 🔥 THIS IS THE CRITICAL FIX
     if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
+      return res.status(404).json({
+        message: "Shop not found for this owner",
+      });
     }
 
-    // Toggle status
+    // 🔄 TOGGLE
     shop.isOpen = !shop.isOpen;
-
     await shop.save();
 
     return res.status(200).json({
-      message: "Shop status updated",
+      message: `Shop is now ${shop.isOpen ? "OPEN" : "CLOSED"}`,
       isOpen: shop.isOpen,
     });
 
   } catch (error) {
-    console.error("❌ TOGGLE SHOP ERROR:", error);
+    console.error("toggleShopStatus error:", error);
     return res.status(500).json({
       message: "Failed to toggle shop status",
     });
   }
 };
+
 
 export const searchShops = async (req, res) => {
   try {
@@ -219,6 +222,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
