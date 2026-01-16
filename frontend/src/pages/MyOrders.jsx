@@ -4,10 +4,7 @@ import { IoIosArrowRoundBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import UserOrderCard from "../components/UserOrderCard";
 import OwnerOrderCard from "../components/OwnerOrderCard";
-import {
-  setMyOrders,
-  updateRealtimeOrderStatus,
-} from "../redux/userSlice.js";
+import { setMyOrders } from "../redux/userSlice.js";
 import axios from "axios";
 import { serverUrl } from "../App";
 import { toast } from "react-toastify";
@@ -15,34 +12,24 @@ import { toast } from "react-toastify";
 function MyOrders() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const {
     userData,
     myOrders = [],
-    socket,
     authChecked,
   } = useSelector((state) => state.user);
 
-  // ✅ FIX 1: EARLY RETURN (DO NOT RENDER JSX BEFORE AUTH CHECK)
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Loading orders...
-      </div>
-    );
-  }
+  const [cancelPopup, setCancelPopup] = useState({
+    show: false,
+    orderId: null,
+  });
 
-  // 🔐 AFTER auth check, redirect if not logged in
+  // 🔐 Redirect after auth check
   useEffect(() => {
     if (authChecked && !userData?._id) {
       navigate("/signin");
     }
   }, [authChecked, userData, navigate]);
-
-  // ✅ BLOCK UNAUTHENTICATED ACCESS
-  const [cancelPopup, setCancelPopup] = useState({
-    show: false,
-    orderId: null,
-  });
 
   // ============================================
   // NORMALIZE SHOP ORDER FORMAT
@@ -56,7 +43,7 @@ function MyOrders() {
   // CANCEL ORDER
   // ============================================
   const handleCancelOrder = async () => {
-    if (!userData?._id) return;
+    if (!userData?._id || !cancelPopup.orderId) return;
 
     try {
       const res = await axios.put(
@@ -77,13 +64,9 @@ function MyOrders() {
             myOrders.map((o) => {
               if (o._id !== cancelPopup.orderId) return o;
 
-              const normalized = Array.isArray(o.shopOrders)
-                ? o.shopOrders
-                : [o.shopOrders];
-
               return {
                 ...o,
-                shopOrders: normalized.map((so) => ({
+                shopOrders: normalizeShopOrders(o.shopOrders).map((so) => ({
                   ...so,
                   status: "cancelled",
                 })),
@@ -93,98 +76,101 @@ function MyOrders() {
         );
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to cancel order ❌");
+      toast.error(
+        error.response?.data?.message || "Failed to cancel order ❌"
+      );
     }
   };
 
   // ============================================
-  // SOCKET: NEW ORDER + STATUS UPDATE
+  // RENDER
   // ============================================
-  useEffect(() => {
-    if (!socket || !userData?._id) return;
-
-    const handleNewOrder = (order) => {
-      if (userData.role === "owner") {
-        dispatch(
-          setMyOrders((prev) => [
-            {
-              ...order,
-              shopOrders: normalizeShopOrders(order.shopOrders),
-            },
-            ...prev,
-          ])
-        );
-      }
-    };
-
-    const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
-      if (String(userId) === String(userData._id)) {
-        dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
-      }
-    };
-
-    socket.on("newOrder", handleNewOrder);
-    socket.on("update-status", handleStatusUpdate);
-
-    return () => {
-      socket.off("newOrder", handleNewOrder);
-      socket.off("update-status", handleStatusUpdate);
-    };
-  }, [socket, userData?._id, dispatch]);
-
-  const visibleOrders = myOrders;
-
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
-        {/* ✅ FIX 2: PROPERLY CLOSED FRAGMENT */}
-        <>
-          {/* HEADER */}
-          <div className="flex items-center gap-5 mb-6">
-            <div className="cursor-pointer" onClick={() => navigate("/")}>
-              <IoIosArrowRoundBack size={35} className="text-[#ff4d2d]" />
-            </div>
-            <h1 className="text-2xl font-bold">My Orders</h1>
-          </div>
 
-          {visibleOrders.length === 0 ? (
-            <div className="flex justify-center mt-10 px-4 animate-fadeIn">
-              <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-xl rounded-3xl p-8 border border-green-100 animate-slideUp">
-                <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                  No Orders Yet
-                </h2>
-                <p className="text-gray-500 text-center text-sm mb-7">
-                  When you place an order, you can track it here.
-                </p>
-                <button
-                  onClick={() => navigate("/")}
-                  className="w-full py-3.5 bg-linear-to-r from-green-500 to-green-600 
-                  text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg"
-                >
-                  Start Shopping
-                </button>
+        {/* LOADING STATE */}
+        {!authChecked && (
+          <div className="min-h-screen flex items-center justify-center text-gray-500">
+            Loading orders...
+          </div>
+        )}
+
+        {/* MAIN CONTENT */}
+        {authChecked && (
+          <>
+            {/* HEADER */}
+            <div className="flex items-center gap-5 mb-6">
+              <div className="cursor-pointer" onClick={() => navigate("/")}>
+                <IoIosArrowRoundBack size={35} className="text-[#ff4d2d]" />
               </div>
+              <h1 className="text-2xl font-bold">My Orders</h1>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {visibleOrders.map((order) =>
-                userData.role === "user" ? (
-                  <UserOrderCard key={order._id} data={order} />
-                ) : (
-                  <OwnerOrderCard key={order._id} data={order} />
-                )
-              )}
-            </div>
-          )}
-        </>
+
+            {/* EMPTY STATE */}
+            {myOrders.length === 0 ? (
+              <div className="flex justify-center mt-10 px-4">
+                <div className="w-full max-w-md bg-white shadow-xl rounded-3xl p-8 border">
+                  <h2 className="text-xl font-bold text-center mb-2">
+                    No Orders Yet
+                  </h2>
+                  <p className="text-gray-500 text-center text-sm mb-6">
+                    When you place an order, you can track it here.
+                  </p>
+                  <button
+                    onClick={() => navigate("/")}
+                    className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold"
+                  >
+                    Start Shopping
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {myOrders.map((order) => {
+                  const normalized = normalizeShopOrders(order.shopOrders);
+
+                  return userData?.role === "user" ? (
+                    <div
+                      key={order._id}
+                      className="relative border rounded-xl p-4 bg-white"
+                    >
+                      <UserOrderCard data={order} />
+
+                      {normalized.some(
+                        (so) =>
+                          so.status !== "delivered" &&
+                          so.status !== "cancelled" &&
+                          so.status !== "out of delivery"
+                      ) && (
+                        <button
+                          className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1.5 rounded-lg"
+                          onClick={() =>
+                            setCancelPopup({
+                              show: true,
+                              orderId: order._id,
+                            })
+                          }
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  ) : userData?.role === "owner" ? (
+                    <OwnerOrderCard key={order._id} data={order} />
+                  ) : null;
+                })}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
+      {/* CANCEL POPUP */}
       {cancelPopup.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-2000">
-          <div className="bg-white p-6 rounded-xl shadow-2xl w-[90%] max-w-sm text-center">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Cancel Order?
-            </h3>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm text-center">
+            <h3 className="text-lg font-semibold mb-2">Cancel Order?</h3>
             <p className="text-sm text-gray-600 mb-4">
               Are you sure you want to cancel this order?
             </p>
@@ -192,7 +178,7 @@ function MyOrders() {
             <div className="flex justify-center gap-3">
               <button
                 onClick={handleCancelOrder}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium"
+                className="bg-red-600 text-white px-4 py-2 rounded-lg"
               >
                 Confirm Cancel
               </button>
@@ -201,7 +187,7 @@ function MyOrders() {
                 onClick={() =>
                   setCancelPopup({ show: false, orderId: null })
                 }
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium"
+                className="bg-gray-200 px-4 py-2 rounded-lg"
               >
                 Go Back
               </button>
