@@ -66,7 +66,7 @@ export const createEditShop = async (req, res) => {
         let shop = await Shop.findOne({ owner: req.userId });
         // ✅ LOCATION RULE
 // New shop → latitude & longitude REQUIRED
-if (!shop && (!latitude || !longitude)) {
+if (!latitude && !longitude && !req.body._id) {
   return res.status(400).json({
     message: "Shop location (latitude & longitude) is required",
   });
@@ -119,7 +119,7 @@ await shop.save();
 
         }
 
-        shop = await shop.populate("owner items");
+        shop = await Shop.findById(shop._id).populate("owner");
         return res.status(200).json(shop);
 
     } catch (error) {
@@ -249,6 +249,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
