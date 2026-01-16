@@ -21,6 +21,15 @@ function MyOrders() {
   socket,
   authChecked,
 } = useSelector((state) => state.user);
+
+  if (!authChecked) {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-gray-500">
+      Loading orders...
+    </div>
+  );
+}
+
   
 
   // 🔐 AFTER auth check, redirect if not logged in
@@ -93,40 +102,38 @@ function MyOrders() {
   // ============================================
   // SOCKET: NEW ORDER + STATUS UPDATE
   // ============================================
-  useEffect(() => {
-    if (!socket || !userData?._id) return; // ✅ FIX
+useEffect(() => {
+  if (!socket || !userData?._id) return;
 
+  const handleNewOrder = (order) => {
+    if (userData.role === "owner") {
+      dispatch(
+        setMyOrders(prev => [
+          {
+            ...order,
+            shopOrders: normalizeShopOrders(order.shopOrders),
+          },
+          ...prev,
+        ])
+      );
+    }
+  };
 
-    const handleNewOrder = (order) => {
-      if (!userData?._id) return;
-      if (userData.role === "owner") {
-        dispatch(
-          setMyOrders([
-            {
-              ...order,
-              shopOrders: normalizeShopOrders(order.shopOrders),
-            },
-            ...myOrders,
-          ])
-        );
-      }
-    };
+  const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
+    if (String(userId) === String(userData._id)) {
+      dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
+    }
+  };
 
-    const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
-      if (!userData?._id) return;
-      if (String(userId) === String(userData._id)) {
-        dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
-      }
-    };
+  socket.on("newOrder", handleNewOrder);
+  socket.on("update-status", handleStatusUpdate);
 
-    socket.on("newOrder", handleNewOrder);
-    socket.on("update-status", handleStatusUpdate);
+  return () => {
+    socket.off("newOrder", handleNewOrder);
+    socket.off("update-status", handleStatusUpdate);
+  };
+}, [socket, userData?._id, dispatch]);
 
-    return () => {
-      socket.off("newOrder", handleNewOrder);
-      socket.off("update-status", handleStatusUpdate);
-    };
-  }, [socket, userData?._id, myOrders.length]);
 
   const visibleOrders = myOrders;
 
@@ -136,14 +143,7 @@ function MyOrders() {
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
 
-        {!authChecked && (
-  <div className="min-h-screen flex items-center justify-center text-gray-500">
-    Loading orders...
-  </div>
-)}
-
-
-        
+      
         {/* HEADER */}
         <div className="flex items-center gap-5 mb-6">
           <div className="cursor-pointer" onClick={() => navigate("/")}>
@@ -269,6 +269,7 @@ function MyOrders() {
 }
 
 export default MyOrders; // give me whole code with changing the fixes and dont touch anything else  
+
 
 
 
