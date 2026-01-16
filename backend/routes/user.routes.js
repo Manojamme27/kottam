@@ -7,10 +7,16 @@ import User from "../models/user.model.js"
 
 
 const userRouter = express.Router()
+console.log("✅ user.routes.js LOADED");
+
 
 
 userRouter.get("/current-user", isAuth, getCurrentUser);
-userRouter.put("/update-location", isAuth, updateUserLocation);
+userRouter.post("/update-location", isAuth, (req, res) => {
+  console.log("🔥 update-location HIT");
+  res.status(200).json({ ok: true });
+});
+
 userRouter.get("/location-refresh", isAuth, async (req, res) => {
     try {
         const user = await User.findById(req.userId);
@@ -45,6 +51,7 @@ userRouter.get("/location-refresh", isAuth, async (req, res) => {
 
 
 export default userRouter
+
 
 
 
