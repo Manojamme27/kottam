@@ -63,35 +63,45 @@ function App() {
   useUpdateLocation();
   useGetMyshop();
   useGetItemsByCity();
+ useGetMyOrders(); // ✅ ADD THIS BACK
+
+ useEffect(() => {
+  if (!authChecked || !userData?._id) return;
+
+  const socket = io(serverUrl, {
+    withCredentials: true,
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+  });
+
+  socket.emit("identity", { userId: userData._id });
+
+  socket.on("newOrder", (orderData) => {
+    playSound();
+    toast.success("New Order Received");
+    dispatch(addMyOrder(orderData));
+  });
+
+  socket.on("update-status", (data) => {
+    playSound();
+    toast.info(`Order status updated: ${data.status}`);
+    dispatch(updateRealtimeOrderStatus(data));
+  });
+
+  dispatch(setSocket(socket));
+
+  return () => {
+    socket.off("newOrder");
+    socket.off("update-status");
+    socket.disconnect();
+    dispatch(setSocket(null));
+  };
+}, [authChecked, userData?._id, dispatch]);
 
 
-  useEffect(() => {
-    if (!userData?._id || !authChecked) return;
 
-
-    const socket = io(serverUrl, {
-      withCredentials: true,
-      transports: ["websocket"],
-    });
-
-    socket.emit("identity", { userId: userData._id });
-
-    socket.on("newOrder", (orderData) => {
-      playSound();
-      toast.success("New Order Received");
-      dispatch(addMyOrder(orderData));
-    });
-
-    socket.on("update-status", (data) => {
-      playSound();
-      toast.info(`Order status updated: ${data.status}`);
-      dispatch(updateRealtimeOrderStatus(data));
-    });
-
-    dispatch(setSocket(socket));
-
-    return () => socket.disconnect();
-  }, [userData?._id, dispatch]);
  
 
   return (
