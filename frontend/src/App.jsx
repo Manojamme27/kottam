@@ -51,6 +51,12 @@ function App() {
   const dispatch = useDispatch();
   const { userData, authChecked } = useSelector(state => state.user);
 
+ useEffect(() => {
+  fetch(`${serverUrl}/health`, { credentials: "include" })
+    .catch(() => {});
+}, []);
+
+
   // ✅ ALL hooks – ALWAYS called, NO conditions
   useGetCurrentUser();
   useGetCity();
