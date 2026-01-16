@@ -10,7 +10,9 @@ const isAuth = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.userId = decoded.userId;
+    // ✅ FIX IS HERE
+    req.userId = decoded.id;
+
     next();
   } catch (error) {
     return res.status(401).json({ message: "Unauthorized" });
