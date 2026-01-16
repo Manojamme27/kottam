@@ -232,6 +232,8 @@ useEffect(() => {
           </div>
         )}
       </div>
+   </>
+      )}
 
       {/* CANCEL POPUP */}
       {cancelPopup.show && (
@@ -269,6 +271,7 @@ useEffect(() => {
 }
 
 export default MyOrders; 
+
 
 
 
