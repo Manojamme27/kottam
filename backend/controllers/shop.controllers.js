@@ -37,6 +37,21 @@ export const createEditShop = async (req, res) => {
       longitude,
     } = req.body;
 
+    // 🔥 STRICT VALIDATION FOR multipart/form-data
+    const lat = Number(latitude);
+    const lon = Number(longitude);
+
+    if (
+      latitude === undefined ||
+      longitude === undefined ||
+      Number.isNaN(lat) ||
+      Number.isNaN(lon)
+    ) {
+      return res.status(400).json({
+        message: "Invalid or missing shop location",
+      });
+    }
+
     // Parse old images safely
     let oldImages = [];
     try {
@@ -62,15 +77,6 @@ export const createEditShop = async (req, res) => {
     // 🔥 DECLARE shop ONLY ONCE
     let shop = await Shop.findOne({ owner: req.userId });
 
-    // ✅ REQUIRE LOCATION ONLY WHEN CREATING SHOP
-    if (!shop) {
-      if (latitude === undefined || longitude === undefined) {
-        return res.status(400).json({
-          message: "Shop location (latitude & longitude) is required",
-        });
-      }
-    }
-
     if (!shop) {
       // CREATE
       shop = await Shop.create({
@@ -83,7 +89,7 @@ export const createEditShop = async (req, res) => {
         owner: req.userId,
         location: {
           type: "Point",
-          coordinates: [Number(longitude), Number(latitude)],
+          coordinates: [lon, lat],
         },
       });
     } else {
@@ -95,18 +101,11 @@ export const createEditShop = async (req, res) => {
       shop.images = finalImages;
       shop.image = finalImages[0] || shop.image;
 
-      // ✅ UPDATE LOCATION ONLY IF VALID
-      if (latitude !== undefined && longitude !== undefined) {
-        const lat = Number(latitude);
-        const lon = Number(longitude);
-
-        if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
-          shop.location = {
-            type: "Point",
-            coordinates: [lon, lat],
-          };
-        }
-      }
+      // ✅ SAFE LOCATION UPDATE
+      shop.location = {
+        type: "Point",
+        coordinates: [lon, lat],
+      };
 
       await shop.save();
     }
@@ -241,6 +240,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
