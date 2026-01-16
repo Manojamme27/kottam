@@ -66,10 +66,15 @@ export const createEditShop = async (req, res) => {
         let shop = await Shop.findOne({ owner: req.userId });
         // ✅ LOCATION RULE
 // New shop → latitude & longitude REQUIRED
-if (!latitude && !longitude && !req.body._id) {
-  return res.status(400).json({
-    message: "Shop location (latitude & longitude) is required",
-  });
+let shop = await Shop.findOne({ owner: req.userId });
+
+// ✅ REQUIRE LOCATION ONLY FOR NEW SHOP
+if (!shop) {
+  if (latitude === undefined || longitude === undefined) {
+    return res.status(400).json({
+      message: "Shop location (latitude & longitude) is required",
+    });
+  }
 }
 
 
@@ -108,11 +113,18 @@ if (
   !isNaN(latitude) &&
   !isNaN(longitude)
 ) {
-  shop.location = {
-    type: "Point",
-    coordinates: [Number(longitude), Number(latitude)],
-  };
+  if (latitude !== undefined && longitude !== undefined) {
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+
+  if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+    shop.location = {
+      type: "Point",
+      coordinates: [lon, lat],
+    };
+  }
 }
+
 
 
 await shop.save();
@@ -249,6 +261,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
