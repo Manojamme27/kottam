@@ -22,15 +22,7 @@ function MyOrders() {
   authChecked,
 } = useSelector((state) => state.user);
 
-  if (!authChecked) {
-  return (
-    <div className="min-h-screen flex items-center justify-center text-gray-500">
-      Loading orders...
-    </div>
-  );
-}
 
-  
 
   // 🔐 AFTER auth check, redirect if not logged in
  useEffect(() => {
@@ -142,6 +134,14 @@ useEffect(() => {
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex justify-center px-4">
       <div className="w-full max-w-[800px] p-4">
+
+        {!authChecked && (
+        <div className="min-h-screen flex items-center justify-center text-gray-500">
+          Loading orders...
+        </div>
+      )}
+{authChecked && (
+        <>
 
       
         {/* HEADER */}
@@ -268,7 +268,8 @@ useEffect(() => {
   );
 }
 
-export default MyOrders; // give me whole code with changing the fixes and dont touch anything else  
+export default MyOrders; 
+
 
 
 
