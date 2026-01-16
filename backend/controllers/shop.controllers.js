@@ -1,5 +1,8 @@
 import Shop from "../models/shop.model.js";
 import cloudinary from "cloudinary";
+import mongoose from "mongoose";
+import Shop from "../models/shop.model.js";
+
 
 // Cloudinary Config (already done globally)
 cloudinary.v2.config({
@@ -129,16 +132,20 @@ export const toggleShopStatus = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const shop = await Shop.findOne({ owner: ownerId });
+    // 🔥 FIX: handle both string & ObjectId owners
+    const shop = await Shop.findOne({
+      $or: [
+        { owner: ownerId },
+        { owner: new mongoose.Types.ObjectId(ownerId) }
+      ]
+    });
 
-    // 🔥 THIS IS THE CRITICAL FIX
     if (!shop) {
       return res.status(404).json({
-        message: "Shop not found for this owner",
+        message: "Shop not found for this owner"
       });
     }
 
-    // 🔄 TOGGLE
     shop.isOpen = !shop.isOpen;
     await shop.save();
 
@@ -150,11 +157,10 @@ export const toggleShopStatus = async (req, res) => {
   } catch (error) {
     console.error("toggleShopStatus error:", error);
     return res.status(500).json({
-      message: "Failed to toggle shop status",
+      message: "Toggle shop status failed"
     });
   }
 };
-
 
 export const searchShops = async (req, res) => {
   try {
@@ -222,6 +228,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
