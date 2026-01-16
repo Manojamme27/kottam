@@ -22,7 +22,7 @@ router.get("/get-my", isAuth, getMyShop);
 // router.get("/get-by-city/:city", isAuth, getShopByCity);
 
 // TOGGLE SHOP STATUS
-router.put("/toggle-status",  protect,  toggleShopStatus);
+router.put("/toggle-status",  toggleShopStatus);
 
 // GLOBAL SEARCH (NO CITY)
 router.get("/search-shops", searchShops);
@@ -50,6 +50,7 @@ router.get("/public/get-by-city/:city", async (req, res) => {
 
 
 export default router;
+
 
 
 
