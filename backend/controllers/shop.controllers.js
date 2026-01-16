@@ -122,30 +122,37 @@ export const getMyShop = async (req, res) => {
 };
 
 export const toggleShopStatus = async (req, res) => {
-    try {
-        const ownerId = req.userId;
+  try {
+    const ownerId = req.userId;
 
-        const shop = await Shop.findOne({ owner: ownerId });
-        if (!shop) {
-            return res.status(404).json({ message: "Shop not found" });
-        }
-
-        shop.isOpen = !shop.isOpen;
-        await shop.save();
-
-        return res.json({
-            success: true,
-            isOpen: shop.isOpen,
-            message: `Shop is now ${shop.isOpen ? "OPEN" : "CLOSED"}`,
-        });
-
-    } catch (error) {
-        console.log("toggle error:", error);
-        return res.status(500).json({
-            message: "Failed to toggle shop status",
-        });
+    if (!ownerId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
+
+    const shop = await Shop.findOne({ owner: ownerId });
+
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    // Toggle status
+    shop.isOpen = !shop.isOpen;
+
+    await shop.save();
+
+    return res.status(200).json({
+      message: "Shop status updated",
+      isOpen: shop.isOpen,
+    });
+
+  } catch (error) {
+    console.error("❌ TOGGLE SHOP ERROR:", error);
+    return res.status(500).json({
+      message: "Failed to toggle shop status",
+    });
+  }
 };
+
 export const searchShops = async (req, res) => {
   try {
     const { query } = req.query;
@@ -212,6 +219,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
