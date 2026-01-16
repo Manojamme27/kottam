@@ -10,7 +10,7 @@ const userRouter = express.Router()
 
 
 userRouter.get("/current-user", isAuth, getCurrentUser);
-userRouter.post('/update-location', isAuth, updateUserLocation)
+userRouter.put("/update-location", isAuth, updateUserLocation);
 userRouter.get("/location-refresh", isAuth, async (req, res) => {
     try {
         const user = await User.findById(req.userId);
@@ -45,6 +45,7 @@ userRouter.get("/location-refresh", isAuth, async (req, res) => {
 
 
 export default userRouter
+
 
 
 
