@@ -27,12 +27,16 @@ const uploadBufferToCloudinary = (fileBuffer, fileName) => {
 // CREATE OR EDIT SHOP
 export const createEditShop = async (req, res) => {
     try {
-        const { name, city, state, address, existingImages, latitude, longitude } = req.body;
-        if (!latitude || !longitude) {
-            return res.status(400).json({
-                message: "Shop location (latitude & longitude) is required",
-            });
-        }
+        const {
+  name,
+  city,
+  state,
+  address,
+  existingImages,
+  latitude,
+  longitude
+} = req.body;
+
 
         // Parse old images
         let oldImages = [];
@@ -60,6 +64,14 @@ export const createEditShop = async (req, res) => {
 
         // Find existing shop
         let shop = await Shop.findOne({ owner: req.userId });
+        // ✅ LOCATION RULE
+// New shop → latitude & longitude REQUIRED
+if (!shop && (!latitude || !longitude)) {
+  return res.status(400).json({
+    message: "Shop location (latitude & longitude) is required",
+  });
+}
+
 
         if (!shop) {
             shop = await Shop.create({
@@ -226,6 +238,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
