@@ -1,7 +1,6 @@
 import Shop from "../models/shop.model.js";
 import cloudinary from "cloudinary";
 import mongoose from "mongoose";
-import Shop from "../models/shop.model.js";
 
 
 // Cloudinary Config (already done globally)
@@ -228,6 +227,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
