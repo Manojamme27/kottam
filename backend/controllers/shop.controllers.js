@@ -131,7 +131,6 @@ export const toggleShopStatus = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // ✅ LET MONGOOSE HANDLE CASTING
     const shop = await Shop.findOne({ owner: ownerId });
 
     if (!shop) {
@@ -140,18 +139,22 @@ export const toggleShopStatus = async (req, res) => {
       });
     }
 
-    shop.isOpen = !shop.isOpen;
-    await shop.save();
+    const newStatus = !shop.isOpen;
+
+    await Shop.updateOne(
+      { _id: shop._id },
+      { $set: { isOpen: newStatus } }
+    );
 
     return res.status(200).json({
-      message: `Shop is now ${shop.isOpen ? "OPEN" : "CLOSED"}`,
-      isOpen: shop.isOpen,
+      message: `Shop is now ${newStatus ? "OPEN" : "CLOSED"}`,
+      isOpen: newStatus,
     });
 
   } catch (error) {
     console.error("toggleShopStatus error:", error);
     return res.status(500).json({
-      message: error.message || "Toggle shop status failed",
+      message: error.message,
     });
   }
 };
@@ -223,6 +226,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
