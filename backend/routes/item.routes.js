@@ -11,7 +11,7 @@ const itemRouter=express.Router()
 itemRouter.post("/add-item", isAuth, upload.array("images"),addItem)
 itemRouter.post("/edit-item/:itemId", isAuth, upload.array("newImages"),editItem)
 itemRouter.get("/get-by-id/:itemId",isAuth,getItemById)
-itemRouter.get("/delete/:itemId",isAuth,deleteItem)
+itemRouter.delete("/delete/:itemId",isAuth,deleteItem)
 itemRouter.get("/get-by-city/:city",getItemByCity)
 itemRouter.get("/get-by-shop/:shopId",getItemsByShop)
 itemRouter.get("/search-items",isAuth,searchItems)
@@ -39,5 +39,6 @@ itemRouter.get("/public/get-by-city/:city", async (req, res) => {
 
 
 export default itemRouter
+
 
 
