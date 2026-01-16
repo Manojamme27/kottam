@@ -99,10 +99,21 @@ shop.images = finalImages;
 shop.image = finalImages[0] || shop.image;
 
 // ✅ UPDATE LOCATION
-shop.location = {
+// ✅ UPDATE LOCATION ONLY IF BOTH VALUES EXIST & VALID
+if (
+  latitude !== undefined &&
+  longitude !== undefined &&
+  latitude !== "" &&
+  longitude !== "" &&
+  !isNaN(latitude) &&
+  !isNaN(longitude)
+) {
+  shop.location = {
     type: "Point",
     coordinates: [Number(longitude), Number(latitude)],
-};
+  };
+}
+
 
 await shop.save();
 
@@ -238,6 +249,7 @@ export const getAllShops = async (req, res) => {
     });
   }
 };
+
 
 
 
