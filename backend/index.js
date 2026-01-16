@@ -87,6 +87,11 @@ app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/order", orderRouter);
 
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
+
 /* ===============================
    SOCKET HANDLER
 ================================ */
@@ -100,3 +105,4 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
