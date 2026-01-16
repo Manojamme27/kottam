@@ -61,8 +61,11 @@ export const addItem = async (req, res) => {
             shop: shop._id,
         });
 
-        shop.items.push(newItem._id);
-        await shop.save();
+       await Shop.updateOne(
+    { _id: shop._id },
+    { $push: { items: newItem._id } }
+);
+
 
         const updatedShop = await Shop.findById(shop._id).populate("items");
         return res.status(200).json(updatedShop);
@@ -276,5 +279,6 @@ export const rating = async (req, res) => {
         return res.status(500).json({ message: `rating error ${error}` });
     }
 };
+
 
 
