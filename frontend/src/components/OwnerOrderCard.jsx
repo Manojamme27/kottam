@@ -107,10 +107,10 @@ const handleUpdateStatus = async (orderId, shopId, status) => {
             <div class="info"><strong>Order ID:</strong> #${data._id?.slice(-6)}</div>
             <div class="info"><strong>Date:</strong> ${new Date(data.createdAt).toLocaleDateString()}</div>
 
-            <div class="section-title">Customer Details</div>
-            <div class="info"><strong>Name:</strong> ${user.fullName || "N/A"}</div>
-            <div class="info"><strong>Mobile:</strong> ${user.mobile || "-"}</div>
-            <div class="info"><strong>Address:</strong> ${data.deliveryAddress?.text || "N/A"}</div>
+           <div class="section-title">Customer Details</div>
+<div class="info"><strong>Name:</strong> ${customer?.name || "Customer"}</div>
+<div class="info"><strong>Mobile:</strong> ${customer?.mobile || "-"}</div>
+<div class="info"><strong>Address:</strong> ${data.deliveryAddress?.text || "N/A"}</div>
 
             <div class="section-title">Order Items</div>
 
@@ -306,6 +306,7 @@ const handleUpdateStatus = async (orderId, shopId, status) => {
 }
 
 export default OwnerOrderCard;
+
 
 
 
