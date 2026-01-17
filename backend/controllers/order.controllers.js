@@ -296,19 +296,15 @@ if (user.role === "owner") {
     if (!validShopOrders.length) continue;
 
     filtered.push({
-      _id: order._id,
-      paymentMethod: order.paymentMethod,
-      user: order.user || {
-        fullName: "Unknown User",
-        email: "",
-        mobile: "",
-      },
-      createdAt: order.createdAt,
-      deliveryAddress: order.deliveryAddress,
-      payment: order.payment,
-      totalAmount: order.totalAmount,
-      shopOrders: validShopOrders,
-    });
+  _id: order._id,
+  paymentMethod: order.paymentMethod,
+  user: populatedUser, // 👈 NEVER optional
+  createdAt: order.createdAt,
+  deliveryAddress: order.deliveryAddress,
+  payment: order.payment,
+  shopOrders: validShopOrders,
+});
+
   }
 
   return res.status(200).json(filtered);
@@ -732,6 +728,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
