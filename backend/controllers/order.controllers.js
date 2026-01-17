@@ -275,6 +275,7 @@ export const getMyOrders = async (req, res) => {
     }
 
     // ================= OWNER VIEW =================
+// ================= OWNER VIEW =================
 if (user.role === "owner") {
   const orders = await Order.find({ "shopOrders.owner": req.userId })
     .sort({ createdAt: -1 })
@@ -288,14 +289,14 @@ if (user.role === "owner") {
 
   for (const order of orders) {
 
-    // ✅ 1️⃣ FILTER SHOP ORDERS FIRST (VERY IMPORTANT)
+    // 1️⃣ FILTER SHOP ORDERS FIRST
     const validShopOrders = order.shopOrders.filter(
       so => String(so.owner?._id || so.owner) === String(req.userId)
     );
 
     if (!validShopOrders.length) continue;
 
-    // ✅ 2️⃣ ENSURE USER DETAILS ALWAYS EXIST
+    // 2️⃣ ENSURE USER DETAILS
     let populatedUser = order.user;
 
     if (!populatedUser) {
@@ -304,7 +305,7 @@ if (user.role === "owner") {
         .lean();
     }
 
-    // ✅ 3️⃣ PUSH ONLY ONCE
+    // 3️⃣ PUSH ONCE
     filtered.push({
       _id: order._id,
       paymentMethod: order.paymentMethod,
@@ -323,7 +324,6 @@ if (user.role === "owner") {
   return res.status(200).json(filtered);
 }
 
-  };
 // ============================================================
 //  UPDATE ORDER STATUS
 // ============================================================
@@ -732,6 +732,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
