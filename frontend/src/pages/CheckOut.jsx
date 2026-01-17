@@ -57,6 +57,9 @@ function CheckOut() {
   const [totalDeliveryFee, setTotalDeliveryFee] = useState(0);
   const [grandTotal, setGrandTotal] = useState(totalAmount);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+const [customerMobile, setCustomerMobile] = useState("");
+
 
 
   const navigate = useNavigate();
@@ -209,10 +212,20 @@ function CheckOut() {
     });
     return; // ❌ STOP → Do NOT place order
   }
+    if (!customerName.trim() || !customerMobile.trim()) {
+  toast.error("Please enter name and mobile number");
+  return;
+}
+
+if (customerMobile.length < 10) {
+  toast.error("Please enter a valid mobile number");
+  return;
+}
+
 
   setPlacingOrder(true);
   try {
-    const result = await axios.post(
+   const result = await axios.post(
   `${serverUrl}/api/order/place-order`,
   {
     paymentMethod,
@@ -223,9 +236,14 @@ function CheckOut() {
     },
     totalAmount: grandTotal,
     cartItems,
+    customer: {
+      name: customerName,
+      mobile: customerMobile,
+    },
   },
   { withCredentials: true }
 );
+
 
 
     if (paymentMethod === "cod") {
@@ -382,6 +400,32 @@ function CheckOut() {
 
         </section>
 
+        {/* Customer Details */}
+<section>
+  <h2 className="text-lg font-semibold mb-2 text-gray-800">
+    Customer Details
+  </h2>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <input
+      type="text"
+      placeholder="Your Name"
+      value={customerName}
+      onChange={(e) => setCustomerName(e.target.value)}
+      className="border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[#ff4d2d]"
+    />
+
+    <input
+      type="tel"
+      placeholder="Mobile Number"
+      value={customerMobile}
+      onChange={(e) => setCustomerMobile(e.target.value)}
+      className="border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[#ff4d2d]"
+    />
+  </div>
+</section>
+
+
         {/* Payment Method */}
         <section>
           <h2 className='text-lg font-semibold mb-3 text-gray-800'>Payment Method</h2>
@@ -478,6 +522,7 @@ function CheckOut() {
 }
 
 export default CheckOut;
+
 
 
 
