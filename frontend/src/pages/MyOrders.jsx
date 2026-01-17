@@ -60,20 +60,11 @@ function MyOrders() {
         setCancelPopup({ show: false, orderId: null });
 
         dispatch(
-          setMyOrders(
-            myOrders.map((o) => {
-              if (o._id !== cancelPopup.orderId) return o;
+  setMyOrders(
+    myOrders.filter((o) => o._id !== cancelPopup.orderId)
+  )
+);
 
-              return {
-                ...o,
-                shopOrders: normalizeShopOrders(o.shopOrders).map((so) => ({
-                  ...so,
-                  status: "cancelled",
-                })),
-              };
-            })
-          )
-        );
       }
     } catch (error) {
       toast.error(
@@ -200,3 +191,4 @@ function MyOrders() {
 }
 
 export default MyOrders;
+
