@@ -323,7 +323,7 @@ if (user.role === "owner") {
   return res.status(200).json(filtered);
 }
 
-
+  };
 // ============================================================
 //  UPDATE ORDER STATUS
 // ============================================================
@@ -732,6 +732,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
