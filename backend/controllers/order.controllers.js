@@ -323,6 +323,13 @@ if (user.role === "owner") {
 
   return res.status(200).json(filtered);
 }
+return res.status(403).json({ message: "Invalid role" });
+
+} catch (error) {
+  console.error("GET MY ORDERS ERROR ❌", error);
+  return res.status(500).json({ message: "Get orders failed" });
+}
+};
 
 // ============================================================
 //  UPDATE ORDER STATUS
@@ -732,6 +739,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
