@@ -58,6 +58,12 @@ const orderSchema = new mongoose.Schema({
         required: true
     },
 
+    customer: {
+  name: { type: String, required: true },
+  mobile: { type: String, required: true },
+},
+
+
     deliveryAddress: {
         text: String,
         latitude: Number,
@@ -93,11 +99,7 @@ const orderSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    customer: {
-  name: { type: String, required: true },
-  mobile: { type: String, required: true },
-},
-
+    
     razorpayPaymentId: {
         type: String,
         default: ""
@@ -106,6 +108,7 @@ const orderSchema = new mongoose.Schema({
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;
+
 
 
 
