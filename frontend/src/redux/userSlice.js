@@ -227,29 +227,25 @@ const userSlice = createSlice({
 
 
     // ⭐ PATCHED — ALWAYS SAFE FOR BOTH USER & OWNER
-    updateOrderStatus: (state, action) => {
-      const { orderId, shopId, status } = action.payload;
+   updateOrderStatus: (state, action) => {
+  const { orderId, shopId, status } = action.payload;
 
-      const order = state.myOrders.find((o) => o._id === orderId);
-      if (!order) return;
+  state.myOrders = state.myOrders.map(order => {
+    if (order._id !== orderId) return order;
 
-      const shopOrders = Array.isArray(order.shopOrders)
-        ? order.shopOrders
-        : [order.shopOrders];
+    return {
+      ...order,
+      shopOrders: Array.isArray(order.shopOrders)
+        ? order.shopOrders.map(so =>
+            String(so.shop?._id || so.shop) === String(shopId)
+              ? { ...so, status }
+              : so
+          )
+        : order.shopOrders,
+    };
+  });
+},
 
-      const shopOrder = shopOrders.find(
-        (so) =>
-          String(so.shop?._id || so.shop) === String(shopId)
-      );
-
-      if (shopOrder) shopOrder.status = status;
-
-      // OWNER gets single object, USER keeps array
-      order.shopOrders =
-        state.userData?.role === "owner"
-          ? shopOrder
-          : shopOrders;
-    },
 
     // ⭐ PATCHED — SOCKET REALTIME FIX
     updateRealtimeOrderStatus: (state, action) => {
@@ -326,6 +322,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
