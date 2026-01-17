@@ -13,9 +13,13 @@ function CreateEditShop() {
     const dispatch = useDispatch();
 
     const { myShopData } = useSelector((state) => state.owner);
-    const { currentCity, currentState, currentAddress } = useSelector(
-        (state) => state.user
-    );
+    const {
+  currentCity,
+  currentState,
+  currentAddress,
+  location,
+} = useSelector((state) => state.user);
+
 
     const [name, setName] = useState(myShopData?.name || "");
     const [address, setAddress] = useState(myShopData?.address || currentAddress);
@@ -78,6 +82,20 @@ function CreateEditShop() {
             newImages.forEach((img) => {
                 formData.append("images", img.file);
             });
+
+            // 🔥 REQUIRED: SEND LOCATION
+const lat = Number(location?.coordinates?.[1]);
+const lon = Number(location?.coordinates?.[0]);
+
+if (Number.isNaN(lat) || Number.isNaN(lon)) {
+  alert("Shop location not detected. Please refresh.");
+  setLoading(false);
+  return;
+}
+
+formData.append("latitude", lat);
+formData.append("longitude", lon);
+
 
             const result = await axios.post(
                 `${serverUrl}/api/shop/create-edit`,
@@ -263,3 +281,4 @@ function CreateEditShop() {
 }
 
 export default CreateEditShop;
+
