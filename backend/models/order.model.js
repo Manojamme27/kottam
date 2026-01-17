@@ -93,6 +93,10 @@ const orderSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    customer: {
+  name: { type: String, required: true },
+  mobile: { type: String, required: true },
+},
 
     razorpayPaymentId: {
         type: String,
@@ -102,5 +106,6 @@ const orderSchema = new mongoose.Schema({
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;
+
 
 
