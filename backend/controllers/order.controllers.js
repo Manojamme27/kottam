@@ -306,25 +306,12 @@ export const getMyOrders = async (req, res) => {
       return res.status(200).json(filtered);
     }
 
-    // ================= FALLBACK =================
-    return res.status(403).json({ message: "Invalid role" });
+    // ================= FALLBACK ================
 
   } catch (error) {
     console.error("GET MY ORDERS ERROR ❌", error);
     return res.status(500).json({ message: "Get orders failed" });
   }
-};
-
-
-
-
-
-return res.status(403).json({ message: "Invalid role" });
-
-} catch (error) {
-  console.error("GET MY ORDERS ERROR ❌", error);
-  return res.status(500).json({ message: "Get orders failed" });
-}
 };
 
 // ============================================================
@@ -735,6 +722,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
