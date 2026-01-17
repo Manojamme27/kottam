@@ -64,6 +64,25 @@ function CreateEditShop() {
         });
     };
 
+    const detectLocation = () =>
+  new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject("Geolocation not supported");
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        });
+      },
+      () => reject("Location permission denied"),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -84,17 +103,30 @@ function CreateEditShop() {
             });
 
             // 🔥 REQUIRED: SEND LOCATION
-const lat = Number(location?.coordinates?.[1]);
-const lon = Number(location?.coordinates?.[0]);
+let lat, lon;
 
-if (Number.isNaN(lat) || Number.isNaN(lon)) {
-  alert("Shop location not detected. Please refresh.");
-  setLoading(false);
-  return;
+// 1️⃣ Try redux location first
+if (location?.coordinates?.length === 2) {
+  lon = Number(location.coordinates[0]);
+  lat = Number(location.coordinates[1]);
+}
+
+// 2️⃣ If missing → force browser detection
+if (!lat || !lon) {
+  try {
+    const pos = await detectLocation();
+    lat = pos.lat;
+    lon = pos.lon;
+  } catch {
+    alert("Please allow location access to save your shop.");
+    setLoading(false);
+    return;
+  }
 }
 
 formData.append("latitude", lat);
 formData.append("longitude", lon);
+
 
 
             const result = await axios.post(
@@ -281,4 +313,5 @@ formData.append("longitude", lon);
 }
 
 export default CreateEditShop;
+
 
