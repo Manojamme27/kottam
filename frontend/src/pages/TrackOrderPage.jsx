@@ -54,7 +54,7 @@ function TrackOrderPage() {
     <div className="max-w-4xl mx-auto p-4 flex flex-col gap-6">
       <div
         className="relative flex items-center gap-4 top-5 left-5 z-10 mb-2.5 cursor-pointer"
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/my-orders")}
       >
         <IoIosArrowRoundBack size={35} className="text-[#ff4d2d]" />
         <h1 className="text-2xl font-bold md:text-center">Track Order</h1>
@@ -148,3 +148,4 @@ function TrackOrderPage() {
 }
 
 export default TrackOrderPage;
+
