@@ -288,13 +288,26 @@ if (user.role === "owner") {
 
   for (const order of orders) {
     // ✅ NEVER DROP ORDER
-    if (!order.user) {
-      order.user = {
-        fullName: "Unknown User",
-        email: "",
-        mobile: "",
-      };
-    }
+   const populatedUser = order.user
+  ? order.user
+  : await User.findById(order.userId || order.user)
+      .select("fullName email mobile")
+      .lean();
+
+filtered.push({
+  _id: order._id,
+  paymentMethod: order.paymentMethod,
+  user: populatedUser || {
+    fullName: "Unknown User",
+    email: "",
+    mobile: "",
+  },
+  createdAt: order.createdAt,
+  deliveryAddress: order.deliveryAddress,
+  payment: order.payment,
+  shopOrders: validShopOrders,
+});
+
 
     const validShopOrders = order.shopOrders.filter(
       so => String(so.owner?._id || so.owner) === String(req.userId)
@@ -736,6 +749,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
