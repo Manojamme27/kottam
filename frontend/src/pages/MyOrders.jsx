@@ -23,6 +23,24 @@ function MyOrders() {
     show: false,
     orderId: null,
   });
+useEffect(() => {
+  if (!authChecked || !userData?._id) return;
+
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get(
+        `${serverUrl}/api/order/my-orders`,
+        { withCredentials: true }
+      );
+
+      dispatch(setMyOrders(res.data));
+    } catch (error) {
+      console.log("Fetch orders error:", error);
+    }
+  };
+
+  fetchOrders();
+}, [authChecked, userData, dispatch]);
 
   // 🔐 Redirect after auth check
   useEffect(() => {
@@ -191,4 +209,5 @@ function MyOrders() {
 }
 
 export default MyOrders;
+
 
