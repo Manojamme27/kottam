@@ -160,21 +160,33 @@ await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
 
 const io = req.app.get("io");
 
+const io = req.app.get("io");
+
 if (io) {
-  newOrder.shopOrders.forEach((shopOrder) => {
+  // 🔥 RE-FETCH ORDER WITH POPULATED USER
+  const populatedOrder = await Order.findById(newOrder._id)
+    .populate("user", "fullName email mobile")
+    .populate("shopOrders.shop", "name")
+    .populate("shopOrders.owner", "fullName email mobile socketId")
+    .populate("shopOrders.shopOrderItems.item", "name image price");
+
+  populatedOrder.shopOrders.forEach((shopOrder) => {
     const ownerSocketId = shopOrder.owner.socketId;
 
     if (ownerSocketId) {
       io.to(ownerSocketId).emit("newOrder", {
-  ...newOrder.toObject(),
-  shopOrders: newOrder.shopOrders.filter(
-    so => so.owner.toString() === shopOrder.owner._id.toString()
-  ),
-});
-
+        _id: populatedOrder._id,
+        paymentMethod: populatedOrder.paymentMethod,
+        user: populatedOrder.user,        // ✅ FULL USER OBJECT
+        shopOrders: shopOrder,             // only this owner's shopOrder
+        createdAt: populatedOrder.createdAt,
+        deliveryAddress: populatedOrder.deliveryAddress,
+        payment: populatedOrder.payment,
+      });
     }
   });
 }
+
 
 return res.status(201).json(newOrder);
           } catch (error) {
@@ -725,6 +737,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
