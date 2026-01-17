@@ -287,38 +287,32 @@ if (user.role === "owner") {
   const filtered = [];
 
   for (const order of orders) {
-    // ✅ NEVER DROP ORDER
-   const populatedUser = order.user
-  ? order.user
-  : await User.findById(order.userId || order.user)
-      .select("fullName email mobile")
-      .lean();
 
-filtered.push({
-  _id: order._id,
-  paymentMethod: order.paymentMethod,
-  user: populatedUser || {
-    fullName: "Unknown User",
-    email: "",
-    mobile: "",
-  },
-  createdAt: order.createdAt,
-  deliveryAddress: order.deliveryAddress,
-  payment: order.payment,
-  shopOrders: validShopOrders,
-});
-
-
+    // ✅ 1️⃣ FILTER SHOP ORDERS FIRST (VERY IMPORTANT)
     const validShopOrders = order.shopOrders.filter(
       so => String(so.owner?._id || so.owner) === String(req.userId)
     );
 
     if (!validShopOrders.length) continue;
 
+    // ✅ 2️⃣ ENSURE USER DETAILS ALWAYS EXIST
+    let populatedUser = order.user;
+
+    if (!populatedUser) {
+      populatedUser = await User.findById(order.userId || order.user)
+        .select("fullName email mobile")
+        .lean();
+    }
+
+    // ✅ 3️⃣ PUSH ONLY ONCE
     filtered.push({
       _id: order._id,
       paymentMethod: order.paymentMethod,
-      user: order.user,
+      user: populatedUser || {
+        fullName: "Unknown User",
+        email: "",
+        mobile: "",
+      },
       createdAt: order.createdAt,
       deliveryAddress: order.deliveryAddress,
       payment: order.payment,
@@ -329,17 +323,6 @@ filtered.push({
   return res.status(200).json(filtered);
 }
 
-
-
-
-
-    return res.status(403).json({ message: "Invalid role" });
-
-  } catch (error) {
-    console.error("GET MY ORDERS ERROR ❌", error);
-    return res.status(500).json({ message: "Get orders failed" });
-  }
-};
 
 // ============================================================
 //  UPDATE ORDER STATUS
@@ -749,6 +732,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
