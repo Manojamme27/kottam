@@ -247,49 +247,74 @@ await order.populate("shopOrders.shopOrderItems.item", "name image price");
         return res.status(500).json({ message: `verify payment error ${error}` });
     }
 };
-// ================= OWNER VIEW =================
-if (user.role === "owner") {
-  const orders = await Order.find({ "shopOrders.owner": req.userId })
-    .sort({ createdAt: -1 })
-    .populate("user", "fullName email mobile") // 🔥 REQUIRED
-    .populate("shopOrders.shop", "name")
-    .populate("shopOrders.owner", "fullName email mobile socketId")
-    .populate("shopOrders.shopOrderItems.item", "name image price")
-    .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
+export const getMyOrders = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-  const filtered = [];
+    // ================= USER VIEW =================
+    if (user.role === "user") {
+      const orders = await Order.find({ user: req.userId })
+        .sort({ createdAt: -1 })
+        .populate("user", "fullName email mobile")
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "fullName email mobile")
+        .populate("shopOrders.shopOrderItems.item", "name image price");
 
-  for (const order of orders) {
-    // 1️⃣ filter only this owner's shopOrders
-    const validShopOrders = order.shopOrders.filter(
-      so => String(so.owner?._id || so.owner) === String(req.userId)
-    );
+      return res.status(200).json(orders);
+    }
 
-    if (!validShopOrders.length) continue;
+    // ================= OWNER VIEW =================
+    if (user.role === "owner") {
+      const orders = await Order.find({ "shopOrders.owner": req.userId })
+        .sort({ createdAt: -1 })
+        .populate("user", "fullName email mobile") // 🔥 REQUIRED
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "fullName email mobile socketId")
+        .populate("shopOrders.shopOrderItems.item", "name image price")
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-    // 2️⃣ ALWAYS define populatedUser (NO reference error)
-    const populatedUser = order.user
-      ? order.user
-      : {
+      const filtered = [];
+
+      for (const order of orders) {
+        // filter only this owner's shopOrders
+        const validShopOrders = order.shopOrders.filter(
+          so => String(so.owner?._id || so.owner) === String(req.userId)
+        );
+
+        if (!validShopOrders.length) continue;
+
+        const populatedUser = order.user || {
           fullName: "Unknown User",
           email: "",
           mobile: "",
         };
 
-    // 3️⃣ push once
-    filtered.push({
-      _id: order._id,
-      paymentMethod: order.paymentMethod,
-      user: populatedUser,          // ✅ FIXED
-      createdAt: order.createdAt,
-      deliveryAddress: order.deliveryAddress,
-      payment: order.payment,
-      shopOrders: validShopOrders,
-    });
-  }
+        filtered.push({
+          _id: order._id,
+          paymentMethod: order.paymentMethod,
+          user: populatedUser,
+          createdAt: order.createdAt,
+          deliveryAddress: order.deliveryAddress,
+          payment: order.payment,
+          shopOrders: validShopOrders,
+        });
+      }
 
-  return res.status(200).json(filtered);
-}
+      return res.status(200).json(filtered);
+    }
+
+    // ================= FALLBACK =================
+    return res.status(403).json({ message: "Invalid role" });
+
+  } catch (error) {
+    console.error("GET MY ORDERS ERROR ❌", error);
+    return res.status(500).json({ message: "Get orders failed" });
+  }
+};
+
 
 
 
@@ -710,6 +735,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
