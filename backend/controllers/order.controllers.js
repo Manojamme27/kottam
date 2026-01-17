@@ -18,7 +18,14 @@ let instance = new RazorPay({
 // ============================================================
 export const placeOrder = async (req, res) => {
     try {
-        const { cartItems, paymentMethod, deliveryAddress, totalAmount } = req.body;
+        const {
+  cartItems,
+  paymentMethod,
+  deliveryAddress,
+  totalAmount,
+  customer,
+} = req.body;
+
 
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: "cart is empty" });
@@ -115,6 +122,11 @@ if (subtotal < 100) {
                 });
             }
         }
+if (!customer?.name || !customer?.mobile) {
+  return res.status(400).json({
+    message: "Customer name and mobile are required",
+  });
+}
 
         // -----------------------------
         // ONLINE PAYMENT FLOW
@@ -128,6 +140,7 @@ if (subtotal < 100) {
 
             const newOrder = await Order.create({
                 user: req.userId,
+                customer,        
                 paymentMethod,
                 deliveryAddress,
                 totalAmount,
@@ -147,6 +160,7 @@ if (subtotal < 100) {
         // -----------------------------
   const newOrder = await Order.create({
   user: req.userId,
+  customer,  
   paymentMethod,
   deliveryAddress,
   totalAmount,
@@ -293,14 +307,15 @@ export const getMyOrders = async (req, res) => {
         };
 
         filtered.push({
-          _id: order._id,
-          paymentMethod: order.paymentMethod,
-          user: populatedUser,
-          createdAt: order.createdAt,
-          deliveryAddress: order.deliveryAddress,
-          payment: order.payment,
-          shopOrders: validShopOrders,
-        });
+  _id: order._id,
+  paymentMethod: order.paymentMethod,
+  customer: order.customer,     // ✅ THIS IS THE FIX
+  createdAt: order.createdAt,
+  deliveryAddress: order.deliveryAddress,
+  payment: order.payment,
+  shopOrders: validShopOrders,
+});
+
       }
 
       return res.status(200).json(filtered);
@@ -722,6 +737,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
