@@ -1,4 +1,4 @@
-import api from "../utils/api";
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { serverUrl } from "../App";
@@ -14,19 +14,17 @@ function TrackOrderPage() {
   const [liveLocations, setLiveLocations] = useState({});
 
   // 🔹 Fetch order details
-  
-
-const handleGetOrder = async () => {
-  try {
-    const res = await api.get(
-      `/api/order/get-order-by-id/${orderId}`
-    );
-    setCurrentOrder(res.data);
-  } catch (err) {
-    console.error("get-order-by-id error:", err.response || err);
-  }
-};
-
+  const handleGetOrder = async () => {
+    try {
+      const result = await axios.get(
+        `${serverUrl}/api/order/get-order-by-id/${orderId}`,
+        { withCredentials: true }
+      );
+      setCurrentOrder(result.data);
+    } catch (error) {
+      console.log("get-order-by-id error:", error.response || error);
+    }
+  };
 
   // 🔹 Live location updates via socket
   useEffect(() => {
@@ -150,4 +148,3 @@ const handleGetOrder = async () => {
 }
 
 export default TrackOrderPage;
-
