@@ -166,14 +166,12 @@ if (io) {
 
     if (ownerSocketId) {
       io.to(ownerSocketId).emit("newOrder", {
-        _id: newOrder._id,
-        paymentMethod: newOrder.paymentMethod,
-        user: newOrder.user,          // ✅ FULL USER
-        shopOrders: shopOrder,
-        createdAt: newOrder.createdAt,
-        deliveryAddress: newOrder.deliveryAddress,
-        payment: newOrder.payment,
-      });
+  ...newOrder.toObject(),
+  shopOrders: newOrder.shopOrders.filter(
+    so => so.owner.toString() === shopOrder.owner._id.toString()
+  ),
+});
+
     }
   });
 }
@@ -727,6 +725,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
