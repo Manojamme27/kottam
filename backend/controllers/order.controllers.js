@@ -279,24 +279,41 @@ export const getMyOrders = async (req, res) => {
 if (user.role === "owner") {
   const orders = await Order.find({ "shopOrders.owner": req.userId })
     .sort({ createdAt: -1 })
-    .populate("user", "fullName email mobile") // 🔥 USER ALWAYS POPULATED
+    .populate("user", "fullName email mobile") // 🔥 REQUIRED
     .populate("shopOrders.shop", "name")
     .populate("shopOrders.owner", "fullName email mobile socketId")
     .populate("shopOrders.shopOrderItems.item", "name image price")
     .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-  // ✅ ONLY FILTER shopOrders — DO NOT REBUILD ORDER
-  orders.forEach(order => {
-    order.shopOrders = order.shopOrders.filter(
-      so => String(so.owner?._id || so.owner) === String(req.userId)
+  const filtered = [];
+
+  for (const order of orders) {
+    // ✅ keep only this owner's shopOrders
+    const validShopOrders = order.shopOrders.filter(
+      so => String(so.owner?._id) === String(req.userId)
     );
-  });
 
-  // ✅ REMOVE EMPTY ORDERS
-  const cleanOrders = orders.filter(o => o.shopOrders.length > 0);
+    if (!validShopOrders.length) continue;
 
-  return res.status(200).json(cleanOrders);
+    filtered.push({
+      _id: order._id,
+      paymentMethod: order.paymentMethod,
+      user: order.user || {
+        fullName: "Unknown User",
+        email: "",
+        mobile: "",
+      },
+      createdAt: order.createdAt,
+      deliveryAddress: order.deliveryAddress,
+      payment: order.payment,
+      totalAmount: order.totalAmount,
+      shopOrders: validShopOrders,
+    });
+  }
+
+  return res.status(200).json(filtered);
 }
+
 
 
 return res.status(403).json({ message: "Invalid role" });
@@ -715,6 +732,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
