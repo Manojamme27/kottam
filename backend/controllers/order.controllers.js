@@ -279,50 +279,45 @@ export const getMyOrders = async (req, res) => {
 if (user.role === "owner") {
   const orders = await Order.find({ "shopOrders.owner": req.userId })
     .sort({ createdAt: -1 })
+    .populate("user", "fullName email mobile") // 🔥 MUST BE HERE
     .populate("shopOrders.shop", "name")
     .populate("shopOrders.owner", "fullName email mobile socketId")
-    .populate("user", "fullName email mobile")
     .populate("shopOrders.shopOrderItems.item", "name image price")
     .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
-  const filtered = [];
+  const result = [];
 
   for (const order of orders) {
-
-    // 1️⃣ FILTER SHOP ORDERS FIRST
-    const validShopOrders = order.shopOrders.filter(
+    // ✅ filter only this owner's shopOrders
+    const ownerShopOrders = order.shopOrders.filter(
       so => String(so.owner?._id || so.owner) === String(req.userId)
     );
 
-    if (!validShopOrders.length) continue;
+    if (!ownerShopOrders.length) continue;
 
-    // 2️⃣ ENSURE USER DETAILS
-    let populatedUser = order.user;
+    // ✅ HARD GUARANTEE USER EXISTS
+    const safeUser = order.user
+      ? order.user
+      : {
+          fullName: "Unknown User",
+          email: "",
+          mobile: "",
+        };
 
-    if (!populatedUser) {
-      populatedUser = await User.findById(order.userId || order.user)
-        .select("fullName email mobile")
-        .lean();
-    }
-
-    // 3️⃣ PUSH ONCE
-    filtered.push({
+    result.push({
       _id: order._id,
       paymentMethod: order.paymentMethod,
-      user: populatedUser || {
-        fullName: "Unknown User",
-        email: "",
-        mobile: "",
-      },
+      user: safeUser,              // 🔥 THIS IS THE FIX
       createdAt: order.createdAt,
       deliveryAddress: order.deliveryAddress,
       payment: order.payment,
-      shopOrders: validShopOrders,
+      shopOrders: ownerShopOrders,
     });
   }
 
-  return res.status(200).json(filtered);
+  return res.status(200).json(result);
 }
+
 return res.status(403).json({ message: "Invalid role" });
 
 } catch (error) {
@@ -739,6 +734,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
