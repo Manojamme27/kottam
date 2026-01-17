@@ -39,20 +39,19 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow Postman, server-to-server, mobile apps
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+        return callback(null, origin); // 🔥 IMPORTANT
       }
 
-      // silently reject other origins
-      return callback(null, false);
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
+
 
 /* ===============================
    STATIC FILES
@@ -105,4 +104,5 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
