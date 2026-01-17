@@ -20,7 +20,8 @@ function OwnerOrderCard({ data }) {
     const dispatch = useDispatch();
     const [availableBoys, setAvailableBoys] = useState([]);
 
-    const user = data?.user || {};
+    const customer = data?.customer || {};
+
 
     // 🔥 ALWAYS NORMALIZE shopOrders
    const shopOrders = Array.isArray(data?.shopOrders)
@@ -159,20 +160,20 @@ const handleUpdateStatus = async (orderId, shopId, status) => {
                     : "bg-white border-orange-100 hover:shadow-lg"
             }`}
         >
-            {/* USER INFO */}
-            <div className="flex justify-between flex-wrap gap-3">
-                <div>
-                    <h2 className="text-lg font-bold text-gray-800">
-                        {user.fullName || "Unknown User"}
-                    </h2>
+         
+            {/* CUSTOMER INFO */}
+<div className="flex justify-between flex-wrap gap-3">
+  <div>
+    <h2 className="text-lg font-bold text-gray-800">
+      {customer?.name || "Customer"}
+    </h2>
 
-                    <p className="text-sm text-gray-500">{user.email || "No email"}</p>
+    <p className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+      <MdPhone />
+      <span>{customer?.mobile || "-"}</span>
+    </p>
+  </div>
 
-                    <p className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                        <MdPhone />
-                        <span>{user.mobile || "-"}</span>
-                    </p>
-                </div>
 
                 <div className="text-left text-sm text-gray-600">
                     <p><strong>Order ID:</strong> #{data._id?.slice(-6)}</p>
@@ -305,5 +306,6 @@ const handleUpdateStatus = async (orderId, shopId, status) => {
 }
 
 export default OwnerOrderCard;
+
 
 
