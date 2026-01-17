@@ -6,30 +6,21 @@ import { serverUrl } from "../App";
 
 const useGetMyOrders = () => {
   const dispatch = useDispatch();
-  const { authChecked, userData, myOrders } = useSelector(
-    state => state.user
-  );
+  const { userData, authChecked } = useSelector(state => state.user);
 
   useEffect(() => {
-    if (!authChecked) return;
-    if (!userData?._id) return;
-    if (myOrders?.length) return; // ✅ PREVENT DOUBLE FETCH
+    if (!authChecked || !userData?._id) return;
 
-    const fetchOrders = async () => {
-      try {
-        const res = await axios.get(
-          `${serverUrl}/api/order/my-orders`,
-          { withCredentials: true }
-        );
-
-        dispatch(setMyOrders(res.data));
-      } catch (error) {
-        // ✅ NEVER CRASH UI
-        console.warn("Orders fetch skipped");
-      }
-    };
-
-    fetchOrders();
+    axios
+      .get(`${serverUrl}/api/order/my-orders`, {
+        withCredentials: true,
+      })
+      .then(res => {
+        dispatch(setMyOrders(res.data || [])); // 🔥 DB IS TRUTH
+      })
+      .catch(() => {
+        dispatch(setMyOrders([]));
+      });
   }, [authChecked, userData?._id, dispatch]);
 };
 
