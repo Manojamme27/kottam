@@ -158,7 +158,6 @@ await newOrder.populate("shopOrders.shop", "name");
 await newOrder.populate("shopOrders.owner", "fullName email mobile socketId");
 await newOrder.populate("shopOrders.shopOrderItems.item", "name image price");
 
-const io = req.app.get("io");
 
 const io = req.app.get("io");
 
@@ -737,6 +736,7 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: `cancel order error ${error}` });
     }
 };
+
 
 
 
