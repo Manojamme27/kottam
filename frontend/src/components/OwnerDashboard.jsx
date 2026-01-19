@@ -209,7 +209,7 @@ function OwnerDashboard() {
 
           {/* Items List */}
           {Array.isArray(myShopData?.items) && myShopData.items.length > 0 && (
-  <div className="flex flex-wrap gap-5">
+  <div className="flex flex-wrap gap-5 justify-center max-w-4xl">
     {myShopData.items.map(item => (
       <OwnerItemCard key={item._id} data={item} />
     ))}
@@ -232,6 +232,7 @@ function StatCard({ title, value, color }) {
     </div>
   );
 }
+
 
 
 
