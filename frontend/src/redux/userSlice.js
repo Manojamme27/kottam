@@ -67,6 +67,23 @@ const userSlice = createSlice({
     return;
   }
 },
+removeItemFromCity: (state, action) => {
+  const itemId = action.payload;
+
+  if (!Array.isArray(state.itemsInMyCity)) {
+    state.itemsInMyCity = [];
+    return;
+  }
+
+  state.itemsInMyCity = state.itemsInMyCity.filter(
+    (item) => item._id !== itemId
+  );
+
+  localStorage.setItem(
+    "items_cache",
+    JSON.stringify(state.itemsInMyCity)
+  );
+},
 
 
    logout: (state) => {
@@ -298,6 +315,7 @@ const userSlice = createSlice({
 export const {
   setUserData,
   setAuthChecked,
+  removeItemFromCity,
    logout,
   setCurrentAddress,
   setCurrentCity,
@@ -322,6 +340,7 @@ export const {
 } = userSlice.actions;
 
 export default userSlice.reducer;   // first review all the files and tell the fixes perfectly later  
+
 
 
 
