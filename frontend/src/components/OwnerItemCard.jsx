@@ -5,21 +5,35 @@ import { useNavigate } from "react-router-dom";
 import { serverUrl } from "../App";
 import { useDispatch } from "react-redux";
 import { setMyShopData } from "../redux/ownerSlice";
+import { useSelector } from "react-redux";
+
 
 function OwnerItemCard({ data }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { myShopData } = useSelector((state) => state.owner);
+
 
   const handleDelete = async () => {
-    try {
-      const result = await axios.delete(`${serverUrl}/api/item/delete/${data._id}`, {
-        withCredentials: true,
-      });
-      dispatch(setMyShopData(result.data));
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // ✅ OPTIMISTIC UI UPDATE (PREVENT WHITE SCREEN)
+  dispatch(
+    setMyShopData({
+      ...myShopData,
+      items: myShopData.items.filter(
+        (item) => item._id !== data._id
+      ),
+    })
+  );
+
+  try {
+    await axios.delete(
+      `${serverUrl}/api/item/delete/${data._id}`,
+      { withCredentials: true }
+    );
+  } catch (error) {
+    console.log("Delete failed:", error);
+  }
+};
 
   const discount =
     data.offerPrice && data.price
@@ -107,4 +121,5 @@ function OwnerItemCard({ data }) {
 }
 
 export default OwnerItemCard;
+
 
