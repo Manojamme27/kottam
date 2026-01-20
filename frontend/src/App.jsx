@@ -37,6 +37,18 @@ import {
   updateRealtimeOrderStatus,
 } from "./redux/userSlice";
 
+
+const socket = io(serverUrl, {
+  withCredentials: true,
+  autoConnect: false,          // 🔥 CRITICAL
+  transports: ["websocket"],   // 🔥 NO polling
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 500,
+  reconnectionDelayMax: 2000,
+});
+
+
 // Server URL
 export const serverUrl = import.meta.env.VITE_SERVER_URL;
 
@@ -65,18 +77,27 @@ function App() {
   useGetItemsByCity();
  useGetMyOrders(); // ✅ ADD THIS BACK
 
- useEffect(() => {
-  if (!authChecked || !userData?._id) return;
+useEffect(() => {
+  socket.connect();
 
-  const socket = io(serverUrl, {
-    withCredentials: true,
-    transports: ["websocket"],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
+  socket.on("connect", () => {
+    console.log("🟢 socket connected", socket.id);
   });
 
-  socket.emit("identity", { userId: userData._id });
+  socket.on("disconnect", () => {
+    console.log("🔴 socket disconnected");
+  });
+
+  dispatch(setSocket(socket));
+
+  return () => {
+    socket.off("connect");
+    socket.off("disconnect");
+  };
+}, [dispatch]);
+ 
+useEffect(() => {
+  if (!userData?._id) return;
 
   socket.on("newOrder", (orderData) => {
     playSound();
@@ -90,15 +111,12 @@ function App() {
     dispatch(updateRealtimeOrderStatus(data));
   });
 
-  dispatch(setSocket(socket));
-
   return () => {
     socket.off("newOrder");
     socket.off("update-status");
-    socket.disconnect();
-    dispatch(setSocket(null));
   };
-}, [authChecked, userData?._id, dispatch]);
+}, [userData?._id, dispatch]);
+
 
 
 
