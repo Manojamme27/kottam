@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import axios from "axios";
 import { useDispatch } from "react-redux";
+import axios from "axios";
 import { setUserData, setAuthChecked } from "../redux/userSlice";
 import { serverUrl } from "../App";
 
@@ -8,23 +8,26 @@ const useGetCurrentUser = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(
-          `${serverUrl}/api/user/current-user`,
-          { withCredentials: true }
-        );
+    // ✅ 1. INSTANT UI FROM CACHE
+    const cachedUser = localStorage.getItem("userData");
+    if (cachedUser) {
+      dispatch(setUserData(JSON.parse(cachedUser)));
+    }
 
+    // ✅ 2. BACKGROUND VERIFY
+    axios
+      .get(`${serverUrl}/api/user/current-user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
         dispatch(setUserData(res.data));
-      } catch {
-        // ✅ DO NOTHING
-        // keep localStorage user
-      } finally {
-        dispatch(setAuthChecked(true)); // logical flag only
-      }
-    };
-
-    fetchUser();
+      })
+      .catch(() => {
+        // silent fail (session expired)
+      })
+      .finally(() => {
+        dispatch(setAuthChecked(true));
+      });
   }, [dispatch]);
 };
 
