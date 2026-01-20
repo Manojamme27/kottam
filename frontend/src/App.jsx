@@ -1,3 +1,4 @@
+export const serverUrl = import.meta.env.VITE_SERVER_URL;
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -49,8 +50,7 @@ const socket = io(serverUrl, {
 });
 
 
-// Server URL
-export const serverUrl = import.meta.env.VITE_SERVER_URL;
+
 
 // 🔊 Play notification sound
 const playSound = () => {
