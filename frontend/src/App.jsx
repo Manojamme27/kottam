@@ -1,13 +1,12 @@
 export const serverUrl = import.meta.env.VITE_SERVER_URL;
+
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { io } from "socket.io-client";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
- 
+
 // Hooks
 import useGetCity from "./hooks/useGetCity";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
@@ -38,89 +37,73 @@ import {
   updateRealtimeOrderStatus,
 } from "./redux/userSlice";
 
-
+// 🔌 SOCKET INSTANCE (DO NOT AUTO CONNECT)
 const socket = io(serverUrl, {
   withCredentials: true,
-  autoConnect: false,          // 🔥 CRITICAL
-  transports: ["websocket"],   // 🔥 NO polling
+  autoConnect: false, // 🔥 VERY IMPORTANT
+  transports: ["websocket"],
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 500,
   reconnectionDelayMax: 2000,
 });
 
-
-
-
-// 🔊 Play notification sound
+// 🔊 Sound
 const playSound = () => {
   const audio = new Audio("/notify.mp3");
   audio.volume = 1;
-  audio.play().catch(() => { });
+  audio.play().catch(() => {});
 };
 
 function App() {
   const dispatch = useDispatch();
-  const { userData, authChecked } = useSelector(state => state.user);
+  const { userData, authChecked } = useSelector((state) => state.user);
 
- useEffect(() => {
-  fetch(`${serverUrl}/health`, { credentials: "include" })
-    .catch(() => {});
-}, []);
+  // 🔥 Wake backend early (does NOT block UI)
+  useEffect(() => {
+    fetch(`${serverUrl}/health`).catch(() => {});
+  }, []);
 
-
-  // ✅ ALL hooks – ALWAYS called, NO conditions
+  // ✅ DATA FIRST — NO SOCKET DEPENDENCY
   useGetCurrentUser();
   useGetCity();
   useUpdateLocation();
   useGetMyshop();
   useGetItemsByCity();
- useGetMyOrders(); // ✅ ADD THIS BACK
+  useGetMyOrders();
 
-useEffect(() => {
-  socket.connect();
+  // 🟢 CONNECT SOCKET *AFTER* UI + AUTH (DELAYED)
+  useEffect(() => {
+    if (!authChecked || !userData?._id) return;
 
-  socket.on("connect", () => {
-    console.log("🟢 socket connected", socket.id);
-  });
+    const timer = setTimeout(() => {
+      socket.connect();
+      dispatch(setSocket(socket));
+    }, 2000); // 🔥 2s delay = instant UI
 
-  socket.on("disconnect", () => {
-    console.log("🔴 socket disconnected");
-  });
+    return () => clearTimeout(timer);
+  }, [authChecked, userData?._id, dispatch]);
 
-  dispatch(setSocket(socket));
+  // 🔔 SOCKET EVENTS (NON-BLOCKING)
+  useEffect(() => {
+    if (!userData?._id) return;
 
-  return () => {
-    socket.off("connect");
-    socket.off("disconnect");
-  };
-}, [dispatch]);
- 
-useEffect(() => {
-  if (!userData?._id) return;
+    socket.on("newOrder", (orderData) => {
+      playSound();
+      toast.success("New Order Received");
+      dispatch(addMyOrder(orderData));
+    });
 
-  socket.on("newOrder", (orderData) => {
-    playSound();
-    toast.success("New Order Received");
-    dispatch(addMyOrder(orderData));
-  });
+    socket.on("update-status", (data) => {
+      playSound();
+      dispatch(updateRealtimeOrderStatus(data));
+    });
 
-  socket.on("update-status", (data) => {
-    playSound();
-    toast.info(`Order status updated: ${data.status}`);
-    dispatch(updateRealtimeOrderStatus(data));
-  });
-
-  return () => {
-    socket.off("newOrder");
-    socket.off("update-status");
-  };
-}, [userData?._id, dispatch]);
-
-
-
-
- 
+    return () => {
+      socket.off("newOrder");
+      socket.off("update-status");
+    };
+  }, [userData?._id, dispatch]);
 
   return (
     <>
@@ -145,6 +128,9 @@ useEffect(() => {
     </>
   );
 }
+
+export default App;
+
 
 
 export default App;
