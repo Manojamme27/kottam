@@ -14,6 +14,9 @@ import http from "http";
 import { socketHandler } from "./socket.js";
 import { Server } from "socket.io";
 import path from "path";
+import { CronJob } from "cron";
+import fetch from "node-fetch";
+
 
 const app = express();
 app.set("trust proxy", 1);
@@ -86,6 +89,23 @@ app.get("/health", (req, res) => {
   });
 });
 
+const keepAliveJob = new CronJob(
+  "*/10 * * * *",
+  async () => {
+    try {
+      await fetch("https://kottam-backend.onrender.com/health");
+      console.log("🔁 Keep-alive ping");
+    } catch (err) {
+      console.log("⚠️ Keep-alive failed");
+    }
+  },
+  null,
+  true
+);
+
+keepAliveJob.start();
+
+
 
 /* ===============================
    ROUTES
@@ -110,6 +130,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
