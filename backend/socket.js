@@ -1,64 +1,66 @@
-import User from "./models/user.model.js"
+import User from "./models/user.model.js";
 
 export const socketHandler = (io) => {
-  io.on('connection', (socket) => {
-    console.log(socket.id)
-    socket.on("identity", async ({ userId, role }) => {
-      try {
-        if (!userId) return;
+  io.on("connection", (socket) => {
+    console.log("🟢 Socket connected:", socket.id);
 
+    // ✅ REGISTER USER
+    socket.on("identity", async ({ userId, role }) => {
+      if (!userId) return;
+
+      try {
         await User.findByIdAndUpdate(userId, {
           socketId: socket.id,
-          isOnline: true
+          isOnline: true,
+          lastSeen: new Date(),
         });
 
-        console.log(`🔗 Registered ${role || "user"} -> ${userId} : ${socket.id}`);
-      } catch (error) {
-        console.log(error);
+        socket.emit("identity-ack"); // 🔥 IMPORTANT
+        console.log(`🔗 Registered ${role || "user"} → ${userId}`);
+      } catch (err) {
+        console.error("identity error", err);
       }
     });
 
+    // ✅ LOCATION UPDATE (SAFE)
+    socket.on("updateLocation", async ({ latitude, longitude, userId }) => {
+      if (!userId || !latitude || !longitude) return;
 
-
-    socket.on('updateLocation', async ({ latitude, longitude, userId }) => {
       try {
-        const user = await User.findByIdAndUpdate(userId, {
+        await User.findByIdAndUpdate(userId, {
           location: {
-            type: 'Point',
-            coordinates: [longitude, latitude]
+            type: "Point",
+            coordinates: [longitude, latitude],
           },
+          socketId: socket.id,
           isOnline: true,
-          socketId: socket.id
-        })
+        });
 
-        if (user) {
-          io.emit('updateDeliveryLocation', {
-            deliveryBoyId: userId,
-            latitude,
-            longitude
-          })
-        }
-
-
-      } catch (error) {
-        console.log('updateDeliveryLocation error')
+        io.emit("updateDeliveryLocation", {
+          deliveryBoyId: userId,
+          latitude,
+          longitude,
+        });
+      } catch (err) {
+        console.error("updateLocation error", err);
       }
-    })
+    });
 
-
-
-
-    socket.on('disconnect', async () => {
+    // ✅ DISCONNECT (DO NOT BLOCK)
+    socket.on("disconnect", async () => {
       try {
-
-        await User.findOneAndUpdate({ socketId: socket.id }, {
-          socketId: null,
-          isOnline: false
-        })
-      } catch (error) {
-        console.log(error)
+        await User.findOneAndUpdate(
+          { socketId: socket.id },
+          {
+            socketId: null,
+            isOnline: false,
+            lastSeen: new Date(),
+          }
+        );
+        console.log("🔴 Socket disconnected:", socket.id);
+      } catch (err) {
+        console.error("disconnect error", err);
       }
-
-    })
-  })
-}
+    });
+  });
+};
