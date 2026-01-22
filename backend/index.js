@@ -78,6 +78,15 @@ const io = new Server(server, {
 
 app.set("io", io);
 
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+  });
+});
+
+
 /* ===============================
    ROUTES
 ================================ */
@@ -105,6 +114,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
