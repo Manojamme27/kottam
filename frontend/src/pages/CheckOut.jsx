@@ -184,102 +184,88 @@ const [customerMobile, setCustomerMobile] = useState("");
   }
 };
 
-  const handlePlaceOrder = async () => {
-    if (!addressInput || !location?.lat || !location?.lon) {
-  toast.error("Please select delivery address");
-  return;
-}
-
-    if (!userData?._id) {
-  toast.error("Please login to place an order");
-  navigate("/signin");
-  return;
-}
-
-  if (placingOrder) return; // prevents double click
-    const shopTotals = {};
-  cartItems.forEach((item) => {
-    const shopId = item.shop;
-    if (!shopTotals[shopId]) shopTotals[shopId] = 0;
-    shopTotals[shopId] += Number(item.price) * Number(item.quantity);
-  });
-
-  const invalidShops = Object.values(shopTotals).filter(total => total < 100);
-
-  if (invalidShops.length > 0) {
-    toast.error("Minimum order ₹100 required for each shop", {
-      position: "top-center",
-    });
-    return; // ❌ STOP → Do NOT place order
+  const ensureAuth = async () => {
+  try {
+    await axios.get(
+      `${serverUrl}/api/user/current-user`,
+      { withCredentials: true }
+    );
+    return true;
+  } catch {
+    return false;
   }
-    if (!customerName.trim() || !customerMobile.trim()) {
-  toast.error("Please enter name and mobile number");
-  return;
-}
+};
 
-if (customerMobile.length < 10) {
-  toast.error("Please enter a valid mobile number");
-  return;
-}
+const handlePlaceOrder = async () => {
+  if (!addressInput || !location?.lat || !location?.lon) {
+    toast.error("Please select delivery address");
+    return;
+  }
 
+  if (!userData?._id) {
+    toast.error("Please login to place an order");
+    navigate("/signin");
+    return;
+  }
+
+  if (placingOrder) return;
+
+  if (!customerName.trim() || !customerMobile.trim()) {
+    toast.error("Please enter name and mobile number");
+    return;
+  }
+
+  if (customerMobile.length < 10) {
+    toast.error("Please enter a valid mobile number");
+    return;
+  }
 
   setPlacingOrder(true);
+
   try {
-   const result = await axios.post(
-  `${serverUrl}/api/order/place-order`,
-  {
-    paymentMethod,
-    deliveryAddress: {
-      text: addressInput,
-      latitude: location.lat,
-      longitude: location.lon,
-    },
-    totalAmount: grandTotal,
-    cartItems,
-    customer: {
-      name: customerName,
-      mobile: customerMobile,
-    },
-  },
-  { withCredentials: true }
-);
-
-
+    const result = await axios.post(
+      `${serverUrl}/api/order/place-order`,
+      {
+        paymentMethod,
+        deliveryAddress: {
+          text: addressInput,
+          latitude: location.lat,
+          longitude: location.lon,
+        },
+        totalAmount: grandTotal,
+        cartItems,
+        customer: {
+          name: customerName,
+          mobile: customerMobile,
+        },
+      },
+      { withCredentials: true }
+    );
 
     if (paymentMethod === "cod") {
       dispatch(addMyOrder(result.data));
       dispatch(clearCart());
-      toast.success("Order placed successfully!", { position: "top-center" });
+      toast.success("Order placed successfully!");
       navigate("/order-placed");
     } else {
-      const orderId = result.data.orderId;
-      const razorOrder = result.data.razorOrder;
-      openRazorpayWindow(orderId, razorOrder);
+      openRazorpayWindow(result.data.orderId, result.data.razorOrder);
     }
 
-} catch (error) {
-  // 🔐 SESSION EXPIRED / NOT AUTHENTICATED
-  if (error.response?.status === 401) {
-  toast.error("Unable to place order. Please retry.");
-  return;
-}
+  } catch (error) {
+    setPlacingOrder(false);
 
+    if (error.response?.status === 401) {
+      toast.error("Session expired. Please login again.");
+      navigate("/signin");
+      return;
+    }
 
-  // ❌ OTHER BACKEND ERRORS
-  const msg = error?.response?.data?.message;
-
-  toast.error(
-    msg || "Failed to place order. Try again later.",
-    { position: "top-center" }
-  );
-
-  console.log("Place order error:", error);
-}
-
-
-
-  setPlacingOrder(false);
+    toast.error(
+      error?.response?.data?.message || "Failed to place order. Try again later."
+    );
+  }
 };
+
 
 
   // ✅ Razorpay integration
@@ -522,6 +508,7 @@ if (customerMobile.length < 10) {
 }
 
 export default CheckOut;
+
 
 
 
