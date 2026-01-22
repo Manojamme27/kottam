@@ -60,9 +60,19 @@ function App() {
   const { userData, authChecked } = useSelector((state) => state.user);
 
   // 🔥 Wake backend early (does NOT block UI)
-  useEffect(() => {
-    fetch(`${serverUrl}/health`).catch(() => {});
-  }, []);
+ useEffect(() => {
+  const wake = () => {
+    fetch(`${serverUrl}/health`, {
+      credentials: "include",
+    }).catch(() => {});
+  };
+
+  wake(); // on load
+
+  const id = setInterval(wake, 5 * 60 * 1000); // every 5 min
+
+  return () => clearInterval(id);
+}, []);
 
   // ✅ DATA FIRST — NO SOCKET DEPENDENCY
   useGetCurrentUser();
@@ -85,25 +95,37 @@ function App() {
   }, [authChecked, userData?._id, dispatch]);
 
   // 🔔 SOCKET EVENTS (NON-BLOCKING)
-  useEffect(() => {
-    if (!userData?._id) return;
+useEffect(() => {
+  if (!userData?._id) return;
 
-    socket.on("newOrder", (orderData) => {
-      playSound();
-      toast.success("New Order Received");
-      dispatch(addMyOrder(orderData));
-    });
+  // 🔥 Delay socket so UI renders first
+  const timer = setTimeout(() => {
+    socket.connect();
+  }, 2000);
 
-    socket.on("update-status", (data) => {
-      playSound();
-      dispatch(updateRealtimeOrderStatus(data));
-    });
+  socket.on("connect", () => {
+    console.log("🟢 socket connected", socket.id);
+  });
 
-    return () => {
-      socket.off("newOrder");
-      socket.off("update-status");
-    };
-  }, [userData?._id, dispatch]);
+  socket.on("connect_error", () => {
+    console.log("⚠️ socket connect failed (ignored)");
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 socket disconnected");
+  });
+
+  dispatch(setSocket(socket));
+
+  return () => {
+    clearTimeout(timer);
+    socket.off("connect");
+    socket.off("connect_error");
+    socket.off("disconnect");
+  };
+}, [userData?._id, dispatch]);
+  
+
 
   return (
     <>
