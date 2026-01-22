@@ -70,6 +70,7 @@ const io = new Server(server, {
     credentials: true,
   },
   transports: ["websocket"],
+  allowUpgrades: false,      // 🔥 BLOCK polling
   pingTimeout: 20000,     // 🔥 FAST fail
   pingInterval: 25000,
   allowEIO3: true,
@@ -104,6 +105,7 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
 
