@@ -69,10 +69,10 @@ const io = new Server(server, {
     origin: FRONTEND_URL,
     credentials: true,
   },
-  transports: ["polling", "websocket"],
-  allowEIO3: true,
-  pingTimeout: 60000,
+  transports: ["websocket"],
+  pingTimeout: 20000,     // 🔥 FAST fail
   pingInterval: 25000,
+  allowEIO3: true,
 });
 
 app.set("io", io);
@@ -104,5 +104,6 @@ server.listen(port, () => {
   connectDb();
   console.log("server started at", port);
 });
+
 
 
