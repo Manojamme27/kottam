@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
 import useSocket from "./hooks/useSocket";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 
@@ -32,8 +32,7 @@ import CreateEditShop from "./pages/CreateEditShop";
 import Home from "./pages/Home";
 
 function App() {
-  const dispatch = useDispatch();
-  const { userData, authChecked } = useSelector((state) => state.user);
+  const { userData} = useSelector((state) => state.user);
 
   // 🔥 Wake backend early (does NOT block UI)
  useEffect(() => {
