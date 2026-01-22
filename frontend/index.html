@@ -1,48 +1,52 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
   <meta charset="UTF-8" />
-  <link rel="icon" href="/favicon.ico" />
+
+  <!-- ✅ FAVICON (THIS CONTROLS GOOGLE ICON) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/kottam-logo.png" />
 
   <title>Kottam – Food Delivery in Telangana</title>
 
   <meta
     name="description"
-    content="Order food and Grocery online from nearby restaurants and local shops in Telangana. Fast delivery, trusted local vendors."
+    content="Order food and groceries online from nearby restaurants and local shops in Telangana. Fast delivery from trusted local vendors."
   />
 
   <meta name="robots" content="index, follow" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Open Graph (WhatsApp / Facebook preview) -->
+  <!-- ✅ OPEN GRAPH (SOCIAL PREVIEW) -->
   <meta property="og:title" content="Kottam – Food Delivery in Telangana" />
   <meta
     property="og:description"
     content="Order food online from nearby shops with fast delivery."
   />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://kottam-frontend.vercel.app" />
-  <meta property="og:image" content="/logo.png" />
+  <meta property="og:url" content="https://kottam-frontend.vercel.app/" />
+  <meta property="og:image" content="https://kottam-frontend.vercel.app/kottam-logo.png" />
 
-  <!-- Twitter -->
+  <!-- ✅ TWITTER -->
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://kottam-frontend.vercel.app/kottam-logo.png" />
 
-    <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Kottam",
-  "url": "https://kottam-frontend.vercel.app/",
-  "logo": "https://kottam-frontend.vercel.app/kottam-logo.png"
-}
-</script>
+  <!-- ✅ GOOGLE ORGANIZATION LOGO (MOST IMPORTANT) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Kottam",
+    "url": "https://kottam-frontend.vercel.app/",
+    "logo": "https://kottam-frontend.vercel.app/kottam-logo.png"
+  }
+  </script>
 
 </head>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</body>
 </html>
