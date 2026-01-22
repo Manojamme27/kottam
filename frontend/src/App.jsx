@@ -3,9 +3,9 @@ export const serverUrl = import.meta.env.VITE_SERVER_URL;
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { io } from "socket.io-client";
-import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useSocket from "./hooks/useSocket";
+
 
 // Hooks
 import useGetCity from "./hooks/useGetCity";
@@ -29,31 +29,6 @@ import SignUp from "./pages/SignUp";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import CreateEditShop from "./pages/CreateEditShop";
 import Home from "./pages/Home";
-
-// Redux
-import {
-  setSocket,
-  addMyOrder,
-  updateRealtimeOrderStatus,
-} from "./redux/userSlice";
-
-// 🔌 SOCKET INSTANCE (DO NOT AUTO CONNECT)
-const socket = io(serverUrl, {
-  withCredentials: true,
-  autoConnect: false, // 🔥 VERY IMPORTANT
-  transports: ["websocket"],
-  reconnection: true,
-  reconnectionAttempts: Infinity,
-  reconnectionDelay: 500,
-  reconnectionDelayMax: 2000,
-});
-
-// 🔊 Sound
-const playSound = () => {
-  const audio = new Audio("/notify.mp3");
-  audio.volume = 1;
-  audio.play().catch(() => {});
-};
 
 function App() {
   const dispatch = useDispatch();
@@ -81,50 +56,7 @@ function App() {
   useGetMyshop();
   useGetItemsByCity();
   useGetMyOrders();
-
-  // 🟢 CONNECT SOCKET *AFTER* UI + AUTH (DELAYED)
-  useEffect(() => {
-    if (!authChecked || !userData?._id) return;
-
-    const timer = setTimeout(() => {
-      socket.connect();
-      dispatch(setSocket(socket));
-    }, 2000); // 🔥 2s delay = instant UI
-
-    return () => clearTimeout(timer);
-  }, [authChecked, userData?._id, dispatch]);
-
-  // 🔔 SOCKET EVENTS (NON-BLOCKING)
-useEffect(() => {
-  if (!userData?._id) return;
-
-  // 🔥 Delay socket so UI renders first
-  const timer = setTimeout(() => {
-    socket.connect();
-  }, 2000);
-
-  socket.on("connect", () => {
-    console.log("🟢 socket connected", socket.id);
-  });
-
-  socket.on("connect_error", () => {
-    console.log("⚠️ socket connect failed (ignored)");
-  });
-
-  socket.on("disconnect", () => {
-    console.log("🔴 socket disconnected");
-  });
-
-  dispatch(setSocket(socket));
-
-  return () => {
-    clearTimeout(timer);
-    socket.off("connect");
-    socket.off("connect_error");
-    socket.off("disconnect");
-  };
-}, [userData?._id, dispatch]);
-  
+  useSocket(); // ✅ THAT'S IT
 
 
   return (
