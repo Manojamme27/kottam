@@ -254,10 +254,17 @@ const handlePlaceOrder = async () => {
   } catch (error) {
     setPlacingOrder(false);
 
-    if (error.response?.status === 401) {
-      toast.error("Session expired. Please login again.");
-      navigate("/signin");
-      return;
+   if (error.response?.status === 401) {
+  toast.error("Session expired. Please login again.");
+
+  // 🔥 CLEAR AUTH STATE
+  dispatch(clearCart());     // optional but safe
+  dispatch({ type: "user/logout" }); // 👈 CRITICAL
+
+  navigate("/signin", { replace: true });
+  return;
+}
+
     }
 
     toast.error(
@@ -508,6 +515,7 @@ const handlePlaceOrder = async () => {
 }
 
 export default CheckOut;
+
 
 
 
