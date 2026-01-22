@@ -15,20 +15,26 @@ const playSound = () => {
 
 const useSocket = () => {
   const dispatch = useDispatch();
-  const { userData } = useSelector((state) => state.user);
+  const { userData, authChecked } = useSelector((state) => state.user);
 
   useEffect(() => {
-    if (!userData?._id) return;
+    if (!authChecked || !userData?._id) return;
 
     const socket = getSocket();
 
-    // 🔥 DELAY socket so UI renders first
+    // 🟢 CONNECT AFTER UI IS READY (NON-BLOCKING)
     const timer = setTimeout(() => {
-      socket.connect();
-    }, 1500);
+      if (!socket.connected) {
+        socket.connect();
+      }
+    }, 2000); // 🔥 UI FIRST
 
     socket.on("connect", () => {
       console.log("🟢 socket connected");
+    });
+
+    socket.on("connect_error", () => {
+      console.log("⚠️ socket failed (ignored)");
     });
 
     socket.on("newOrder", (order) => {
@@ -45,10 +51,12 @@ const useSocket = () => {
 
     return () => {
       clearTimeout(timer);
+      socket.off("connect");
+      socket.off("connect_error");
       socket.off("newOrder");
       socket.off("update-status");
     };
-  }, [userData?._id, dispatch]);
+  }, [authChecked, userData?._id, dispatch]);
 };
 
 export default useSocket;
