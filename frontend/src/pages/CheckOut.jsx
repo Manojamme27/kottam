@@ -265,8 +265,6 @@ const handlePlaceOrder = async () => {
   return;
 }
 
-    }
-
     toast.error(
       error?.response?.data?.message || "Failed to place order. Try again later."
     );
@@ -515,6 +513,7 @@ const handlePlaceOrder = async () => {
 }
 
 export default CheckOut;
+
 
 
 
