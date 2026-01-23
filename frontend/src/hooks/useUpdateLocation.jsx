@@ -1,26 +1,34 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import axios from "axios";
 import { useSelector } from "react-redux";
-import api from "../axios";
+import { serverUrl } from "../App";
 
 const useUpdateLocation = () => {
-  const { userData, authChecked } = useSelector((state) => state.user);
+  const { userData, authChecked } = useSelector(state => state.user);
+
+  const disabledRef = useRef(false); // 🔥 NEW
 
   useEffect(() => {
+    if (disabledRef.current) return;   // 🔥 STOP forever after 401
     if (!authChecked) return;
     if (!userData?._id) return;
-    if (!userData?.location?.coordinates?.length) return;
+    if (!userData?.location?.coordinates) return;
 
     const [lon, lat] = userData.location.coordinates;
 
-    // 🔥 NON-BLOCKING, SAFE CALL
-    api
-      .post("/api/user/update-location", {
-        latitude: lat,
-        longitude: lon,
-      })
-      .catch(() => {
-        // handled globally in axios interceptor
-      });
+    axios.post(
+      `${serverUrl}/api/user/update-location`,
+      { latitude: lat, longitude: lon },
+      { withCredentials: true }
+    ).catch(err => {
+      if (err.response?.status === 401) {
+        console.warn("Session expired — disabling location updates");
+        disabledRef.current = true; // 🔥 HARD STOP
+        return;
+      }
+
+      console.error("update-location error:", err);
+    });
   }, [
     authChecked,
     userData?._id,
