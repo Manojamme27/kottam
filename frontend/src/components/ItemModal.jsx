@@ -1,13 +1,16 @@
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { FaMinus, FaPlus } from "react-icons/fa";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { addToCart } from "../redux/userSlice";
 import { getImageUrl } from "../utils/getImageUrl";
 
 export default function ItemModal({ item, onClose }) {
     const [qty, setQty] = useState(1);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { userData } = useSelector((state) => state.user);
     const modalRef = useRef();
     const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -192,16 +195,25 @@ export default function ItemModal({ item, onClose }) {
                         </motion.div>
 
                         {/* ADD BUTTON */}
-                        <motion.button
-                            whileHover={{ scale: 1.05, boxShadow: "0 0 20px #ff2e78" }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={handleAdd}
-                            className="px-8 py-3 text-white font-semibold rounded-full 
-                                       bg-linear-to-r from-[#ff007a] to-[#ff4d2d] 
-                                       shadow-[0_0_15px_#ff2e7870] tracking-wide uppercase"
-                        >
-                            Add • ₹{price * qty}
-                        </motion.button>
+                    {/* ADD BUTTON */}
+                    <motion.button
+                        whileHover={{ scale: 1.05, boxShadow: "0 0 20px #ff2e78" }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                            if (!userData) {
+                                onClose();
+                                navigate("/signin");
+                                return;
+                            }
+
+                            handleAdd();
+                        }}
+                        className="px-8 py-3 text-white font-semibold rounded-full 
+               bg-linear-to-r from-[#ff007a] to-[#ff4d2d] 
+               shadow-[0_0_15px_#ff2e7870] tracking-wide uppercase"
+                    >
+                        {!userData ? "Sign in to Order" : `Add • ₹${price * qty}`}
+                    </motion.button>
                     </div>
                 </motion.div>
             
