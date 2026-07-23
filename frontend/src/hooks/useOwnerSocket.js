@@ -16,7 +16,8 @@ export default function useOwnerSocket() {
         // Connect socket only once
         if (!socket) {
             socket = io(serverUrl, {
-                withCredentials: true
+                withCredentials: true,
+                transports: ["websocket"],
             });
         }
 

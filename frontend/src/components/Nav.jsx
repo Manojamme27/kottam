@@ -196,7 +196,7 @@ const handleSearchShops = async () => {
 
 
                 {/* Search (Desktop) */}
-                {userData.role === "user" && (
+                {userData?.role === "user" && (
                     <div className="hidden md:flex w-[45%] bg-white/40 backdrop-blur-xl border border-white/30 rounded-full px-5 py-2 items-center gap-4">
                         <FaLocationDot size={22} className="text-[#ff4d2d]" />
 
@@ -275,7 +275,7 @@ const handleSearchShops = async () => {
                     )}
 
                     {/* My Orders */}
-                    {isLoggedIn && (userData.role === "user" || userData.role === "owner") && (
+                    {isLoggedIn && (userData?.role === "user" || userData?.role === "owner") && (
 
                         <button
                             onClick={() => navigate("/my-orders")}
@@ -286,7 +286,7 @@ const handleSearchShops = async () => {
                     )}
 
                     {/* Add Item (Owner) */}
-                    {userData.role === "owner" && (
+                    {userData?.role === "owner" && (
                         <button
                             onClick={() => navigate("/add-item")}
                             className="hidden md:flex items-center gap-2 bg-[#ff4d2d] text-white px-4 py-2 rounded-lg shadow"
@@ -295,7 +295,7 @@ const handleSearchShops = async () => {
                         </button>
                     )}
                     {/* Mobile Search Icon */}
-                    {userData.role === "user" && (
+                    {userData?.role === "user" && (
                         <IoIosSearch
                             size={26}
                             className="text-[#ff4d2d] cursor-pointer md:hidden"
@@ -318,15 +318,23 @@ const handleSearchShops = async () => {
                     {/* Profile */}
                     <div ref={dropdownRef} className="relative">
                         <div
-                            className="w-10 h-10 rounded-full bg-[#ff4d2d] text-white flex items-center justify-center cursor-pointer"
-                           onClick={() => isLoggedIn && setShowInfo(!showInfo)}
+                            className="w-10 h-10 rounded-full bg-[#ff4d2d] text-white flex items-center justify-center cursor-pointer font-semibold"
+                            onClick={() => {
+                                if (!isLoggedIn) {
+                                    navigate("/signin");
+                                    return;
+                                }
+                                setShowInfo(!showInfo);
+                            }}
                         >
-                            {userData?.fullName?.slice(0, 1)}
+                            {userData?.fullName?.charAt(0) || "👤"}
                         </div>
 
                         {showInfo && (
                             <div className="absolute right-0 mt-3 bg-white shadow-xl rounded-xl p-5 w-48 z-50">
-                                <div className="font-semibold mb-2">{userData.fullName}</div>
+                                <div className="font-semibold mb-2">
+                                    {userData?.fullName}
+                                </div>
                                 {/* Mobile My Orders */}
                                 {(userData.role === "user" || userData.role === "owner") && (
                                     <div
@@ -338,7 +346,7 @@ const handleSearchShops = async () => {
                                 )}
 
 
-                                {userData.role === "user" && (
+                                {userData?.role === "user" && (
                                     <div
                                         className="text-red-600 cursor-pointer mb-2"
                                         onClick={() => setShowDeletePopup(true)}
@@ -371,7 +379,7 @@ const handleSearchShops = async () => {
                 </div>
             </div>
             {/* Mobile Search Bar Under Navbar */}
-            {userData.role === "user" && mobileSearchOpen && (
+            {userData?.role === "user" && mobileSearchOpen && (
                 <div ref={mobileSearchRef} className="md:hidden w-full px-5 py-2 bg-white shadow-sm fixed top-20 z-40">
                     <div className="flex items-center bg-orange-50 border px-3 py-2 rounded-full">
                         <IoIosSearch className="text-[#ff4d2d] mr-2" size={22} />
@@ -471,7 +479,7 @@ const handleSearchShops = async () => {
                 )}
             </AnimatePresence>
             {/* OWNER MOBILE FLOATING BUTTONS */}
-            {userData.role === "owner" && (
+            {userData?.role === "owner" && (
                 <div className="md:hidden fixed bottom-5 right-5 flex flex-col gap-3 z-50">
                     <button
                         onClick={() => navigate("/my-orders")}

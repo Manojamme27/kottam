@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/userSlice";
@@ -43,20 +43,18 @@ export default function ItemModal({ item, onClose }) {
             className="fixed inset-0 z-999 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-md p-4"
             onMouseDown={handleBackgroundClick}
         >
-            <AnimatePresence>
-                <motion.div
-                    ref={modalRef}
-                    initial={{ y: 250, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 300, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 120, damping: 12 }}
-                    drag="y"
-                    dragConstraints={{ top: 0, bottom: 0 }}
-                    onDragEnd={(e, info) => {
-                        if (info.offset.y > 120) onClose();
-                    }}
-                    className="w-full max-w-2xl bg-[#0f0f10] rounded-3xl shadow-[0_0_40px_rgba(255,0,100,0.3)] border border-[#ff005d40] overflow-hidden neon-card relative"
-                >
+            <motion.div
+                ref={modalRef}
+                initial={{ y: 250, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 120, damping: 12 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                onDragEnd={(e, info) => {
+                    if (info.offset.y > 120) onClose();
+                }}
+                className="w-full max-w-2xl bg-[#0f0f10] rounded-3xl shadow-[0_0_40px_rgba(255,0,100,0.3)] border border-[#ff005d40] overflow-hidden neon-card relative"
+            >
                     {/* HERO IMAGE */}
                     {/* HERO IMAGE / SLIDER */}
                     <div className="relative h-64 md:h-80 w-full overflow-hidden">
@@ -206,7 +204,7 @@ export default function ItemModal({ item, onClose }) {
                         </motion.button>
                     </div>
                 </motion.div>
-            </AnimatePresence>
+            
         </div>
     );
 }

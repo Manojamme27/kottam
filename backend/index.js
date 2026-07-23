@@ -23,7 +23,6 @@ app.set("trust proxy", 1);
 
 const server = http.createServer(app);
 
-const FRONTEND_URL = "https://kottam-frontend.vercel.app";
 
 /* ===============================
    BODY + COOKIE PARSER
@@ -69,12 +68,12 @@ app.use(
 ================================ */
 const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL,
+    origin: allowedOrigins,
     credentials: true,
   },
   transports: ["websocket"],
-  allowUpgrades: false,      // 🔥 BLOCK polling
-  pingTimeout: 20000,     // 🔥 FAST fail
+  allowUpgrades: false,
+  pingTimeout: 20000,
   pingInterval: 25000,
   allowEIO3: true,
 });

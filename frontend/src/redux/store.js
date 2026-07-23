@@ -6,6 +6,13 @@ export const store = configureStore({
     reducer: {
         user: userSlice,
         owner: ownerSlice,
-        map: mapSlice
-    }
-})
+        map: mapSlice,
+    },
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            serializableCheck: {
+                ignoredActions: ["user/setSocket"],
+                ignoredPaths: ["user.socket"],
+            },
+        }),
+});

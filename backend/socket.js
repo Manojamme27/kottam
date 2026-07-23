@@ -6,19 +6,18 @@ export const socketHandler = (io) => {
 
     // ✅ REGISTER USER
     socket.on("identity", async ({ userId, role }) => {
-  if (!userId) return;
+      try {
+        if (!userId) return;
 
-  await User.findByIdAndUpdate(userId, {
-    socketId: socket.id,
-    isOnline: true,
-    lastSeen: new Date(),
-  });
+        await User.findByIdAndUpdate(userId, {
+          socketId: socket.id,
+          isOnline: true,
+          lastSeen: new Date(),
+        });
 
-  socket.join(userId); // 🔥 VERY IMPORTANT
-});
+        socket.join(userId);
 
-
-        socket.emit("identity-ack"); // 🔥 IMPORTANT
+        socket.emit("identity-ack");
         console.log(`🔗 Registered ${role || "user"} → ${userId}`);
       } catch (err) {
         console.error("identity error", err);

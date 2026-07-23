@@ -409,8 +409,8 @@ function UserDashboard() {
                   <div className="relative w-full h-52 sm:h-60 md:h-64">
                     <Swiper
                       modules={[Autoplay, Pagination]}
-                      loop={true}
-                      autoplay={{ delay: 2000 }}
+            loop={(shop.images?.length || 1) > 1}
+            autoplay={(shop.images?.length || 1) > 1 ? { delay: 2000 } : false}
                       pagination={{ clickable: true }}
                       className="w-full h-full"
                     >
