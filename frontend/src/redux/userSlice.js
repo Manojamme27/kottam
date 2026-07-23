@@ -86,14 +86,14 @@ removeItemFromCity: (state, action) => {
 },
 
 
-   logout: (state) => {
-  state.userData = null;
-  state.cartItems = [];
-  state.totalAmount = 0;
+    logout: (state) => {
+      state.userData = null;
+      state.cartItems = [];
+      state.totalAmount = 0;
 
-  // ❌ DO NOT clear myOrders
-  // orders must stay visible after logout
-},
+      // Clear cached login
+      localStorage.removeItem("userData");
+    },
 
 
     setAuthChecked: (state, action) => {
